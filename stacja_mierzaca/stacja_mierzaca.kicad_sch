@@ -2826,7 +2826,7 @@
 	)
 	(wire
 		(pts
-			(xy 218.44 128.27) (xy 233.68 128.27)
+			(xy 240.03 139.7) (xy 255.27 139.7)
 		)
 		(stroke
 			(width 0)
@@ -2856,6 +2856,16 @@
 	)
 	(wire
 		(pts
+			(xy 215.9 78.74) (xy 227.33 78.74)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "42675eee-49b3-4b3a-b4d9-988032e854a7")
+	)
+	(wire
+		(pts
 			(xy 22.86 123.19) (xy 53.34 123.19)
 		)
 		(stroke
@@ -2866,7 +2876,7 @@
 	)
 	(wire
 		(pts
-			(xy 233.68 135.89) (xy 226.06 135.89)
+			(xy 255.27 147.32) (xy 247.65 147.32)
 		)
 		(stroke
 			(width 0)
@@ -2886,6 +2896,26 @@
 	)
 	(wire
 		(pts
+			(xy 215.9 71.12) (xy 227.33 71.12)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "60848b14-3d9a-49b2-9872-82f9db58e43e")
+	)
+	(wire
+		(pts
+			(xy 190.5 111.76) (xy 203.2 111.76)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "6e672958-7527-438d-a064-2230357a6fef")
+	)
+	(wire
+		(pts
 			(xy 90.17 101.6) (xy 97.79 101.6)
 		)
 		(stroke
@@ -2893,6 +2923,26 @@
 			(type default)
 		)
 		(uuid "757ad3bf-c79d-464c-aafd-aed222092dbe")
+	)
+	(wire
+		(pts
+			(xy 237.49 58.42) (xy 237.49 55.88)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "7d101d0f-0828-4b32-9bb3-d638f38eddfb")
+	)
+	(wire
+		(pts
+			(xy 190.5 106.68) (xy 203.2 106.68)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "809b3331-f087-443e-b10d-c415c9883bd9")
 	)
 	(wire
 		(pts
@@ -2906,6 +2956,26 @@
 	)
 	(wire
 		(pts
+			(xy 190.5 109.22) (xy 203.2 109.22)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "8bdf8abe-ad0f-42d9-935e-124f494dfd09")
+	)
+	(wire
+		(pts
+			(xy 215.9 73.66) (xy 227.33 73.66)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "9b80def5-ef1f-4ae6-a473-3740db6ec3fb")
+	)
+	(wire
+		(pts
 			(xy 114.3 118.11) (xy 73.66 118.11)
 		)
 		(stroke
@@ -2916,7 +2986,7 @@
 	)
 	(wire
 		(pts
-			(xy 194.31 110.49) (xy 205.74 110.49)
+			(xy 190.5 127) (xy 201.93 127)
 		)
 		(stroke
 			(width 0)
@@ -2936,7 +3006,17 @@
 	)
 	(wire
 		(pts
-			(xy 194.31 113.03) (xy 203.2 113.03)
+			(xy 215.9 76.2) (xy 227.33 76.2)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "a6c5e164-10ae-4211-84bf-29e5a4a1441a")
+	)
+	(wire
+		(pts
+			(xy 190.5 129.54) (xy 199.39 129.54)
 		)
 		(stroke
 			(width 0)
@@ -2946,7 +3026,7 @@
 	)
 	(wire
 		(pts
-			(xy 233.68 132.08) (xy 226.06 132.08)
+			(xy 255.27 143.51) (xy 247.65 143.51)
 		)
 		(stroke
 			(width 0)
@@ -2986,13 +3066,23 @@
 	)
 	(wire
 		(pts
-			(xy 142.24 90.17) (xy 158.75 90.17)
+			(xy 138.43 106.68) (xy 154.94 106.68)
 		)
 		(stroke
 			(width 0)
 			(type default)
 		)
 		(uuid "cc1cc038-9a6c-4755-9c2c-f275f2e709ff")
+	)
+	(wire
+		(pts
+			(xy 228.6 55.88) (xy 237.49 55.88)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "d2ea5729-47a6-43f2-8f03-8511c5e77d79")
 	)
 	(wire
 		(pts
@@ -3004,8 +3094,28 @@
 		)
 		(uuid "e0d95860-c7af-4d52-87de-7b27a6ca6f38")
 	)
+	(wire
+		(pts
+			(xy 190.5 93.98) (xy 203.2 93.98)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "fa08e6d6-06a9-4506-8489-2dfa1f2d6c91")
+	)
+	(label "RA02_MISO"
+		(at 203.2 106.68 180)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify right bottom)
+		)
+		(uuid "00bd0b34-3c8f-4942-8a24-48eb0ec1e64f")
+	)
 	(label "MOISTURE_AOUT"
-		(at 218.44 128.27 0)
+		(at 240.03 139.7 0)
 		(effects
 			(font
 				(size 1.27 1.27)
@@ -3014,8 +3124,58 @@
 		)
 		(uuid "0bf54269-667e-4d05-9f2b-7c6aef48df19")
 	)
+	(label "RA02_MISO"
+		(at 215.9 73.66 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left bottom)
+		)
+		(uuid "0e3121e4-3c55-4d74-bf2d-f07c2659d723")
+	)
+	(label "VDD_3V3"
+		(at 228.6 55.88 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left bottom)
+		)
+		(uuid "0f4bad87-7a43-4f90-969a-69ec65ce7d53")
+	)
+	(label "RA02_SCK"
+		(at 203.2 109.22 180)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify right bottom)
+		)
+		(uuid "13313c30-0594-4ab8-b9cb-ea3b97967f10")
+	)
+	(label "RA02_SS"
+		(at 203.2 111.76 180)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify right bottom)
+		)
+		(uuid "4d3e4def-e6b4-4ccb-b0e7-8f9bfc6e33d5")
+	)
+	(label "RA02_SCK"
+		(at 215.9 76.2 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left bottom)
+		)
+		(uuid "51e0028a-b75d-496b-9d66-ddae842076b5")
+	)
 	(label "MOISTURE_AOUT"
-		(at 142.24 90.17 0)
+		(at 138.43 106.68 0)
 		(effects
 			(font
 				(size 1.27 1.27)
@@ -3024,18 +3184,48 @@
 		)
 		(uuid "648dec98-db00-475c-a332-f2ee0c646f8e")
 	)
-	(label "VDD_3V3"
-		(at 195.58 113.03 0)
+	(label "RA02_MOSI"
+		(at 203.2 93.98 180)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify right bottom)
+		)
+		(uuid "6d392125-49ce-4653-9782-387ced3de8d3")
+	)
+	(label "RA02_MOSI"
+		(at 215.9 71.12 0)
 		(effects
 			(font
 				(size 1.27 1.27)
 			)
 			(justify left bottom)
 		)
-		(uuid "9db1defc-8e45-46ca-8b0d-c47f31938517")
+		(uuid "98dacb8a-2415-4c20-98e1-55005bc69d60")
 	)
 	(label "VDD_3V3"
-		(at 233.68 132.08 180)
+		(at 199.39 129.54 180)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify right bottom)
+		)
+		(uuid "9db1defc-8e45-46ca-8b0d-c47f31938517")
+	)
+	(label "RA02_SS"
+		(at 215.9 78.74 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left bottom)
+		)
+		(uuid "d540bbe9-8100-4b93-82c0-6d840841f3e0")
+	)
+	(label "VDD_3V3"
+		(at 255.27 143.51 180)
 		(effects
 			(font
 				(size 1.27 1.27)
@@ -3046,7 +3236,7 @@
 	)
 	(symbol
 		(lib_id "custom_sensors:SEN0193")
-		(at 241.3 132.08 90)
+		(at 262.89 143.51 90)
 		(unit 1)
 		(exclude_from_sim no)
 		(in_bom yes)
@@ -3055,7 +3245,7 @@
 		(fields_autoplaced yes)
 		(uuid "66eec740-079d-47c9-a557-7435879b2d6e")
 		(property "Reference" "S1"
-			(at 240.03 143.51 90)
+			(at 261.62 154.94 90)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -3063,7 +3253,7 @@
 			)
 		)
 		(property "Value" "SEN0193"
-			(at 240.03 140.97 90)
+			(at 261.62 152.4 90)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -3071,7 +3261,7 @@
 			)
 		)
 		(property "Footprint" ""
-			(at 241.3 132.08 0)
+			(at 262.89 143.51 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -3080,7 +3270,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 241.3 132.08 0)
+			(at 262.89 143.51 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -3089,7 +3279,7 @@
 			)
 		)
 		(property "Description" "DFRobot capacitive moisture sensor SEN0193"
-			(at 253.238 132.08 0)
+			(at 274.828 143.51 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -3117,7 +3307,7 @@
 	)
 	(symbol
 		(lib_id "power:GND")
-		(at 205.74 110.49 90)
+		(at 201.93 127 90)
 		(unit 1)
 		(exclude_from_sim no)
 		(in_bom yes)
@@ -3126,7 +3316,7 @@
 		(fields_autoplaced yes)
 		(uuid "809516ce-3bd3-4dea-bde0-939eb37d04c2")
 		(property "Reference" "#PWR01"
-			(at 212.09 110.49 0)
+			(at 208.28 127 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -3135,7 +3325,7 @@
 			)
 		)
 		(property "Value" "GND"
-			(at 209.55 110.4899 90)
+			(at 205.74 126.9999 90)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -3144,7 +3334,7 @@
 			)
 		)
 		(property "Footprint" ""
-			(at 205.74 110.49 0)
+			(at 201.93 127 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -3153,7 +3343,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 205.74 110.49 0)
+			(at 201.93 127 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -3162,7 +3352,7 @@
 			)
 		)
 		(property "Description" "Power symbol creates a global label with name \"GND\" , ground"
-			(at 205.74 110.49 0)
+			(at 201.93 127 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -3184,7 +3374,7 @@
 	)
 	(symbol
 		(lib_id "power:GND")
-		(at 226.06 135.89 0)
+		(at 247.65 147.32 0)
 		(unit 1)
 		(exclude_from_sim no)
 		(in_bom yes)
@@ -3193,7 +3383,7 @@
 		(fields_autoplaced yes)
 		(uuid "820f9ebc-32a1-4f21-8056-6c6f5a0feb71")
 		(property "Reference" "#PWR02"
-			(at 226.06 142.24 0)
+			(at 247.65 153.67 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -3202,7 +3392,7 @@
 			)
 		)
 		(property "Value" "GND"
-			(at 226.06 140.97 0)
+			(at 247.65 152.4 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -3210,7 +3400,7 @@
 			)
 		)
 		(property "Footprint" ""
-			(at 226.06 135.89 0)
+			(at 247.65 147.32 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -3219,7 +3409,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 226.06 135.89 0)
+			(at 247.65 147.32 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -3228,7 +3418,7 @@
 			)
 		)
 		(property "Description" "Power symbol creates a global label with name \"GND\" , ground"
-			(at 226.06 135.89 0)
+			(at 247.65 147.32 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -3328,7 +3518,7 @@
 	)
 	(symbol
 		(lib_id "RF_Module:Ai-Thinker-Ra-02")
-		(at 207.01 46.99 0)
+		(at 237.49 76.2 0)
 		(unit 1)
 		(exclude_from_sim no)
 		(in_bom yes)
@@ -3337,7 +3527,7 @@
 		(fields_autoplaced yes)
 		(uuid "9d589b51-d9ac-4dc0-be8b-4daa324c7752")
 		(property "Reference" "U3"
-			(at 209.1533 29.21 0)
+			(at 239.6333 58.42 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -3346,7 +3536,7 @@
 			)
 		)
 		(property "Value" "Ai-Thinker-Ra-02"
-			(at 209.1533 31.75 0)
+			(at 239.6333 60.96 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -3355,7 +3545,7 @@
 			)
 		)
 		(property "Footprint" "RF_Module:Ai-Thinker-Ra-01-LoRa"
-			(at 232.41 57.15 0)
+			(at 262.89 86.36 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -3364,7 +3554,7 @@
 			)
 		)
 		(property "Datasheet" "http://wiki.ai-thinker.com/_media/lora/docs/c048ps01a1_ra-02_product_specification_v1.1.pdf"
-			(at 209.55 27.94 0)
+			(at 240.03 57.15 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -3373,7 +3563,7 @@
 			)
 		)
 		(property "Description" "Ai-Thinker Ra-02 410-525 MHz LoRa Module, SPI interface, U.FL antenna connector"
-			(at 207.01 46.99 0)
+			(at 237.49 76.2 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -3686,7 +3876,7 @@
 	)
 	(symbol
 		(lib_id "Sensor_Temperature:DS18B20")
-		(at 243.84 77.47 270)
+		(at 261.62 121.92 270)
 		(unit 1)
 		(exclude_from_sim no)
 		(in_bom yes)
@@ -3695,7 +3885,7 @@
 		(fields_autoplaced yes)
 		(uuid "c02e61e4-45b8-4f6d-9d87-5bcc089210af")
 		(property "Reference" "U2"
-			(at 243.84 67.31 90)
+			(at 261.62 111.76 90)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -3703,7 +3893,7 @@
 			)
 		)
 		(property "Value" "DS18B20"
-			(at 243.84 69.85 90)
+			(at 261.62 114.3 90)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -3711,7 +3901,7 @@
 			)
 		)
 		(property "Footprint" "Package_TO_SOT_THT:TO-92_Inline"
-			(at 237.49 52.07 0)
+			(at 255.27 96.52 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -3720,7 +3910,7 @@
 			)
 		)
 		(property "Datasheet" "http://datasheets.maximintegrated.com/en/ds/DS18B20.pdf"
-			(at 250.19 73.66 0)
+			(at 267.97 118.11 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -3729,7 +3919,7 @@
 			)
 		)
 		(property "Description" "Programmable Resolution 1-Wire Digital Thermometer TO-92"
-			(at 243.84 77.47 0)
+			(at 261.62 121.92 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -3903,7 +4093,7 @@
 	)
 	(symbol
 		(lib_id "custom_sensors:ESP32-WROOM32-DEVKIT-V1-30P")
-		(at 176.53 93.98 0)
+		(at 172.72 110.49 0)
 		(unit 1)
 		(exclude_from_sim no)
 		(in_bom yes)
@@ -3912,7 +4102,7 @@
 		(fields_autoplaced yes)
 		(uuid "da1c9c9e-3406-498c-a84b-4951e92f5cbe")
 		(property "Reference" "U1"
-			(at 176.53 63.5 0)
+			(at 172.72 80.01 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -3920,7 +4110,7 @@
 			)
 		)
 		(property "Value" "ESP32-WROOM32-DEVKIT-V1-30P"
-			(at 176.53 66.04 0)
+			(at 172.72 82.55 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -3928,7 +4118,7 @@
 			)
 		)
 		(property "Footprint" ""
-			(at 176.53 93.98 0)
+			(at 172.72 110.49 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -3937,7 +4127,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 176.53 93.98 0)
+			(at 172.72 110.49 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -3946,7 +4136,7 @@
 			)
 		)
 		(property "Description" "ESP32-WROOM32-DEVKIT-V1 30 PIN VERSION"
-			(at 176.53 124.968 0)
+			(at 172.72 141.478 0)
 			(effects
 				(font
 					(size 1.27 1.27)
