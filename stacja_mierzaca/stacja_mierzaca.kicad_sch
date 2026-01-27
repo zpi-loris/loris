@@ -3523,6 +3523,16 @@
 	)
 	(wire
 		(pts
+			(xy 138.43 124.46) (xy 154.94 124.46)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "1aa48716-e3d3-49b8-88d7-79c2cff79570")
+	)
+	(wire
+		(pts
 			(xy 240.03 139.7) (xy 255.27 139.7)
 		)
 		(stroke
@@ -3550,6 +3560,16 @@
 			(type default)
 		)
 		(uuid "2d1062e0-ee91-4880-b0c0-64f16d6995a5")
+	)
+	(wire
+		(pts
+			(xy 215.9 83.82) (xy 227.33 83.82)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "38096566-89d0-47d4-b0a1-7598a5cafb1d")
 	)
 	(wire
 		(pts
@@ -3660,6 +3680,16 @@
 			(type default)
 		)
 		(uuid "757ad3bf-c79d-464c-aafd-aed222092dbe")
+	)
+	(wire
+		(pts
+			(xy 247.65 71.12) (xy 259.08 71.12)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "76bc6edc-2968-4667-bfd7-a082e9021a02")
 	)
 	(wire
 		(pts
@@ -3783,6 +3813,26 @@
 	)
 	(wire
 		(pts
+			(xy 190.5 116.84) (xy 203.2 116.84)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "b6dd3278-957e-4bb6-a2bf-79471f73ea6f")
+	)
+	(wire
+		(pts
+			(xy 247.65 73.66) (xy 259.08 73.66)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "bd8d9804-6674-41b5-ae84-a604044adb1b")
+	)
+	(wire
+		(pts
 			(xy 105.41 63.5) (xy 115.57 63.5)
 		)
 		(stroke
@@ -3790,6 +3840,16 @@
 			(type default)
 		)
 		(uuid "bed354a4-e887-4a09-b98f-b7e5f112c182")
+	)
+	(wire
+		(pts
+			(xy 190.5 114.3) (xy 203.2 114.3)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "c5e8c8e7-eaa2-40ef-b538-23b5f275f86a")
 	)
 	(wire
 		(pts
@@ -3991,6 +4051,16 @@
 		)
 		(uuid "2908b48a-6e20-4136-9707-077a433dd5f5")
 	)
+	(label "RA02_DIO0"
+		(at 259.08 71.12 180)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify right bottom)
+		)
+		(uuid "36cbf55f-9c18-4439-9fb7-d8f63a76092a")
+	)
 	(label "RA02_SS"
 		(at 203.2 111.76 180)
 		(effects
@@ -4071,6 +4141,26 @@
 		)
 		(uuid "81036ebb-ade8-421c-b18b-c02885ca9d97")
 	)
+	(label "RA02_RESET"
+		(at 215.9 83.82 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left bottom)
+		)
+		(uuid "8602ee23-b60b-4d9e-a4db-753958dbf1b1")
+	)
+	(label "RA02_RESET"
+		(at 138.43 124.46 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left bottom)
+		)
+		(uuid "93516c16-0088-45e9-af12-6cdf91741a92")
+	)
 	(label "RA02_MOSI"
 		(at 215.9 71.12 0)
 		(effects
@@ -4091,6 +4181,16 @@
 		)
 		(uuid "9db1defc-8e45-46ca-8b0d-c47f31938517")
 	)
+	(label "RA02_DIO1"
+		(at 259.08 73.66 180)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify right bottom)
+		)
+		(uuid "a43e93bc-3323-44fe-8f82-2257bedfe819")
+	)
 	(label "CON_VDD"
 		(at 106.68 46.99 0)
 		(effects
@@ -4100,6 +4200,26 @@
 			(justify left bottom)
 		)
 		(uuid "a86576e8-202f-4d64-a80d-c608fdbe8f50")
+	)
+	(label "RA02_DIO0"
+		(at 203.2 116.84 180)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify right bottom)
+		)
+		(uuid "aa77ce46-ef56-4b25-90d3-b964bd4063f4")
+	)
+	(label "RA02_DIO1"
+		(at 203.2 114.3 180)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify right bottom)
+		)
+		(uuid "cb233e65-86bc-4c01-8d10-2a8293d5f7fd")
 	)
 	(label "RA02_SS"
 		(at 215.9 78.74 0)

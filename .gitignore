@@ -40,3 +40,4 @@ fp-info-cache
 *.kicad_prl
 
 **.cache*
+**RadioLib**
