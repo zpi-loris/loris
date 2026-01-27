@@ -1,0 +1,14 @@
+/home/tgadz/projekt_iot/src/rpi/server/build/CMakeFiles/rpi-server.dir
+/home/tgadz/projekt_iot/src/rpi/server/build/CMakeFiles/edit_cache.dir
+/home/tgadz/projekt_iot/src/rpi/server/build/CMakeFiles/rebuild_cache.dir
+/home/tgadz/projekt_iot/src/rpi/server/build/CMakeFiles/list_install_components.dir
+/home/tgadz/projekt_iot/src/rpi/server/build/CMakeFiles/install.dir
+/home/tgadz/projekt_iot/src/rpi/server/build/CMakeFiles/install/local.dir
+/home/tgadz/projekt_iot/src/rpi/server/build/CMakeFiles/install/strip.dir
+/home/tgadz/projekt_iot/src/rpi/server/build/RadioLib/CMakeFiles/RadioLib.dir
+/home/tgadz/projekt_iot/src/rpi/server/build/RadioLib/CMakeFiles/edit_cache.dir
+/home/tgadz/projekt_iot/src/rpi/server/build/RadioLib/CMakeFiles/rebuild_cache.dir
+/home/tgadz/projekt_iot/src/rpi/server/build/RadioLib/CMakeFiles/list_install_components.dir
+/home/tgadz/projekt_iot/src/rpi/server/build/RadioLib/CMakeFiles/install.dir
+/home/tgadz/projekt_iot/src/rpi/server/build/RadioLib/CMakeFiles/install/local.dir
+/home/tgadz/projekt_iot/src/rpi/server/build/RadioLib/CMakeFiles/install/strip.dir

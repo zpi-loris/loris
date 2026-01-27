@@ -1,0 +1,1 @@
+/usr/bin/c++ -Wl,--dependency-file=CMakeFiles/rpi-server.dir/link.d "CMakeFiles/rpi-server.dir/main.cpp.o" -o rpi-server  RadioLib/libRadioLib.a -llgpio
