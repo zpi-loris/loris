@@ -3470,10 +3470,22 @@
 		(uuid "754d27e1-f4ea-4fd8-9b22-b289bc084222")
 	)
 	(junction
+		(at 242.57 101.6)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "96953d45-d278-4ca8-816f-0c3427907ab4")
+	)
+	(junction
 		(at 158.75 60.96)
 		(diameter 0)
 		(color 0 0 0 0)
 		(uuid "b80e0496-ed8d-4e4a-bc65-e0f0f1204470")
+	)
+	(junction
+		(at 254 113.03)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "bc3bd210-5fd6-4fd8-a57b-2fe4880d5c99")
 	)
 	(junction
 		(at 158.75 45.72)
@@ -3523,6 +3535,16 @@
 	)
 	(wire
 		(pts
+			(xy 242.57 101.6) (xy 254 101.6)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "0e21dce0-af56-42cd-892f-225d54805a74")
+	)
+	(wire
+		(pts
 			(xy 138.43 124.46) (xy 154.94 124.46)
 		)
 		(stroke
@@ -3540,6 +3562,16 @@
 			(type default)
 		)
 		(uuid "2403614d-88f1-4ef2-a684-408d60d3f168")
+	)
+	(wire
+		(pts
+			(xy 254 110.49) (xy 254 113.03)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "245a6281-35f9-4f81-9a87-72a162b431e7")
 	)
 	(wire
 		(pts
@@ -3593,6 +3625,16 @@
 	)
 	(wire
 		(pts
+			(xy 254 113.03) (xy 273.05 113.03)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "45a54094-b61a-4c39-8093-f259bc536d40")
+	)
+	(wire
+		(pts
 			(xy 39.37 92.71) (xy 49.53 92.71)
 		)
 		(stroke
@@ -3610,6 +3652,16 @@
 			(type default)
 		)
 		(uuid "4ce4e576-9422-4934-b441-dbe222595213")
+	)
+	(wire
+		(pts
+			(xy 233.68 101.6) (xy 242.57 101.6)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "4f67b675-97e3-491d-a2a5-c871b7ee4266")
 	)
 	(wire
 		(pts
@@ -3660,6 +3712,16 @@
 			(type default)
 		)
 		(uuid "6b51a6a4-f6d5-404a-ac0b-6d6079f46df8")
+	)
+	(wire
+		(pts
+			(xy 250.19 113.03) (xy 254 113.03)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "6beee3e5-59ab-4614-8e91-31bc2ad1b4c0")
 	)
 	(wire
 		(pts
@@ -3723,6 +3785,16 @@
 	)
 	(wire
 		(pts
+			(xy 242.57 101.6) (xy 242.57 105.41)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "80089368-9a86-425f-8186-3c4e13fa31e0")
+	)
+	(wire
+		(pts
 			(xy 190.5 106.68) (xy 203.2 106.68)
 		)
 		(stroke
@@ -3740,6 +3812,36 @@
 			(type default)
 		)
 		(uuid "8bdf8abe-ad0f-42d9-935e-124f494dfd09")
+	)
+	(wire
+		(pts
+			(xy 138.43 109.22) (xy 154.94 109.22)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "8c3dfe51-c6d9-4819-bc91-f27a03349445")
+	)
+	(wire
+		(pts
+			(xy 242.57 120.65) (xy 242.57 125.73)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "9006608c-1d24-41d1-8664-9a41e2603481")
+	)
+	(wire
+		(pts
+			(xy 254 101.6) (xy 254 102.87)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "9b4da044-9878-4e4e-97b8-e90925b43c36")
 	)
 	(wire
 		(pts
@@ -4061,6 +4163,16 @@
 		)
 		(uuid "36cbf55f-9c18-4439-9fb7-d8f63a76092a")
 	)
+	(label "VDD_3V3"
+		(at 233.68 101.6 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left bottom)
+		)
+		(uuid "3f958723-9c99-427e-b3a4-d5800ab960f8")
+	)
 	(label "RA02_SS"
 		(at 203.2 111.76 180)
 		(effects
@@ -4100,6 +4212,16 @@
 			(justify left bottom)
 		)
 		(uuid "66b46375-79e2-4410-bc8b-72f667bd2428")
+	)
+	(label "SOIL_DS18B20_S"
+		(at 138.43 109.22 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left bottom)
+		)
+		(uuid "6761d975-f071-4026-8459-5b362bffed32")
 	)
 	(label "SOL_VDD"
 		(at 88.9 71.12 0)
@@ -4180,6 +4302,16 @@
 			(justify right bottom)
 		)
 		(uuid "9db1defc-8e45-46ca-8b0d-c47f31938517")
+	)
+	(label "SOIL_DS18B20_S"
+		(at 273.05 113.03 180)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify right bottom)
+		)
+		(uuid "a17fa135-d1dc-4914-9255-db7b038efc9f")
 	)
 	(label "RA02_DIO1"
 		(at 259.08 73.66 180)
@@ -4394,6 +4526,142 @@
 			(project ""
 				(path "/08203ee5-32dd-43d7-8eb6-09a929ab0a23"
 					(reference "C1")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "power:GND")
+		(at 242.57 125.73 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(uuid "482841b2-c273-4b31-98f7-a3216adfa40c")
+		(property "Reference" "#PWR08"
+			(at 242.57 132.08 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Value" "GND"
+			(at 242.57 130.81 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" ""
+			(at 242.57 125.73 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" ""
+			(at 242.57 125.73 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" "Power symbol creates a global label with name \"GND\" , ground"
+			(at 242.57 125.73 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(pin "1"
+			(uuid "6ccb9220-1b54-4641-bc1c-1c4080bcbb7f")
+		)
+		(instances
+			(project ""
+				(path "/08203ee5-32dd-43d7-8eb6-09a929ab0a23"
+					(reference "#PWR08")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "Device:R")
+		(at 254 106.68 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(uuid "56f6865d-eadb-4199-a425-701ca44b30df")
+		(property "Reference" "R2"
+			(at 256.54 105.4099 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Value" "4k7"
+			(at 256.54 107.9499 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Footprint" ""
+			(at 252.222 106.68 90)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" "~"
+			(at 254 106.68 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" "Resistor"
+			(at 254 106.68 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(pin "2"
+			(uuid "1a52b6e0-70fb-4582-ac53-8162513aeb35")
+		)
+		(pin "1"
+			(uuid "799551e8-9644-4dee-8df8-9ecb16e55c08")
+		)
+		(instances
+			(project ""
+				(path "/08203ee5-32dd-43d7-8eb6-09a929ab0a23"
+					(reference "R2")
 					(unit 1)
 				)
 			)
@@ -5244,24 +5512,23 @@
 	)
 	(symbol
 		(lib_id "Sensor_Temperature:DS18B20")
-		(at 261.62 121.92 270)
+		(at 242.57 113.03 0)
 		(unit 1)
 		(exclude_from_sim no)
 		(in_bom yes)
 		(on_board yes)
 		(dnp no)
-		(fields_autoplaced yes)
 		(uuid "c02e61e4-45b8-4f6d-9d87-5bcc089210af")
 		(property "Reference" "U2"
-			(at 261.62 111.76 90)
+			(at 250.19 117.348 0)
 			(effects
 				(font
 					(size 1.27 1.27)
 				)
 			)
 		)
-		(property "Value" "DS18B20"
-			(at 261.62 114.3 90)
+		(property "Value" "SOIL_DS18B20"
+			(at 255.524 119.634 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -5269,7 +5536,7 @@
 			)
 		)
 		(property "Footprint" "Package_TO_SOT_THT:TO-92_Inline"
-			(at 255.27 96.52 0)
+			(at 217.17 119.38 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -5278,7 +5545,7 @@
 			)
 		)
 		(property "Datasheet" "http://datasheets.maximintegrated.com/en/ds/DS18B20.pdf"
-			(at 267.97 118.11 0)
+			(at 238.76 106.68 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -5287,7 +5554,7 @@
 			)
 		)
 		(property "Description" "Programmable Resolution 1-Wire Digital Thermometer TO-92"
-			(at 261.62 121.92 0)
+			(at 242.57 113.03 0)
 			(effects
 				(font
 					(size 1.27 1.27)
