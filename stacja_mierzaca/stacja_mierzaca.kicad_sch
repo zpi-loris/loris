@@ -4213,7 +4213,7 @@
 		)
 		(uuid "66b46375-79e2-4410-bc8b-72f667bd2428")
 	)
-	(label "SOIL_DS18B20_S"
+	(label "1WIRE_SIGNAL"
 		(at 138.43 109.22 0)
 		(effects
 			(font
@@ -4303,7 +4303,7 @@
 		)
 		(uuid "9db1defc-8e45-46ca-8b0d-c47f31938517")
 	)
-	(label "SOIL_DS18B20_S"
+	(label "1WIRE_SIGNAL"
 		(at 273.05 113.03 180)
 		(effects
 			(font
