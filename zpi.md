@@ -64,7 +64,7 @@ Opcjonalnie:
 ## Komunikacja
 Komunikacja podzielona jest na dwa etapy:
 1. Komunikacja od stacji mierzących do bramki LoRaWAN za pomocą protokołu
-   LoRaWAN
+   LoRaWAN. 
 2. Komunikacja od bramki LoRaWAN do serwera (punktu centralnego) za pomocą WiFi
    (lub innej podobnej technologii), wykorzystując protokół MQTT,
 
@@ -75,6 +75,10 @@ bramki LoRaWAN, aby umożliwić bezpieczną i wydajną komunikację w formie wie
 Komunikacja LoRaWAN (urządzenia <---> bramka) będzie wykorzystywała szyfrowanie
 AES 128-bitowe.
 Komunikacja protokołem MQTT będzie wykorzystywała protokół TLS.
+
+Dodatkowo, do komunikacji w kilku miejscach, w celu zwiększenia wydajności
+przesyłania danych, może zostać wykorzystany format wymiany danych *Protocol
+Buffers* (tzw. Protobuf) opracowany przez Google.
 
 ## Serwer (punkt centralny)
 Dowolne urządzenie z ogólnodostępną lub dedykowaną (np. wytworzoną za pomocą
