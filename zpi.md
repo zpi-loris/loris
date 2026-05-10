@@ -35,8 +35,8 @@ zrealizowane:
 6. Spełnienie normy szczelności IP67 przez stacje mierzące,
 
 # Opis technologiczny
-Poniższy opis jest jedynie wstępnym założeniem i może ulec znaczącym zmianom.
-
+Poniższy opis jest jedynie wstępnym założeniem i może ulec zmianom w zależności
+od dostępności części i innych podobnych czynników.
 
 ## Stacje mierzące
 Każda stacja mierząca to jeden mikrokontroler (np. ESP32), do którego podłączone
@@ -60,6 +60,29 @@ LUB
 
 Opcjonalnie:
 - moduł ładujący baterię z wykorzystaniem ogniwa słonecznego Waveshare 16120
+
+## Bramka LoRaWAN
+
+Bramka LoRaWAN składa się z następujących części:
+- Raspberry Pi 5;
+- Modułu *Wio-WM1302 Long Range Gateway Module without SX1262(SPI) - EU868*
+  firmy Seeed Studio. Moduł ten bazowany jest na czipie SX1302 firmy Semtech i
+  pracuje na częstotliwości 862 MHz, która jest nielicencjonowana w Europie;
+- Płytki HAT (*Hardware Attached on Top*) dedykowanej do ww. modułu firmy Seeed
+  Studio;
+- Anteny 862 MHz ze złączem SMA;
+- Anteny GPS ze złączem IPEX (dostępnej w zestawie z płytką HAT). 
+
+Czip Semtech SX1302 umożliwia komunikację jednocześnie z aż 16 urządzeniami,
+zatem przy odpowiedniej konfiguracji do bramki mogłyby być podłączone setki
+urządzeń. Do jego obsługi wykorzystana zostanie oficjalnia biblioteka
+dostarczająca HAL (*Hardware Abstraction Layer*) od producenta czipu. 
+
+### Linki
+- HAL dla SX1302: https://github.com/Lora-net/sx1302_hal
+- Płytka HAT: https://www.seeedstudio.com/WM1302-Pi-Hat-p-4897.html
+- Moduł LoRa: https://www.seeedstudio.com/WM1302-LoRaWAN-Gateway-Module-Without-SX126-SPI-EU868-p-5847.html
+- Zestaw potrzebnych anten: https://www.seeedstudio.com/LoRa-Antenna-Kit-for-reTerminal-DM-p-5714.html
 
 ## Komunikacja
 Komunikacja podzielona jest na dwa etapy:
