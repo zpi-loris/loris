@@ -61,6 +61,25 @@ LUB
 Opcjonalnie:
 - moduł ładujący baterię z wykorzystaniem ogniwa słonecznego Waveshare 16120
 
+## Komunikacja
+Komunikacja podzielona jest na dwa etapy:
+1. Komunikacja od stacji mierzących do bramki LoRaWAN za pomocą protokołu
+   LoRaWAN;
+2. Komunikacja od bramki LoRaWAN do serwera (punktu centralnego) za pomocą WiFi
+   (lub innej podobnej technologii), wykorzystując protokół MQTT.
+
+Taki podział komunikacji wymaga skonstruowania dodatkowego urządzenia - ww.
+bramki LoRaWAN, aby umożliwić bezpieczną i wydajną komunikację w formie wiele do
+1, a następnie przesłanie danych do głównego serwera.
+
+Komunikacja LoRaWAN (urządzenia <---> bramka) będzie wykorzystywała szyfrowanie
+AES 128-bitowe.
+Komunikacja protokołem MQTT będzie wykorzystywała protokół TLS.
+
+Dodatkowo, do komunikacji w kilku miejscach, w celu zwiększenia wydajności
+przesyłania danych, może zostać wykorzystany format wymiany danych *Protocol
+Buffers* (tzw. Protobuf) opracowany przez Google.
+
 ## Bramka LoRaWAN
 
 Bramka LoRaWAN składa się z następujących części:
@@ -83,25 +102,6 @@ dostarczająca HAL (*Hardware Abstraction Layer*) od producenta czipu.
 - Płytka HAT: https://www.seeedstudio.com/WM1302-Pi-Hat-p-4897.html
 - Moduł LoRa: https://www.seeedstudio.com/WM1302-LoRaWAN-Gateway-Module-Without-SX126-SPI-EU868-p-5847.html
 - Zestaw potrzebnych anten: https://www.seeedstudio.com/LoRa-Antenna-Kit-for-reTerminal-DM-p-5714.html
-
-## Komunikacja
-Komunikacja podzielona jest na dwa etapy:
-1. Komunikacja od stacji mierzących do bramki LoRaWAN za pomocą protokołu
-   LoRaWAN. 
-2. Komunikacja od bramki LoRaWAN do serwera (punktu centralnego) za pomocą WiFi
-   (lub innej podobnej technologii), wykorzystując protokół MQTT,
-
-Taki podział komunikacji wymaga skonstruowania dodatkowego urządzenia - w.w.
-bramki LoRaWAN, aby umożliwić bezpieczną i wydajną komunikację w formie wiele do
-1, a następnie przesłanie danych do głównego serwera.
-
-Komunikacja LoRaWAN (urządzenia <---> bramka) będzie wykorzystywała szyfrowanie
-AES 128-bitowe.
-Komunikacja protokołem MQTT będzie wykorzystywała protokół TLS.
-
-Dodatkowo, do komunikacji w kilku miejscach, w celu zwiększenia wydajności
-przesyłania danych, może zostać wykorzystany format wymiany danych *Protocol
-Buffers* (tzw. Protobuf) opracowany przez Google.
 
 ## Serwer (punkt centralny)
 Dowolne urządzenie z ogólnodostępną lub dedykowaną (np. wytworzoną za pomocą
