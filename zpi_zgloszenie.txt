@@ -1,0 +1,41 @@
+[DANE BAZOWE]
+Współpraca z biznesem? NIE
+Jeśli tak, podaj nazwę firmy: -
+Zastosowanie w nauce/dydaktyce?
+
+[TAK/NIE]
+Czy projekt wymaga zgody Komisji
+Bioetycznej lub Komisji ds. Etyki
+Badań Naukowych? NIE
+
+[1. CEL I OPIS PROJEKTU]
+Głównym celem projektu jest wytworzenie systemu rozproszonej automatyki
+długodystansowej opartej na technologii LoRa. System ten, ze względu na swoją
+rozszerzalność, może zostać wykorzystany w wielu dziedzinach, natomiast projekt
+skupi się na jego wykorzystaniu do zdalnego monitorowania i wpływania na
+środowisko roślin poprzez sensory i aktuatory.
+
+[2. ASPEKT BADAWCZO-ANALITYCZNY]
+1. Analiza efektywności przesyłu danych za pomocą technologii LoRa ze względu na
+   odległość oraz zbadanie jej możliwości w systemach czasu rzeczywistego.
+2. Analiza wpływu formatu danych, m.in. JSON, XML i Protobuf, na efektywność
+   przesyłu danych
+3. Analiza protokołów komunikacyjnych LoRaWAN i MQTT w zależności od
+   zastosowania.
+
+[3. ASPEKT INŻYNIERSKI I REALIZACJA]
+- zabezpieczenie danych i aplikacji przed nieuoprawnionym dostępem
+- samodzielna budowa bramki implementującej podzbiór kluczowych funkcjonalności
+  protokołu LoRaWAN, m.in. szyfrowanie i wielokanałową komunikację.
+- implementacja i udostępnienie API do zarządzania sensorami i aktuatorami
+- implementacja serwisu służącego do podstawowej wizualizacji danych i automatyki
+  sterowanej zdarzeniami (ang. event-driven). System powinien umożliwiać m.in.
+  definiowanie własnych zdarzeń oraz akcji wyzwalanych zdarzeniami.
+
+[4. LITERATURA I MATERIAŁY - opcjonalnie]
+Minimum dwie pozycje: dokumentacja,
+artykuły naukowe lub podręczniki.
+- Specyfikacja protokołu LoRaWAN v1.1
+- Specyfikacja protokołu MQTT 5
+
+[5. UWAGI DODATKOWE – opcjonalnie]
