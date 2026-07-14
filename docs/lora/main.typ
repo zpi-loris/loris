@@ -1,4 +1,4 @@
-#import "@local/arkona:0.1.1": arkona, definition
+#import "@local/arkona:0.2.1": arkona, definition
 #show: arkona.with(
   title: "Notatki z książki o LoRa",
   authors: (
@@ -158,6 +158,131 @@ który jest wysyłany falami o wybranej częstotliwości i przepuszcza je przez 
 kod. W sytuacji, gdy nadawca wyśle wiadomość, odbiorca jest w stanie przepuścić
 tę wiadomość przez swój zapisany kod i odczytać wiadomość nadawcy.
 
+= Propagacja oraz transmisja radiowa
+
+== Jednostki i definicje
+
+=== Decybel (dB)
+Kiedy sygnał rozprzestrzenia się po swojej ścieżce komunikacyjnej, stosunek
+między *odebraną* i *nadaną mocą* może się znacznie różnić.
+
+W sytuacji gdy używamy kabla stosunek wynosi blisko 1. Gdy używamy wzmacniacza
+może być znacznie wyższy, lub może też być bardzo niski w przypadku straty w
+trakcie transmisji w powietrzu.
+
+Operowanie tak dużymi i małymi liczbami nie pozwala na szybkie określenie
+*wzmocnienia* lub *tłumienia* transmisji. Ponadto mnożenie wzmocnienia
+poszczególnych *bloków transmisyjnych* jest niewygodne.
+
+#definition("Blok transmisyjny")[
+  *Blok transmisyjny* to każde pojedyncze urządzenie lub podzespół, przez który
+  przechodzi sygnał na jego drodze od nadawcy do odbiorcy.
+]
+#figure(
+  image("assets/transmission.png", height: auto),
+  caption: [Transmisja mocy pomiędzy nadawcą a odbiorcą],
+)
+#line(length: 100%)
+#definition("Decybel")[
+  *dB* to stosunek między dwiema mocami:
+  - odbiorcy $P_R$,
+  - nadawcy $P_T$.
+
+  Wzór na stosunek w dB jest następujący:
+  #align(center)[$"Power ratio (dB)" = 10*log_10(P_R/P_T)$]
+
+  Gdy wynik jest negatywny, mamy do czynienia z *tłumieniem*, gdy pozytywny ze
+  *wzmacnianiem*.
+]
+
+#pagebreak()
+
+W praktyce najczęściej korzysta się z prostych obliczeń na podstawie tej
+tabelki:
+
+#figure(
+  image("assets/db.png", height: 15%),
+  caption: [Stosunek mocy i decybele],
+)
+
+Przykładowo mamy wzmacniacz, który wzmacnia sygnał o 16 dB, zatem jeżeli
+dostanie moc o wysokości 1 W, na wyjściu otrzymamy:
+#align(center)[$10 "dB" + 3 "dB" + 3 "dB" = 1 W * 10 * 2 * 2 = 20 W$]
+
+#line(length: 100%)
+
+Jak przykładowo dla decybeli dla dźwięku naszym punktem odniesienia są 20 mPa,
+to *dla mocy odniesieniem jest 1 mW*. Decybele, które porównujemy do 1 mW,
+oznaczamy jako *dBm*.
+
+#figure(
+  image("assets/dbm.png", height: 15%),
+  caption: [Porównanie mocy w dB i mW],
+)
+Załóżmy, że mamy walkie-talkie, które ma moc transmisji wynoszącą 2 W:
+
+#align(center)[$1 "mW" * 10 * 10 * 10 * 2 = 10 "dBm" + 10 "dBm" + 10
+"dBm" + 3 "dBm" = bold(33 "dBm")$]
+
+#pagebreak()
+=== RSSI, czułość, SNR, bilans łącza
+Transmiter nadaje sygnał z mocą $P_T$. Odbiornik odbiera tylko część z tej mocy
+($P_R$), oraz także trochę szumu ($P_N$). Wartości te podajemy w dB.
+
+#figure(
+  image("assets/radio-transmission.png", height: 15%),
+  caption: [Transmisja radiowa],
+)
+
+- *Received Signal Strength Indication (RSSI)* to moc odebrana $P_R$
+- *Czułość* to minimalna moc $P_R$ (minimalna RSSI), która musi być obecna w
+  odbiorniku, żeby odebrać sygnał. Jeżeli odebrane RSSI jest poniżej tego
+  poziomu, syngał jest niewykrywalny.
+- *SNR (Signal over Noise Radio)* to stosunek odebranej mocy $P_R$ do mocy
+  szumu $P_N$.
+- *Bilans łącza* to różnica pomiędzy mocą transmisji $P_T$, a czułością.
+
+#line(length: 100%)
+
+*Sygnał może być odebrany w przypadku, gdy:*
+1. RSSI jest większe niż poziom czułości odbiornika.
+2. SNR nie spada poniżej pewnego progu, który skutkowałby brakiem możliwości
+  wykrycia sygnału po stronie odbiornika.
+#line(length: 100%)
+
+*Co można zrobić gdy RRSI spadnie poniżej poziomu czułości?*
+1. *Zwiększenie $P_T$.* Jest to możliwe tylko do pewnego stopnia, ponieważ moc
+  transmitowania jest ograniczona przez specyfikację. Maksymalna moc $P_T$ na
+  paśmie 868 MHz to 14 dBm (25 mW).
+
+2. *Zwiększenie czułości odbiornika.*
+#line(length: 100%)
+*Przykład*: \
+Transmiter *nadaje 13 dBm* oraz korzysta z anteny ze *wzmocnieniem 2 dB*.
+*Strata w powietrzu wynosi 60 dB*. Antena odbiornika ma *wzmocnienie 2 dB* i
+jest podłączona do odbiornika z *poziomem czułości -80 dB*.
+#align(center)[13 + 2 - 60 + 2 = *-43 dB > -80 dB*]
+Bilans łącza w tym przypadku wynosi: *13 + 80 = 93 dB*.
+
+== Odległość transmitowania w LoRa
+#definition("Odległość transmitowania LoRa")[
+  Nadawana moc $P_T$ jest tłumiona w powietrzu zgodnie z uproszczonym wzorem:
+  #align(center)[$"Strata" = 10*log_10("Dystans"^2 * "Częstotliwość"^2 * 1755)$]
+  - Strata: *dB*
+  - Dystans: *km*
+  - Częstotliwość: *MHz*
+
+  Możemy zatem przekształcić wzór, aby obliczyć maksymalny dystans:
+  #align(center)[$"Dystans" = sqrt(10*"Strata"/10 / (1755*"Częstotliwość"^2))$]
+
+  Z kolei wiemy, że bilans łącza mówi nam o maksymalnej stracie, która może
+  dotknąć transmisję:
+
+  #align(center)[$"Dystans" = sqrt(10*"Bilans łącza"/10 / (1755*"Częstotliwość"^2))$]
+
+  - Nadajnik LoRa SX1272 (bilans 157 dB) daje teoretyczną odległość 1946 km.
+  - Nadajnik LoRa SX1262 (bilans 170 dB) daje teoretyczną odległość 8696 km.
+]
 
 
 === Modulacja
@@ -173,6 +298,9 @@ tę wiadomość przez swój zapisany kod i odczytać wiadomość nadawcy.
     caption: [Modulacja AM (Amplitude Modulation)],
   )
 ]
+
+
+
 
 
 
