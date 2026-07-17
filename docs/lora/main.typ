@@ -147,7 +147,7 @@ urządzeń końcowych na tym samym kanale, wszystkie z nich będą w stanie
 przesyłać w tym samym momencie.
 
 Najpopularniejsze modulacje z rozpraszaniem widma korzystają z "kodów",
-natomiast LoRa używa symboli zwanych Chirp, stąd też nazwa modulacji *Chirp
+natomiast LoRa używa symbolów zwanych Chirp, stąd też nazwa modulacji *Chirp
 Spread Spectrum (CSS)*.
 
 === Rozpraszanie widma z kodami
@@ -283,9 +283,18 @@ Bilans łącza w tym przypadku wynosi: *13 + 80 = 93 dB*.
   - Nadajnik LoRa SX1272 (bilans 157 dB) daje teoretyczną odległość 1946 km.
   - Nadajnik LoRa SX1262 (bilans 170 dB) daje teoretyczną odległość 8696 km.
 ]
+#pagebreak()
+= Warstwa fizyczna w LoRa
 
+== Modulacja w LoRa
+Modulacja w LoRa korzysta z *rozpraszania widma* do transmitowania danych. Nie
+używa ona jednak wcześniej wspomnianego rozpraszania widma z użyciem kodu, lecz
+korzysta z *Chirpów*, dlatego też modulację w LoRa nazywamy
+*Chirp Spread Spectrum*.
 
-=== Modulacja
+Cel pozostaje ten sam -- możliwość wielu transmisji w tym samym momencie i na
+tym samym kanale.
+
 #definition("Modulacja")[
   *Modulacja* to proces kodowania informacji w fale elektromagnetyczne. Odbywa
   się to poprzez nałożenie *sygnału modulacyjnego* na *falę nośną* z
@@ -299,8 +308,97 @@ Bilans łącza w tym przypadku wynosi: *13 + 80 = 93 dB*.
   )
 ]
 
+=== Chirp
+Sygnał emitowany przez modulację LoRa to *symbol* o podstawowej formie widocznej
+na poniższym obrazku. Nazwa "Chirp" wynika z faktu, że ten symbol jest używany
+w technologii radarów (Chirp: Compressed High Intensity Radar Pulse).
 
+#figure(
+  image("assets/chirp.png", height: 40%),
+  caption: [Chirp],
+)
 
+Częstotliwość kanału $F_"kanał"$ to centrum częstotliwości, a pasmo zajmowane
+wokół niego to *pasmo przenoszenia* (bandwidth).
 
+#figure(
+  image("assets/lora-transmission.png", height: auto),
+  caption: [Spektrum częstotliwości dla transmisji LoRa],
+)
 
+#figure(
+  image("assets/spectogram.png", height: auto),
+  caption: [Spektogram transmisji LoRa],
+)
+
+#definition("Symbol")[
+  *Symbol* to stan fali nośnej. Określa się go poprzez konkretną fazę,
+  amplitudę oraz częstotliwość. Ponadto tempo, z jakim fala nośna zmienia swój
+  stan z jednego symbolu na kolejny, nazywane jest *szybkością modulacji* (lub
+  szybkością symbolową).
+]
+#line(length: 100%)
+W LoRa każdy *symbol* reprezentuje numer nadanych bitów. Ogólna zasada jest taka:
+#align(center)[*Liczba nadanych bitów w jednym symbolu = Spreading Factor*]
+
+#definition("Spreading Factor")[
+  *Spreading Factor* w LoRa reprezentuje liczbę nadanych bitów w jednym symbolu.
+
+  W trakcie emisji, bity są grupowane w pakiety o liczbe *SF* bitów. Każdy
+  pakiet jest reprezentowany przez konkretny symbol spośród $2^"SF"$ możliwych.
+  Jedyną różnicą dla symbolów jest fakt, że *każdy symbol rozpoczyna się od innej
+  częstotliwości, która reprezentuje pakiet bitów.*
+]
+
+#figure(
+  image("assets/SF2.png", height: auto),
+  caption: [Nadane symbole dla modulacji LoRa SF2],
+)
+#line(length: 100%)
+*Przykład*
+- Mamy kod binarny: `0 1 0 1 1 1 0 0 0 1 1 0 0 1 0 0 1 1 0 1`
+- Korzystamy z SF10
+
+Grupujemy bity w pakiety po 10. Każdy pakiet jest reprezentowany przez
+konkretny symbol. Istnieją 1024 symbole do zenkodowania 1024 możliwych
+kombinacji binarnych ($2^10$).
+
+#figure(
+  image("assets/SF10.png", height: auto),
+  caption: [Nadane symbole dla modulacji LoRa SF10],
+)
+
+#pagebreak()
+=== Czas nadawania symbolów
+Czas nadawania symbolów ($T_"symbol"$) zależy od *Spreading Factoru*. Im wyższy
+SF, tym dłuższy czas nadawania. Dla tego samego pasma przenoszenia, czas
+nadawania symbolu w SF8 będzie dwukrotnie dłuższy niż SF7, SF9 dwukrotnie
+wyższy od SF8 itd. aż do SF12 (najwyższy SF).
+
+#figure(
+  image("assets/transmission-time.png", height: auto),
+  caption: [Czas nadawania symbolów],
+)
+
+Czas nadawania $T_"symbol"$ zależy też od *pasma przenoszenia (bandwidth)*, z
+którego korzystamy. $T_"symbol"$ jest odwrotnie proporcjonalny do pasma
+przenoszenia:
+
+#align(center)[$T_"symbol" = 2^"SF"/"Bandwidth"$]
+
+#figure(
+  image("assets/time-example.png", height: 18%),
+  caption: [Czas nadawania symbolów dla różnych SF. Bandwidth 125 KHz],
+)
+#pagebreak()
+=== Time on Air
+Time on Air to całkowity czas trwania jednej ramki LoRa. Zależy ona od liczby
+symbolów w ramce: payloudu, preambuły, nagłówka oraz sumy kontrolnej CPC.
+
+#figure(
+  image("assets/time-on-air.png", height: auto),
+  caption: [Time on air ramki LoRa],
+)
+#align(center)[* $"Time on Air" = n_"symbol" * T_"symbol"$ *]
+#align(center)[gdzie $n_"symbol"$ to liczba symbolów w ramce LoRa.]
 
