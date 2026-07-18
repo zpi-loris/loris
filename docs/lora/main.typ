@@ -402,3 +402,54 @@ symbolów w ramce: payloudu, preambuły, nagłówka oraz sumy kontrolnej CPC.
 #align(center)[* $"Time on Air" = n_"symbol" * T_"symbol"$ *]
 #align(center)[gdzie $n_"symbol"$ to liczba symbolów w ramce LoRa.]
 
+
+== Bit rate
+
+#definition("Bitrate")[
+  *Bitrate* to ilość bitów transmitowanych w jednostce czasu poprzez kanał
+  komunikacyjny.
+
+  Najczęściej mierzona w bitach na sekundę i ich wielokrotnościach.
+]
+#line(length: 100%)
+Wzór na Bitrate dla LoRa:
+#align(center)[* $"Bitrate" = "SF"*"Bandwidth"/2^"SF"$ *]
+
+- Im większy bandwidth tym *wyższy bitrate*
+- Im wyższy SF tym *mniejszy bitrate*
+
+=== Wpływ Code Rate na bitrate
+
+#definition("Code Rate")[
+  *Code Rate* -- proporcja strumieniowanych danych, która jest użyteczna, tj.
+  *proporcja $k/n$*, gdzie:
+  - k - informacje użyteczne,
+  - n - całkowita liczba informacji,
+  - $n - k$ - informacje redundantne.
+
+  W przypadku $"CR" = 4/8$, 8 bitów jest transmitowanych za każdym razem, gdzie
+  w rzeczywistości chcemy przesłać jedynie 4 bity.
+
+  W tym przypadku mamy *Overhead Ratio* (wskaźnik kosztów) wynoszący 2, co
+  oznacza, że mamy dwukrotną liczbę transmitowanych bitów.
+
+  *Po co Code Rate?*\
+  Nadmiarowe informacje umieszczamy po to, żeby w przypadku utraty części
+  informacji w trakcie transmisji, mieć dodatkowy zasób, do którego możemy
+  sięgnąć i naprawić błąd. Formalnie nazywamy to *Forward Error Correction
+  (FEC)*.
+]
+
+#figure(
+  image("assets/code-rate.png", height: auto),
+  caption: [Overhead Ratio i Code Rate],
+)
+
+*Przykład*:
+- Mamy dwa przypadki transmisji jeden: SF7, 125 kHz i drugi: SF12, 125 kHz z CR
+  na poziomie 4/5. Jaki będzie rzeczywisty bitrate?
+
+  1. SF7, 125 kHz $=>$ $(6,836 "b/s") / 1.25 = 5469 "b/s"$
+  2. SF12, 125 kHz $=>$ $(366 "b/s") / 1.25 = 293 "b/s"$
+
+
