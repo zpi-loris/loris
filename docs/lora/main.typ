@@ -336,6 +336,8 @@ wokół niego to *pasmo przenoszenia* (bandwidth).
   amplitudę oraz częstotliwość. Ponadto tempo, z jakim fala nośna zmienia swój
   stan z jednego symbolu na kolejny, nazywane jest *szybkością modulacji* (lub
   szybkością symbolową).
+
+  *W LoRa symbolem jest 1 chirp.*
 ]
 #line(length: 100%)
 W LoRa każdy *symbol* reprezentuje numer nadanych bitów. Ogólna zasada jest taka:
@@ -393,7 +395,7 @@ przenoszenia:
 #pagebreak()
 === Time on Air
 Time on Air to całkowity czas trwania jednej ramki LoRa. Zależy ona od liczby
-symbolów w ramce: payloudu, preambuły, nagłówka oraz sumy kontrolnej CPC.
+symbolów w ramce: payloadu, preambuły, nagłówka oraz sumy kontrolnej CPC.
 
 #figure(
   image("assets/time-on-air.png", height: auto),
@@ -450,6 +452,125 @@ Wzór na Bitrate dla LoRa:
   na poziomie 4/5. Jaki będzie rzeczywisty bitrate?
 
   1. SF7, 125 kHz $=>$ $(6,836 "b/s") / 1.25 = 5469 "b/s"$
+
   2. SF12, 125 kHz $=>$ $(366 "b/s") / 1.25 = 293 "b/s"$
 
+#pagebreak()
+
+=== Wpływ Overheadu na bitrate
+#definition("Ramka LoRa")[
+  #figure(
+    image("assets/frame.png", height: auto),
+    caption: [Ramka LoRa],
+  )
+
+  Ramka LoRa składa się z:
+  - *preambuły* pozwalającej na synchronizację nadawcy z odbiorcą,
+  - opcjonalnych *nagłówków* po preambuli,
+  - *PHY payload*, czyli właściwych przesyłanych danych,
+  - pola *CRC* sprawdzającego integralność danych.
+]
+
+Z racji, że wysyłamy dodatkowe pakiety w jednej ramce LoRa, dla każdego ładunku
+(payload), musimy *przesłać dodatkowe bity dla całej ramki*. To znacznie
+spowalnia nasz bitrate, ponieważ nie przesyłamy już tylko samego ładunku.
+
+Gdy korzsytamy z protokołu *LoRaWAN*, do ramki dołączane są jeszcze nagłówki z
+LoRaWAN'u co dodatkowo spowalnia bitrate.
+
+Co więcej na paśmie 868 MHz, wedle regulacji UE urządzenia końcowe *nie mogą
+transmitować więcej niż 1% czasu*. Oznacza to, że dla dowolnej jednostki czasu,
+gdy urządzenie transmituje przez 1 musi pozostawać w spoczynku przez 99.
+
+Ostatecznie sumując te wszystkie "spowolnienia" bitrate'u pozostaje nam:
+- SF7, 125 kHz, CR4/5 $=>$ 1.73 b/s
+- SF12, 125 kHz, CR4/5 $=>$ 0.07 b/s
+Więc jak widać nie za wiele, dlatego też LoRa nie może być wykorzystywana do
+przesyłania danych o dużych rozmiarach, bo zajmie to wieki.
+
+#pagebreak()
+
+== Symulacja transmisji LoRa
+
+=== Time on Air
+Najpierw wyliczamy czas trwania jednej ramki, czyli _Time on Air_:
+
+#align(center)[* $"Time on Air" = n_"symbol"*T_"symbol"$ *]
+
+- $n_"symbol"$ to liczba symbolów w ramce LoRa.
+- $T_"symbol"$ to czas trwania jednego symbolu.
+
+#figure(
+  image("assets/n-symbol.png", height: auto),
+  caption: [Wzór na obliczenie $n_"symbol"$],
+)
+
+=== Modulacja Chirp
+Modulacja LoRa generuje Chirpy -- *sygnał modulujący symbol(t)* wymieszane z
+lokalnym sygnałem oscylatora -- *falą nośną channel(t)* w celu przemieszczenia
+Chirpa po częstotliwości kanału $f_"channel"$ i w konsekwencji wygenerowania
+gotowego do wysłania w eter sygnału lora(t)
+
+#figure(
+  image("assets/modulation-example.png", height: 15%),
+  caption: [Proces modulacji],
+)
+
+=== Demodulacja Chirp
+Proces demodulacji składa się z 2 etapów:
+
+1. Zamiana lora(t) na pasmo podstawowe, w celu znalezienia sygnału symbol(t).
+2. Jest on następnie mieszany z sygnałem down(t), który jest sygnałem typu
+  *down-chirp* (chirpem malejącym). Wynikowy sygnał demod(t) jest filtrowany, a
+  następnie używamy algorytmu FFT (Szybkiej Transformaty Fouriera), aby
+  odzyskać *indeks symbolu n*, a tym samym 12 bitów.
+
+#figure(
+  image("assets/demodulation.png", height: 15%),
+  caption: [Proces demodulacji],
+)
+
+#figure(
+  image("assets/demodulation-2.png", height: 55%),
+  caption: [Wyniki mieszania lora(t) z down(t)],
+)
+
+#figure(
+  image("assets/demodulation-3.png", height: auto),
+  caption: [Przykład demodulacji symbolu z wieloma wartościami],
+)
+
+=== Rzeczywisty test transmisji LoRa
+Test przeprowadzony dla parametrów:
+- Kanał: 868.1 Mhz
+- Spreading Factor: 12
+- Bandwidth: 125 kHz
+- Coding Rate: 1.25 (4/5)
+- Number of preamble: 8
+- LoRa PHY payload: "HELLO"
+
+#figure(
+  image("assets/spectogram-real.png", height: auto),
+  caption: [Spektogram ramki LoRa],
+)
+- 8 pierwszych Chirpów to preambuła,
+- kolejne 4.25 (2 w góre i 2.25 w dół) to symbole synchronizacyjne oznaczające
+  start ramki.
+
+#figure(
+  image("assets/spectrum-real.png", height: auto),
+  caption: [Spektrum częstotliwości dla transmisji LoRa],
+)
+
+=== Zużycie energii
+Stqandard LoRaWAN ma na celu aplikację o bardzo niskim poziomie zużycia
+energii. Często bateria starcza nawet na kilka lat. Zużycie energii zależy
+m.in. od:
+- ilość danych do transportu (payload),
+- Spreading Factoru,
+- możliwych kolizji przy emisji (tym samym retransmisji),
+- żądania potwierdzenia odbioru nadanych ramek,
+- cyklu pracy,
+- mocy nadawczej _transcievera_,
+- mocy pobieranej w trybie _standby_ między transmisjami.
 
