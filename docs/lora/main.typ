@@ -574,3 +574,101 @@ m.in. od:
 - mocy nadawczej _transcievera_,
 - mocy pobieranej w trybie _standby_ między transmisjami.
 
+#pagebreak()
+
+= LoRaWAN
+
+*Różnica między LoRa a LoRaWAN:*\
+
+LoRa to *typ modulacji* używany pomiędzy dwoma urządzeniami końcowymi LoRa lub
+pomiędzy urządzeniem końcowym a bramką. Kiedy mówimy o całym *łańcuchu
+komunikacji* (od urządzenia końcowego do serwera LoRaWAN), mówimy o standardzie
+*LoRaWAN*. LoRaWAN to rozszerzenie protokołu LoRa, dające *możliwości bezpiecznego
+połączenia* urządzenia do serwera w celu przekazania danych do użytkownika.
+
+- *Warstwa fizyczna LoRa*: Typ modulacji (CSS) i fizyczny format ramki, używany
+  do przesyłania danych między nadawcą a odbiornikiem.
+- *Standard LoRaWAN*: Architektura sieci (urządzenia końcowe, bramki, serwery)
+  oraz bardziej specyficzny format ramki, pozwalający na bezpieczne
+  transmitowanie danych do serwera LoRaWAN.
+
+== Struktura sieci LoRaWAN
+
+#figure(
+  image("assets/LoRaWAN.png", height: auto),
+  caption: [Widok z lotu ptaka na całkowitą architekturę sieci LoRaWAN],
+)
+
+Urządzenia końcowe, bramki, serwer oraz serwer aplikacji są sercem architektury
+LoRaWAN, jednakże platforma IoT oraz połączenie z użytkownikiem nie ma nic
+wspólnego z LoRaWAN -- jest to klasyczny serwis webowy.
+
+#pagebreak()
+
+=== Urządzenia końcowe
+*Urządzenie końcowe LoRaWAN* to elektroniczny system wbudowany, należący do
+świata IoT, cechuje go: niskie zużycie mocy, mały rozmiar i niewielki koszt.
+Urządzenie takie ma własny *transciever*, aby skomunikować się z bramką.
+
+Urządzenie końcowe LoRaWAN nie musi komunikować się tylko z jedną bramką,
+wszystkie bramki dostępne w obszarze działania dostają wiadomości od
+urządzenia i je przetwarzają.
+#line(length: 100%)
+=== Bramka LoRaWAN
+Bramki LoRaWAN nasłuchują wszystkich kanałów (w paśmie LoRaWAN) i Spreading
+Factors'ów naraz. Kiedy ramka LoRa zostaje odebrana, bramka transmituje jej
+zawartość poprzez Internet do serwera, który został uprzednio zkonfigurowany w
+celu obsługi bramki.
+
+#figure(
+  image("assets/gateway.png", height: auto),
+  caption: [Bramka LoRaWAN],
+)
+
+Każda bramka LoRaWAN ma unikalny indentyfikator (64-bitowy EUI). ID to, jest
+użyteczne w celu rejestracji i aktywacji bramki na serwerze sieci.
+
+#pagebreak()
+
+=== Serwer sieci
+*Serwer sieci* otrzymuje wiadomości transmitowane przez bramki i usuwa
+zduplikowane pakiety (jak wspominałem wcześniej wiele bramek może obsługiwać te
+same urządzenia końcowe). Wtedy Serwer sieci *uwierzytelnia* (nie szyfruje!!)
+tą wiadomość, dzięki 128-bitowemu kluczowi AES, zwanemu *NwkSKey* (Network
+Session Key).
+
+#figure(
+  image("assets/network-server.png", height: 25%),
+  caption: [Uwierzytelnianie pomiędzy urządzeniem końcowym a serwerem sieci],
+)
+
+- Jeżeli uwierzytelnienie się *nie powiedzie*, wiadomość jest odrzucana.
+- Jeżeli uwierzytelnienie się *powiedzie*, serwer sieci przesyła wiadomość
+  dalej do *serwera aplikacji*
+#line(length: 100%)
+=== Serwer aplikacji
+Serwer aplikacji odbiera zaszyfrowane wiadomości z serwera sieci. Szyfrowanie i
+odszyfrowywanie jest wykonywane dzięki 128-bitowemu kluczowi AES, zwanemu
+*AppSKey* (Application Session Key).
+
+#figure(
+  image("assets/app-server.png", height: 25%),
+  caption: [Szyfrowanie pomiędzy urządzeniem końcowym a serwerem aplikacji],
+)
+
+=== Platforma IoT
+Platforma IoT to interfejs aplikacji użytkownika, składa się ona z:
+
+1. Połączenia z serwerem aplikacji w celu zbierania danych. Zazwyczaj
+  wykorzystuje się do tego protokoły *HTTP* lub *MQTT*. W fazie deweloperskiej
+  czasami wykorzystuje się do tego niezabezpieczone wersje tych protokołów. Po
+  zdeployowaniu aplikacji naturalnie używamy już wersji zabezpieczonych, czyli
+  *HTTPS* i *MQTTS*.
+2. Bazy danych do przechowywania informacji.
+3. Dashboardu dostępnego dla użytkownika przez stronę internetową lub aplikację
+  mobilną.
+
+#figure(
+  image("assets/iot-platform.png", height: auto),
+  caption: [Połączenie pomiędzy serwerem aplikacji a platformą IoT],
+)
