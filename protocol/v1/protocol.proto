@@ -1,0 +1,115 @@
+syntax = "proto3";
+
+package protocol.v1;
+
+enum MessageType {
+  MESSAGE_TYPE_UNSPECIFIED = 0;
+  MESSAGE_TYPE_CAPABILITES = 1;
+  MESSAGE_TYPE_REPORT = 2;
+  MESSAGE_TYPE_CALL = 3;
+  MESSAGE_TYPE_HELLO = 4;
+}
+
+enum ValueType {
+  // General
+  VALUE_TYPE_UNSPECIFIED = 0;
+  VALUE_TYPE_NUMERIC = 1;
+  VALUE_TYPE_TEXT = 2;
+  VALUE_TYPE_BOOL = 3;
+  VALUE_TYPE_TEMPERATURE = 4;
+  VALUE_TYPE_PRESSURE = 5;
+  VALUE_TYPE_FREQUENCY = 6;
+  VALUE_TYPE_MOISTURE = 7;
+  VALUE_TYPE_UPTIME = 8;
+  VALUE_TYPE_AREA = 9;
+  VALUE_TYPE_DISTANCE = 10;
+  VALUE_TYPE_DURATION = 11;
+  VALUE_TYPE_ILLUMINANCE = 12;
+  VALUE_TYPE_WATER = 13;
+  VALUE_TYPE_WEIGHT = 14;
+  // Air index
+  VALUE_TYPE_AQI = 15;
+  VALUE_TYPE_CO2 = 16;
+  VALUE_TYPE_PM1 = 17;
+  VALUE_TYPE_PM25 = 18;
+  VALUE_TYPE_PM4 = 19;
+  VALUE_TYPE_PM10 = 20;
+  VALUE_TYPE_HUMIDITY = 21;
+  // Wind
+  VALUE_TYPE_WIND_SPEED = 22;
+  // Electricity
+  VALUE_TYPE_BATTERY = 23;
+  VALUE_TYPE_ENERGY = 24;
+  VALUE_TYPE_VOLTAGE = 25;
+  VALUE_TYPE_CURRENT = 26;
+  // Transmission
+  VALUE_TYPE_DATA_RATE = 27;
+  VALUE_TYPE_DATA_SIZE = 28;
+  VALUE_TYPE_SIGNAL_STRENGTH = 29;
+  // Earth
+  VALUE_TYPE_PH = 30;
+  VALUE_TYPE_POTASSIUM = 31;
+  VALUE_TYPE_PHOSPHORUS = 32;
+  VALUE_TYPE_NITROGEN = 33;
+}
+
+enum FuncArgType {
+  FUNC_ARG_TYPE_UNSPECIFIED = 0;
+  FUNC_ARG_TYPE_VOID = 1;
+  FUNC_ARG_TYPE_INT = 2;
+  FUNC_ARG_TYPE_FLOAT = 3;
+  FUNC_ARG_TYPE_STRING = 4;
+}
+
+message Sensor {
+  int32 id = 1;
+  string name = 2;
+  string description = 3;
+  ValueType value_type = 4;
+  optional string unit = 5;
+}
+
+message Function {
+  int32 id = 1;
+  string name = 2;
+  string description = 3;
+}
+
+message Capabilites {
+  string device_name = 1;
+  repeated Sensor sensors = 2;
+  repeated Function functions = 3;
+}
+
+message Report {
+  int32 sensor_id = 1;
+  oneof value {
+    float float = 2;
+    string string = 3;
+    bool bool = 4;
+  }
+}
+
+message Call {
+  int32 function_id = 1;
+  oneof value {
+    int32 int = 2;
+    string string = 3;
+    bool bool = 4;
+    float float = 5;
+  }
+  int32 callback_timer = 6;
+}
+
+message Hello {}
+
+message Message {
+  MessageType type = 1;
+
+  oneof details {
+    Capabilites capabilites = 2;
+    Report report = 3;
+    Call call = 4;
+    Hello hello = 5;
+  }
+}
