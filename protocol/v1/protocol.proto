@@ -16,6 +16,7 @@ enum ValueType {
   VALUE_TYPE_NUMERIC = 1;
   VALUE_TYPE_TEXT = 2;
   VALUE_TYPE_BOOL = 3;
+  // Common
   VALUE_TYPE_TEMPERATURE = 4;
   VALUE_TYPE_PRESSURE = 5;
   VALUE_TYPE_FREQUENCY = 6;
@@ -73,6 +74,7 @@ message Function {
   int32 id = 1;
   string name = 2;
   string description = 3;
+  FuncArgType arg_type = 4;
 }
 
 message Capabilites {
@@ -98,7 +100,7 @@ message Call {
     bool bool = 4;
     float float = 5;
   }
-  int32 callback_timer = 6;
+  int32 wake_after_secs = 6;
 }
 
 message Hello {}
