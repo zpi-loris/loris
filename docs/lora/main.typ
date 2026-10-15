@@ -1,4 +1,4 @@
-#import "@local/arkona:0.2.1": arkona, definition
+#import "@local/arkona:0.2.1": arkona, attention, definition
 #show: arkona.with(
   title: "Notatki z książki o LoRa",
   authors: (
@@ -8,6 +8,8 @@
     Wszystkie notatki zawarte w tym dokumencie oparte są na książce "LoRa -
     LoRaWAN and Internet of Things for beginners" autorstwa Sylvaina
     Montagny'ego z Universite Savoie Mont Blanc.
+
+    Dodatkowo ze specyfikacji LoRaWAN v1.1.
   ],
   date: datetime.today().display(),
 )
@@ -672,3 +674,161 @@ Platforma IoT to interfejs aplikacji użytkownika, składa się ona z:
   image("assets/iot-platform.png", height: auto),
   caption: [Połączenie pomiędzy serwerem aplikacji a platformą IoT],
 )
+
+#pagebreak()
+== Specyfikacja działania LoRaWAN
+Przyjmijmy kilka oznaczeń i definicji:
+- *NS* (_Network Server_) -- serwer sieciowy LoRaWAN,
+- *JS* (_Join Server_) -- serwer LoRaWAN odpowiedzialny za aktywację urządzeń
+  (OTAA),
+- *EDGE* -- urządzenie brzegowe.
+- *Komunikacja UP*#footnote[Pojęcia _UP_ oraz _DOWN_ można rozumieć jak z
+    drzewa, gdzie u góry jest Serwer LoRaWAN] -- przesył wiadomości od EDGE do NS,
+- *Komunikacja DOWN* -- przesył wiadomości od NS do EDGE,
+- *Wiadomość downlink* -- pojedyncza wiadomość wysyłana przez NS do jednego
+  EDGE (komunikacja DOWN), która przechodzi przez jedną bramkę,
+- *Wiadomość uplink* -- pojedyncza wiadomość wysyłana przez EDGE do NS
+  (komunikacja UP), która przechodzi przez jedną lub więcej bramek.
+
+
+=== Rodzaje wiadomości LoRaWAN
+#attention([Komendy MAC])[
+  *Nie należy mylić wiadomości MAC (opisanych poniżej) z komendami MAC.* Komendy
+  są przesyłane jedynie pomiędzy NS, a warstwą MAC EDGE'a. Komendy są całkowicie
+  niewidoczne dla serwera aplikacji i aplikacji na EDGE'u.
+]
+
+W specyfikacji LoRaWAN zdefiniowanych jest 8 rodzajów wiadomości *MAC*
+(_Medium Access Control_):
+
+#align(center)[
+  #set par(justify: false)
+  #table(
+    columns: (auto, auto, auto),
+    inset: 10pt,
+    align: horizon,
+    table.header([*MType*], [*Nazwa*], [*Krótki opis*]),
+    [001], [Join-request], [Prośba o dołączenie do sieci LoRaWAN],
+
+    [001], [Join-accept], [Przyjęcie prośby o dołączenie do sieci LoRaWAN],
+
+    [010], [Unconfirmed Data Up], [Przesłanie danych z EDGE do NS *bez* potwierdzenia otrzymania],
+
+    [011], [Unconfirmed Data Down], [Przesładnie danych z NS do EDGE *bez* potwierdzenia otrzymania],
+
+    [100],
+    [Confirmed Data Up],
+    [Przesłanie danych z EDGE do NS z potwierdzeniem
+      otrzymania],
+
+    [101],
+    [Confirmed Data Down],
+    [Przesłanie danych z NS do EDGE z
+      potwierdzeniem otrzymania],
+
+    [110], [Rejoin-request], [Prośba o ponowne dołączenie do sieci],
+
+    [111],
+    [Proprietary],
+    [Typ wiadomości do własnego zdefiniowania w obrębie
+      rozwiązania],
+  )
+]
+
+==== Wiadomości z potwierdzeniem
+Po otrzymaniu wiadomości, która wymaga potwierdzenia odbiorca musi odpowiedzieć
+ramką#footnote[Trzeba doczytać, czy to może być dowolna wiadomość] z ustawionym
+bitem potwierdzenia (*ACK*). Mamy dwa scenariusze, gdy nadawcą jest:
+1. *EDGE* -- NS wtedy stara się przesłać wiadomość podczas dwóch okienek odbioru
+  nadawcy po wysłaniu wiadomości,
+2. *NS* -- aby nie ograniczać urządzeń brzegowych i jak najbardziej uprościć ich
+  budowę *nie mają one narzuconego czasu potwierdzenia*; mogą postarać się od
+  razu, wysłać potem, a nawet dołączyć do kolejnej wiadomości.
+
+=== Aktywacja urządzeń końcowych
+Istnieją dwa sposoby na podłączenie nowego urządzenia do sieci LoRaWAN (jego
+aktywację):
+1. *Over-The-Air Activation* (_OTAA_) -- zdalne i działające "na bieżąco",
+2. *Activation By Personalization* (_ABP_) -- ręcznie konfigurujemy urządzenie i
+  je dodajemy do systemu.
+
+==== Przed aktywacją
+#definition("IEEE EUI-64")[
+  Zdefiniowany przez IEEE standard *EUI-64* (_Extended Unique Identifier,
+  64-bit_) to 64-bitowy identyfikator sprzętowy lub sieciowy.
+
+  Często jest generowany z 48-bitowego adresu MAC karty sieciowej.
+]
+
+Poniżej są ogólne rzeczy, mogą dotyczyć zarówno OTAA i ABP, jak i tylko jednej z
+nich.
+
+Przed aktywacją urządzenia brzegowe mogą/muszą (zależnie od sposobu) poniższe dane i
+klucze w swojej pamięci#footnote[LoRaWAN nie definiuje sposobu przechowywania,
+  ale *musi być bezpieczny!*]:
+1. *JoinEUI* -- globalne i unikalne ID (EUI64) Join Servera, który ma być
+  wykorzystany do połączenia; nie jest wymagany w _ABP_,
+2. *DevEUI* -- globalne i unikalne ID urządzenia; zaleca się, aby było jakoś
+  napisane na urządzeniu fizycznie,
+3. Klucze *AppKey* i *NwkKey* (_Network Key_) -- klucze AES-128 generowane i
+  przypisywane przy wytwarzaniu urządzenia, specyficzne dla niego;
+  Wykorzystywane są do wyliczenia kluczy szyfrujących potem: *FNwkSIntKey*,
+  *SNwkSIntKey*, *NwkSEncKey* oraz *AppSKey*; nie są wymagane przez ABP; powinny
+  być wyjątkowo bezpiecznie przechowywane,
+
+Na podstawie *NwkKey* wyliczane są dwa kolejne klucze:
+- *JSIntKey* -- używany do wyliczenia MIC (_Message Integrity Code_) dla
+  wiadomości typu _Rejoin-Request_ i odpowiedzi _Join-Accept_,
+- *JSEncKey* -- używany do zaszyfrowania _Join-Accept_.
+
+==== Po aktywacji
+Po aktywacji na urządzeniu przechowywane są nowe informacje, które zostały
+uzyskane w tym procesie:
+1. *DevAddr* (_Device Address_) -- w odróżnieniu od DevEUI jest unikalny tylko w
+  danej sieci; składa się z 32 bitów,
+2. trójka (*NwkSEncKey*, *SNwkSIntKey*, *FNwkSIntKey*) -- trójka kluczy sesji
+  sieci:
+  - *NwkSEncKey* -- wykorzystywany do (de)szyfrowania koment MAC, zarówno
+    downlinków i uplinków,
+  - *SNwkSIntKey* -- wykorzystywany do wyliczania MIC downlinków i części MIC
+    dla uplinków,
+  - *FNwkSIntKey* -- wykorzystywany do wylicznania pozostałej części MIC
+    uplinków
+3. *AppSKey* -- klucz sesji aplikacji, używany do zaszyfrowywania właściwych
+  danych (payloadu) wiadomości.
+
+==== OTAA
+W dużym uproszczeniu procedura OTAA przebiega następująco:
+1. Urządzenie na początku wysyła wiadomość `Join-request`, która zawiera
+  `JoinEUI` i `DevEUI` oraz `nonce` (ang. _number used once_) składający się z
+  dwóch bajtów (`DevNonce`).
+
+  `DevNonce` to licznik, który zaczyna od 0, gdy uruchamiamy urządzenie i jest
+  inkrementowany za każdą wiadomością `Join-request`. *`DevNonce` nigdy nie może
+  być użyty dwa razy z tym samym `JoinEUI`* -- jeżeli urządzenie ma się wyłączać
+  to `DevNonce` ma być trwały pomiedzy uruchomieniami (np. zapisany w
+  #link("https://docs.espressif.com/projects/esp-idf/en/stable/esp32/api-reference/storage/nvs_flash.html")[NVS]).
+  Jeżeli będzie powtórzony, to NS zigonruje wiadomość.
+2. NS wysyła `Join-accept` (jeżeli może dołączyć, jeżeli nie to ignoruje),
+  które zawiera `JoinNonce` (analogicznie jak wcześniej, tylko w drugą stronę),
+  `NetID` (ID sieci), `DevAddr` i `DLSettings` (część ustawień downlinków).
+
+  Urządzenie kryptograficznie z tych rzeczy wylicza `FNwkSIntKey`,
+  `SNwkSIntKey`, `NwkSEncKey` oraz `AppKey` -- są to klucze sesyjne.
+3. Później urządzenie może co jakiś czas wysyłać wiadomość `Rejoin-request`, aby
+  móc odświeżyć kontekst połączenia; jest to dobrowolne i dla nas właściwie
+  nieważne.
+
+==== ABP
+Aktywacja przez personalizację polega na ręcznym zapisaniu w urządzeniu
+`DevAddr` oraz 4 kluczy sesyjnych: `FNwkSIntKey`, `SNwkSIntKey`, `NwkSEncKey` i
+`AppSKey`, zamiast ich wyliczeniu.
+
+Następnie takie urządzenie przy pierwszym uruchomieniu musi wysłać specjalną
+komendę MIC `ResetInd` -- nie ma co dalej wchodzić w szczegóły.
+
+#attention("Proces wyliczania kluczy")[
+  Skoro tutaj ręcznie wpisujemy klucze, to też i ręcznie musimy zadbać o ich
+  bezpieczeństw. Muszą być kryptograficznie bezpieczne i niezależne od siebie --
+  przejęcie jednego, nie powinno mieć wpływu na pozostałe urządzenia.
+]
