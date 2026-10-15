@@ -101,7 +101,7 @@ message Call {
     bool bool = 4;
     float float = 5;
   }
-  int32 wake_after_secs = 6;
+  optional int32 wake_after_secs = 6;
 }
 
 message Hello {}
