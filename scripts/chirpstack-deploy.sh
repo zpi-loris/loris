@@ -61,9 +61,9 @@ main() {
     echo "Cleaning up conflicting docker packages"
     apt-get remove -y $(dpkg --get-selections docker.io docker-compose docker-doc docker-buildx podman-docker containerd runc | cut -f1) 2>/dev/null || true
 
-    echo "Installing required packages"
+    echo "Installing required packages... and vim ofc"
     apt-get update -qq
-    apt-get install -y -qq ca-certificates curl yq git
+    apt-get install -y -qq ca-certificates curl yq git vim
 
     # configure docker Apt repo
     install -m 0755 -d /etc/apt/keyrings
