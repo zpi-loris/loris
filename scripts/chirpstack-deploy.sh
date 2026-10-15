@@ -119,7 +119,7 @@ EOF
     echo "Starting services"
     docker compose up -d --quiet-pull --quiet-build
 
-    echo "\n\nActive services are:"
+    echo -e "\n\nActive services are:"
     docker ps --filter "status=running" --filter "name=chirpstack*" --format "{{.Names}}\nPORTS: {{.Ports}}\n"
 
 }
