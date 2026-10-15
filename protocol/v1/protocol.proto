@@ -60,6 +60,7 @@ enum FuncArgType {
   FUNC_ARG_TYPE_INT = 2;
   FUNC_ARG_TYPE_FLOAT = 3;
   FUNC_ARG_TYPE_STRING = 4;
+  FUNC_ARG_TYPE_BOOL = 5;
 }
 
 message Sensor {
