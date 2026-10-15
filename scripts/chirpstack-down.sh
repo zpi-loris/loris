@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # in case compose is lost, easy way to stop all
 for container in $(docker ps --format "{{.ID}}" --filter "name=chirpstack*"); do
