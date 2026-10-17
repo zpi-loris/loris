@@ -243,7 +243,7 @@
       "internal_id": "",
       "mfg": "",
       "mpn": "",
-      "sch_revision": ""
+      "sch_revision": "0.1"
     },
     "layer_pairs": [],
     "layer_presets": [],
@@ -670,16 +670,16 @@
       {
         "filename": "stacja_mierzaca.kicad_sch",
         "name": "stacja_mierzaca",
-        "uuid": "00000000-0000-0000-0000-000000000000"
+        "uuid": "08203ee5-32dd-43d7-8eb6-09a929ab0a23"
       }
     ],
-    "used_designators": "",
+    "used_designators": "U4",
     "variants": []
   },
   "sheets": [
     [
       "08203ee5-32dd-43d7-8eb6-09a929ab0a23",
-      "Root"
+      "stacja_mierzaca"
     ]
   ],
   "text_variables": {},
