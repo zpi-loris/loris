@@ -1,0 +1,18 @@
+dependencies:
+  idf:
+    source:
+      type: idf
+    version: 6.0.2
+  nopnop2002/sx127x:
+    component_hash: 4635a2b8b4876729fd45770ee2d5c2264c7a4e5510bc57af0067f2fa6a26398b
+    dependencies: []
+    source:
+      git: https://github.com/nopnop2002/esp-idf-sx127x.git
+      path: components/lora/
+      type: git
+    version: ff923e5c29d32dac2fa8651ca7f5cc58eb2a0575
+direct_dependencies:
+- nopnop2002/sx127x
+manifest_hash: 1fac4e30bed0e065841c979a301fa5cb54b866b08240b8340ac75e21b2d07d81
+target: esp32
+version: 3.0.0
