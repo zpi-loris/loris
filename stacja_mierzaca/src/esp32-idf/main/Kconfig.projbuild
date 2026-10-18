@@ -1,0 +1,18 @@
+menu "Application Configuration"
+
+	choice POLARITY
+		prompt "Communication Polarity"
+		default TRANSMITTER
+		help
+			Select Communication Polarity.
+		config TRANSMITTER
+			bool "Transmitter"
+			help
+				As Transmitter.
+		config RECEIVER
+			bool "Receiver"
+			help
+				As Receiver.
+	endchoice
+
+endmenu 

@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+
+git clone git@github.com:jgromes/RadioLib.git
+cd RadioLib
+rm -rf .git examples extras
+
+
+

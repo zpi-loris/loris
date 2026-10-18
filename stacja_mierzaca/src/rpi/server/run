@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+
+BINARY_NAME=rpi-server
+
+./build.sh
+./build/"${BINARY_NAME}"
