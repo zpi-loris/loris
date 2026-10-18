@@ -6,8 +6,11 @@ CONTAINER_NAME="gtw-test"
 docker container stop "$CONTAINER_NAME"
 docker container remove "$CONTAINER_NAME"
 docker run --name "$CONTAINER_NAME" \
+  --detach \
+  --env MQTT_BROKER_ADDR="tcp://192.168.55.36:1883" \
   --device /dev/gpiochip0:/dev/gpiochip0 \
   --device /dev/spidev0.0:/dev/spidev0.0 \
   --device /dev/i2c-1:/dev/i2c-1 \
   --device /dev/ttyAMA0:/dev/ttyAMA0 \
-  -it "$IMAGE" /bin/bash
+  "$IMAGE"
+docker logs --follow "$CONTAINER_NAME"

@@ -12,6 +12,7 @@ RUN apt-get install -y \
   gcc \
   make \
   bash \
+  gettext-base \
   vim
 
 ADD --unpack=true "https://artifacts.chirpstack.io/downloads/chirpstack-mqtt-forwarder/chirpstack-mqtt-forwarder_${MQTT_FORWARDER_VERSION}_linux_arm64.tar.gz" .

@@ -42,13 +42,14 @@
   json=false
 
   # MQTT server (e.g. scheme://host:port where scheme is tcp, ssl, ws or wss)
-  server="tcp://192.168.55.36:1883"
+  # e.g. "tcp://0.0.0.0:1883"
+  server="${MQTT_BROKER_ADDR}"
 
   # Connect with the given username (optional)
-  username=""
+  username="${MQTT_USERNAME}"
 
   # Connect with the given password (optional)
-  password=""
+  password="${MQTT_PASSWORD}"
 
   # Quality of service level
   #
@@ -180,17 +181,21 @@
 
 
 # Gateway metadata configuration.
-[metadata]
+# NOTE: uncommented metadata (even empty) resulted in a weird error probably 
+# caused by a std::process::Command call, might be worth investigating
+# more and opening a PR: https://github.com/chirpstack/chirpstack-mqtt-forwarder/blob/master/src/backend/concentratord.rs
+
+# [metadata]
 
   # Static key / value metadata.
-  [metadata.static]
+  # [metadata.static]
       
     # Example:
     # serial_number="1234"
 
 
   # Commands returning metadata.
-  [metadata.commands]
+  # [metadata.commands]
 
     # Split delimiter
     #
@@ -211,7 +216,7 @@
     # * example2 = ["echo", "key1=Hello\nkey2=World\n"]
     #     -> example2_key1: Hello,  example2_key2: World
     #
-    split_delimiter=["="]
+    # split_delimiter=["="]
 
     # Example:
     # datetime=["date", "-R"]
