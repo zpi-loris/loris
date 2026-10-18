@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+
+./chirpstack-concentratord-sx1302 -c ./configs/concentratord.toml &
+./chirpstack-mqtt-forwarder -c ./configs/forwarder.toml &
