@@ -4,7 +4,7 @@ RULES_FILE="/etc/udev/rules.d/99-concentratord.rules"
 ENV_FILE=".env"
 UART_SYSTEMD_SERVICE="serial-getty@ttyAMA0.service"
 
-# Associative array mapping device to its expected group
+# Associative array mapping a device to its expected group
 declare -A DEVICES
 DEVICES["/dev/gpiochip0"]="gpio"
 DEVICES["/dev/spidev0.0"]="spi"
