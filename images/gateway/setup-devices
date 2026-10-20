@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
 RULES_FILE="/etc/udev/rules.d/99-concentratord.rules"
+ENV_FILE=".env"
 UART_SYSTEMD_SERVICE="serial-getty@ttyAMA0.service"
 
 # Associative array mapping device to its expected group
@@ -12,10 +13,6 @@ DEVICES["/dev/ttyAMA0"]="dialout"
 
 set -eo pipefail
 
-get-group-gid() {
-  local group_name="$1"
-  getent group "$group_name" | cut -d ':' -f 3 || fatal "Error retrieving '$group_name' GID"
-}
 
 fatal() {
   echo "FATAL" "$@" >&2
@@ -26,27 +23,54 @@ info() {
   echo "INFO" "$@"
 }
 
-check-device-groups() {
+check-devices() {
   for device in "${!DEVICES[@]}"; do
     if [[ ! -c "$device" ]]; then
       fatal "'$device' does not exist or is not a device"
     fi
 
+    info "$device OK"
+  done
+}
+
+check-devices-owner-groups() {
+  for device in "${!DEVICES[@]}"; do
     local expected_group="${DEVICES["$device"]}"
     local actual_group
     actual_group="$(stat -c "%G" "$device")"
     if [[ "$expected_group" != "$actual_group" ]]; then
-      fatal "Incorrect '$device' group; expected '$expected_group', found '$actual_group'"
+      fatal "Incorrect '$device' owner group; expected '$expected_group', found '$actual_group'"
     fi
 
     info "$device -> $expected_group | OK"
   done
 }
 
+get-group-gid() {
+  local group_name="$1"
+  getent group "$group_name" | cut -d ':' -f 3 || fatal "Error retrieving '$group_name' GID"
+}
+
+update-env-var() {
+  local key="$1"
+  local value="$2"
+  touch "$ENV_FILE"
+  if grep -q "^${key}=" "$ENV_FILE"; then
+    sed -i "s/^${key}=.*/${key}=${value}/" "$ENV_FILE"
+    info "Updated ${key}=${value} in '$ENV_FILE'"
+  else
+    echo "${key}=${value}" >> "$ENV_FILE"
+    info "Added ${key}=${value} to '$ENV_FILE'"
+  fi
+}
+
 main() {
   if [[ "$(id -u)" -ne 0 ]]; then
     fatal "$0 must be executed as root, try using 'sudo $0'"
   fi
+
+  info "Checking if necessary devices exist..."
+  check-devices 
 
   if systemctl is-active --quiet "$UART_SYSTEMD_SERVICE" || systemctl is-enabled --quiet "$UART_SYSTEMD_SERVICE"; then
     info "Stopping and disabling conflicting systemd service '$UART_SYSTEMD_SERVICE'"
@@ -79,22 +103,14 @@ EOF
 
   udevadm settle
 
-  info "Checking whether devices are owned by the expected groups..."
-  check-device-groups
+  info "Checking devices owner groups..."
+  check-devices-owner-groups
 
-  info "Retrieving necessary GIDs"
-  GPIO_GID=$(get-group-gid "gpio")
-  SPI_GID=$(get-group-gid "spi")
-  DIALOUT_GID=$(get-group-gid "dialout")
-  I2C_GID=$(get-group-gid "i2c")
-
-  info "Writing GIDs > '.env...'"
-  tee --append ".env" << EOF
-GPIO_GID=$GPIO_GID
-SPI_GID=$SPI_GID
-DIALOUT_GID=$DIALOUT_GID
-I2C_GID=$I2C_GID
-EOF
+  info "Writing necessary GIDs > $ENV_FILE"
+  update-env-var "GPIO_GID" "$(get-group-gid "gpio")"
+  update-env-var "SPI_GID" "$(get-group-gid "spi")"
+  update-env-var "DIALOUT_GID" "$(get-group-gid "dialout")"
+  update-env-var "I2C_GID" "$(get-group-gid "i2c")"
 }
 
 main "$@"
