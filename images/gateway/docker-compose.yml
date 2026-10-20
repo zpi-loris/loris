@@ -10,6 +10,11 @@ services:
       - "/dev/ttyAMA0:/dev/ttyAMA0"
     volumes:
       - chirpstack-ipc:/tmp/chirpstack
+    group_add:
+      - "${DIALOUT_GID:-20}"
+      - "${GPIO_GID:-986}"
+      - "${I2C_GID:-987}"
+      - "${SPI_GID:-989}"
   mqtt-forwarder:
     build:
       context: ./mqtt_forwarder/

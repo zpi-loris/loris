@@ -1,0 +1,100 @@
+#!/usr/bin/env bash
+
+RULES_FILE="/etc/udev/rules.d/99-concentratord.rules"
+UART_SYSTEMD_SERVICE="serial-getty@ttyAMA0.service"
+
+# Associative array mapping device to its expected group
+declare -A DEVICES
+DEVICES["/dev/gpiochip0"]="gpio"
+DEVICES["/dev/spidev0.0"]="spi"
+DEVICES["/dev/i2c-1"]="i2c"
+DEVICES["/dev/ttyAMA0"]="dialout"
+
+set -eo pipefail
+
+get-group-gid() {
+  local group_name="$1"
+  getent group "$group_name" | cut -d ':' -f 3 || fatal "Error retrieving '$group_name' GID"
+}
+
+fatal() {
+  echo "FATAL" "$@" >&2
+  exit 1
+}
+
+info() {
+  echo "INFO" "$@"
+}
+
+check-device-groups() {
+  for device in "${!DEVICES[@]}"; do
+    if [[ ! -c "$device" ]]; then
+      fatal "'$device' does not exist or is not a device"
+    fi
+
+    local expected_group="${DEVICES["$device"]}"
+    local actual_group
+    actual_group="$(stat -c "%G" "$device")"
+    if [[ "$expected_group" != "$actual_group" ]]; then
+      fatal "Incorrect '$device' group; expected '$expected_group', found '$actual_group'"
+    fi
+
+    info "$device -> $expected_group | OK"
+  done
+}
+
+main() {
+  if [[ "$(id -u)" -ne 0 ]]; then
+    fatal "$0 must be executed as root, try using 'sudo $0'"
+  fi
+
+  if systemctl is-active --quiet "$UART_SYSTEMD_SERVICE" || systemctl is-enabled --quiet "$UART_SYSTEMD_SERVICE"; then
+    info "Stopping and disabling conflicting systemd service '$UART_SYSTEMD_SERVICE'"
+    systemctl stop "$UART_SYSTEMD_SERVICE"
+    systemctl disable "$UART_SYSTEMD_SERVICE"
+  fi
+
+  info "Checking for necessary udev rules..."
+  if [[ -f  "$RULES_FILE" ]]; then
+    info "'$RULES_FILE' already exists"
+  else
+    info "Writing udev rules > '$RULES_FILE'..."
+    tee "$RULES_FILE" << EOF
+SUBSYSTEM=="tty", KERNEL=="ttyAMA0", GROUP="dialout", MODE="0660"
+SUBSYSTEM=="gpio", KERNEL=="gpiochip*", GROUP="gpio", MODE="0660"
+SUBSYSTEM=="spidev", KERNEL=="spidev*", GROUP="spi", MODE="0660"
+SUBSYSTEM=="i2c-dev", KERNEL=="i2c-*", GROUP="i2c", MODE="0660"
+EOF
+  fi
+
+  info "Reloading udev rules"
+  udevadm control --reload-rules || fatal "Error reloading udev rules"
+
+  info "Applying new udev rules"
+  udevadm trigger \
+    --subsystem-match=tty \
+    --subsystem-match=gpio \
+    --subsystem-match=spidev \
+    --subsystem-match=i2c-dev || fatal "Error applying udev rules"
+
+  udevadm settle
+
+  info "Checking whether devices are owned by the expected groups..."
+  check-device-groups
+
+  info "Retrieving necessary GIDs"
+  GPIO_GID=$(get-group-gid "gpio")
+  SPI_GID=$(get-group-gid "spi")
+  DIALOUT_GID=$(get-group-gid "dialout")
+  I2C_GID=$(get-group-gid "i2c")
+
+  info "Writing GIDs > '.env...'"
+  tee --append ".env" << EOF
+GPIO_GID=$GPIO_GID
+SPI_GID=$SPI_GID
+DIALOUT_GID=$DIALOUT_GID
+I2C_GID=$I2C_GID
+EOF
+}
+
+main "$@"

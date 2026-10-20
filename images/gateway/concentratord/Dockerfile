@@ -18,12 +18,10 @@ ADD --unpack=true "https://artifacts.chirpstack.io/downloads/chirpstack-concentr
 
 COPY ./concentratord.toml .
 
-# RUN chmod +x ./start
+RUN useradd chirpstack
+RUN chown chirpstack:chirpstack --recursive .
 
-# RUN useradd chirpstack
-# RUN chown chirpstack:chirpstack --recursive .
-#
-# USER chirpstack
+USER chirpstack
 
 CMD ["./chirpstack-concentratord-sx1302", "-c", "./concentratord.toml"]
 
