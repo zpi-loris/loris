@@ -29,10 +29,10 @@
   # Configuration for the (ZeroMQ based) API.
   [concentratord.api]
     # Event PUB socket bind.
-    event_bind="ipc:///tmp/concentratord_event"
+    event_bind="ipc:///tmp/chirpstack/concentratord_event"
 
     # Command REP socket bind.
-    command_bind="ipc:///tmp/concentratord_command"
+    command_bind="ipc:///tmp/chirpstack/concentratord_command"
 
 
 # LoRa gateway configuration.

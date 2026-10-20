@@ -1,0 +1,24 @@
+name: gateway-chirpstack-stack
+services:
+  concentratord:
+    build:
+      context: ./concentratord/
+    devices:
+      - "/dev/gpiochip0:/dev/gpiochip0"
+      - "/dev/spidev0.0:/dev/spidev0.0"
+      - "/dev/i2c-1:/dev/i2c-1"
+      - "/dev/ttyAMA0:/dev/ttyAMA0"
+    volumes:
+      - chirpstack-ipc:/tmp/chirpstack
+  mqtt-forwarder:
+    build:
+      context: ./mqtt_forwarder/
+    depends_on:
+      - concentratord
+    volumes:
+      - chirpstack-ipc:/tmp/chirpstack
+    environment:
+      - MQTT_BROKER_ADDR=tcp://192.168.55.36:1883
+
+volumes:
+  chirpstack-ipc:

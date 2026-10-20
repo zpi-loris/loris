@@ -12,21 +12,18 @@ RUN apt-get install -y \
   gcc \
   make \
   bash \
-  gettext-base \
   vim
 
-ADD --unpack=true "https://artifacts.chirpstack.io/downloads/chirpstack-mqtt-forwarder/chirpstack-mqtt-forwarder_${MQTT_FORWARDER_VERSION}_linux_arm64.tar.gz" .
 ADD --unpack=true "https://artifacts.chirpstack.io/downloads/chirpstack-concentratord/chirpstack-concentratord-sx1302_${CONCENTRATORD_VERSION}_linux_arm64.tar.gz" .
 
-COPY ./configs configs/
-COPY ./start .
+COPY ./concentratord.toml .
 
-RUN chmod +x ./start
+# RUN chmod +x ./start
 
-RUN useradd chirpstack
-RUN chown chirpstack:chirpstack --recursive .
+# RUN useradd chirpstack
+# RUN chown chirpstack:chirpstack --recursive .
+#
+# USER chirpstack
 
-USER chirpstack
-
-CMD ["./start"]
+CMD ["./chirpstack-concentratord-sx1302", "-c", "./concentratord.toml"]
 
