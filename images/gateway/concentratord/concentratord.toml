@@ -24,7 +24,7 @@
   # By default, the Concentratord will ignore received frames which do not have
   # a valid CRC. This option makes it possible to disable this filter such that
   # received frames without (valid) CRC can be analyzed.
-  disable_crc_filter=true # NOTE: should be disabled later
+  disable_crc_filter=false 
 
   # Configuration for the (ZeroMQ based) API.
   [concentratord.api]

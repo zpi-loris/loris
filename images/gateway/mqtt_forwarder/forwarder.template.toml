@@ -119,10 +119,10 @@
     forward_crc_ok=true
 
     # Forward CRC invalid.
-    forward_crc_invalid=true # NOTE: should be false when deployed
+    forward_crc_invalid=false
 
     # Forward CRC missing.
-    forward_crc_missing=true # NOTE: should be false when deployed
+    forward_crc_missing=false
 
     # LoRaWAN only.
     lorawan_only=false
