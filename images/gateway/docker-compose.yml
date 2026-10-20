@@ -1,5 +1,12 @@
 name: gateway-chirpstack-stack
 services:
+  init-ipc-permissions:
+    image: busybox
+    command: ["chown", "-R", "1000:1000", "/tmp/chirpstack"] # change onwership to chirpstack:chirpstack
+    volumes:
+      - chirpstack-ipc:/tmp/chirpstack
+    restart: "no"
+
   concentratord:
     build:
       context: ./concentratord/
@@ -15,6 +22,8 @@ services:
       - "${GPIO_GID:-986}"
       - "${I2C_GID:-987}"
       - "${SPI_GID:-989}"
+    depends_on:
+      - init-ipc-permissions
   mqtt-forwarder:
     build:
       context: ./mqtt_forwarder/

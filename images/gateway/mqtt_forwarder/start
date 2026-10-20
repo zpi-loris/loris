@@ -22,8 +22,8 @@ fi
 
 envsubst < ./forwarder.template.toml > ./forwarder.toml
 
-info "Waiting for concentratord to initialize the TCP socket..."
-while ! nc -z concentratord 5555 2>/dev/null; do
+info "Waiting for concentratord to initialize the IPC socket..."
+while ! nc -U -z "/tmp/chirpstack/concentratord_event" 2>/dev/null; do
   if [[ $TIMEOUT_SECS -le 0 ]]; then
     fatal "Concentratord timed out"
   fi
@@ -31,8 +31,6 @@ while ! nc -z concentratord 5555 2>/dev/null; do
   sleep 1
   TIMEOUT_SECS=$((TIMEOUT_SECS - 1))
 done
-
-# sleep 3
 
 info "Starting mqtt-forwarder..."
 ./chirpstack-mqtt-forwarder -c ./forwarder.toml &

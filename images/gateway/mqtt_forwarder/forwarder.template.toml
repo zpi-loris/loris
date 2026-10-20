@@ -156,10 +156,10 @@
   [backend.concentratord]
 
     # Event API URL.
-    event_url="tcp://concentratord:5555"
+    event_url="ipc:///tmp/chirpstack/concentratord_event"
 
     # Command API URL.
-    command_url="tcp://concentratord:5556"
+    command_url="ipc:///tmp/chirpstack/concentratord_command"
 
 
   # Semtech UDP backend configuration.

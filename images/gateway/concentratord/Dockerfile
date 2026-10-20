@@ -9,7 +9,9 @@ ADD --unpack=true "https://artifacts.chirpstack.io/downloads/chirpstack-concentr
 
 COPY ./concentratord.toml .
 
-RUN useradd chirpstack
+RUN groupadd --gid 1000 chirpstack \
+  && useradd --uid 1000 --gid 1000 --no-create-home chirpstack
+
 RUN chown chirpstack:chirpstack --recursive .
 
 USER chirpstack

@@ -29,11 +29,10 @@
   # Configuration for the (ZeroMQ based) API.
   [concentratord.api]
     # Event PUB socket bind.
-    # NOTE: use tcp sockets instead of ipc to separate the images more easily
-    event_bind="tcp://0.0.0.0:5555"
+    event_bind="ipc:///tmp/chirpstack/concentratord_event"
 
     # Command REP socket bind.
-    command_bind="tcp://0.0.0.0:5556"
+    command_bind="ipc:///tmp/chirpstack/concentratord_command"
 
 
 # LoRa gateway configuration.
