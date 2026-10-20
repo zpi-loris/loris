@@ -23,5 +23,10 @@ COPY ./start .
 
 RUN chmod +x ./start
 
+RUN useradd chirpstack
+RUN chown chirpstack:chirpstack --recursive .
+
+USER chirpstack
+
 CMD ["./start"]
 
