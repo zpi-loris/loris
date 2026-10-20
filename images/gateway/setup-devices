@@ -2,7 +2,9 @@
 
 RULES_FILE="/etc/udev/rules.d/99-concentratord.rules"
 ENV_FILE=".env"
+
 UART_SYSTEMD_SERVICE="serial-getty@ttyAMA0.service"
+mask_uart_service_flag=true 
 
 # Associative array mapping a device to its expected group
 declare -A DEVICES
@@ -15,12 +17,27 @@ set -eo pipefail
 
 
 fatal() {
-  echo "FATAL" "$@" >&2
+  echo "[FATAL]" "$@" >&2
   exit 1
 }
 
 info() {
-  echo "INFO" "$@"
+  echo "[INFO]" "$@"
+}
+
+usage() {
+  cat << EOF
+
+USAGE:
+  $0 [OPTIONS] 
+
+COMMANDS:
+  run            prepare devices and output relevant GIDs to "$ENV_FILE" file
+
+OPTIONS:
+  -h/--help      print this message and exit
+  -n/--no-mask   don't mask '${UART_SYSTEMD_SERVICE}' systemd service
+EOF
 }
 
 check-devices() {
@@ -64,18 +81,18 @@ update-env-var() {
   fi
 }
 
-main() {
-  if [[ "$(id -u)" -ne 0 ]]; then
-    fatal "$0 must be executed as root, try using 'sudo $0'"
-  fi
-
+run-command() {
   info "Checking if necessary devices exist..."
   check-devices 
 
   if systemctl is-active --quiet "$UART_SYSTEMD_SERVICE" || systemctl is-enabled --quiet "$UART_SYSTEMD_SERVICE"; then
-    info "Stopping and disabling conflicting systemd service '$UART_SYSTEMD_SERVICE'"
+    info "Stopping conflicting systemd service '$UART_SYSTEMD_SERVICE'"
     systemctl stop "$UART_SYSTEMD_SERVICE"
-    systemctl disable "$UART_SYSTEMD_SERVICE"
+
+    if [[ "$mask_uart_service_flag" == "true" ]]; then
+      info "Masking service '$UART_SYSTEMD_SERVICE'"
+      systemctl mask "$UART_SYSTEMD_SERVICE"
+    fi
   fi
 
   info "Checking for necessary udev rules..."
@@ -111,6 +128,36 @@ EOF
   update-env-var "SPI_GID" "$(get-group-gid "spi")"
   update-env-var "DIALOUT_GID" "$(get-group-gid "dialout")"
   update-env-var "I2C_GID" "$(get-group-gid "i2c")"
+}
+
+main() {
+  if [[ "$(id -u)" -ne 0 ]]; then
+    fatal "$0 must be executed as root, try using 'sudo $0'"
+  fi
+
+  declare -a positional_args
+  while [[ $# -gt 0 ]]; do
+    case $1 in
+      -h|--help)
+        usage
+        exit 0 ;;
+      -n|--no-mask)
+        mask_uart_service_flag=false
+        shift ;;
+      *)
+        positional_args+=("$1")
+        shift ;;
+    esac
+  done
+
+  set -- "${positional_args[@]}"
+
+  case $1 in
+    run)
+      run-command ;;
+    *)
+      fatal "Missing or invalid command name!$(usage)"
+  esac
 }
 
 main "$@"
