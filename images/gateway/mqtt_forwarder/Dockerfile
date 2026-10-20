@@ -9,6 +9,7 @@ RUN apt-get update
 RUN apt-get install -y \
   git \
   gcc \
+  netcat-traditional \
   make \
   bash \
   gettext-base \
@@ -21,10 +22,10 @@ COPY ./start .
 
 RUN chmod +x ./start
 
-# RUN useradd chirpstack
-# RUN chown chirpstack:chirpstack --recursive .
-#
-# USER chirpstack
+RUN useradd chirpstack
+RUN chown chirpstack:chirpstack --recursive .
+
+USER chirpstack
 
 CMD ["./start"]
 

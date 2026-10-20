@@ -23,7 +23,7 @@ fi
 envsubst < ./forwarder.template.toml > ./forwarder.toml
 
 info "Waiting for concentratord to initialize the TCP socket..."
-while [[ ! -S /tmp/chirpstack/concentratord_event ]]; do
+while ! nc -z concentratord 5555 2>/dev/null; do
   if [[ $TIMEOUT_SECS -le 0 ]]; then
     fatal "Concentratord timed out"
   fi
