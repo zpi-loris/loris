@@ -1,4 +1,4 @@
-FROM debian:13.7
+FROM alpine:3.24.3
 
 ARG MQTT_FORWARDER_VERSION="4.6.1"
 ARG CONCENTRATORD_VERSION="4.7.1"
@@ -9,8 +9,8 @@ ADD --unpack=true "https://artifacts.chirpstack.io/downloads/chirpstack-concentr
 
 COPY ./concentratord.toml .
 
-RUN groupadd --gid 1000 chirpstack \
-  && useradd --uid 1000 --gid 1000 --no-create-home chirpstack
+RUN addgroup -g 1000 chirpstack && \
+  adduser -u 1000 -G chirpstack -H -D chirpstack
 
 RUN chown chirpstack:chirpstack --recursive .
 
