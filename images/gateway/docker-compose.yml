@@ -1,0 +1,38 @@
+name: gateway-chirpstack-stack
+services:
+  init-ipc-permissions:
+    image: busybox
+    command: ["chown", "-R", "1000:1000", "/tmp/chirpstack"] # change onwership to chirpstack:chirpstack
+    volumes:
+      - chirpstack-ipc:/tmp/chirpstack
+    restart: "no"
+
+  concentratord:
+    build:
+      context: ./concentratord/
+    devices:
+      - "/dev/gpiochip0:/dev/gpiochip0"
+      - "/dev/spidev0.0:/dev/spidev0.0"
+      - "/dev/i2c-1:/dev/i2c-1"
+      - "/dev/ttyAMA0:/dev/ttyAMA0"
+    volumes:
+      - chirpstack-ipc:/tmp/chirpstack
+    group_add:
+      - "${DIALOUT_GID:-20}"
+      - "${GPIO_GID:-986}"
+      - "${I2C_GID:-987}"
+      - "${SPI_GID:-989}"
+    depends_on:
+      - init-ipc-permissions
+  mqtt-forwarder:
+    build:
+      context: ./mqtt_forwarder/
+    depends_on:
+      - concentratord
+    volumes:
+      - chirpstack-ipc:/tmp/chirpstack
+    environment:
+      - MQTT_BROKER_ADDR=tcp://192.168.55.36:1883
+
+volumes:
+  chirpstack-ipc:

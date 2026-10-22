@@ -1,0 +1,38 @@
+#!/usr/bin/env bash
+
+SCRIPT_NAME="STARTUP"
+TIMEOUT_SECS=20
+
+get-timestamp() {
+  date -u +"%Y-%m-%dT%H:%M:%S.%3NZ"
+}
+
+fatal() {
+  echo "[$SCRIPT_NAME] $(get-timestamp) FATAL" "$@" >&2
+  exit 1
+}
+
+info() {
+  echo "[$SCRIPT_NAME] $(get-timestamp) INFO" "$@"
+}
+
+if [[ -z "$MQTT_BROKER_ADDR" ]]; then
+  fatal "Missing env var 'MQTT_BROKER_ADDR'"
+fi
+
+envsubst < ./forwarder.template.toml > ./forwarder.toml
+
+info "Waiting for concentratord to initialize the IPC socket..."
+while ! nc -U -z "/tmp/chirpstack/concentratord_event" 2>/dev/null; do
+  if [[ $TIMEOUT_SECS -le 0 ]]; then
+    fatal "Concentratord timed out"
+  fi
+
+  sleep 1
+  TIMEOUT_SECS=$((TIMEOUT_SECS - 1))
+done
+
+info "Starting mqtt-forwarder..."
+./chirpstack-mqtt-forwarder -c ./forwarder.toml &
+
+wait -n
