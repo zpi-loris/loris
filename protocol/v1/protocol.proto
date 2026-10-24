@@ -2,13 +2,6 @@ syntax = "proto3";
 
 package protocol.v1;
 
-enum UplinkType {
-  UNSPECIFIED = 0;
-  CAPABILITIES = 1;
-  REPORT = 2;
-  HELLO = 3;
-}
-
 enum ValueType {
   // General
   VALUE_TYPE_UNSPECIFIED = 0;
@@ -77,7 +70,7 @@ message Function {
   FuncArgType arg_type = 4;
 }
 
-message Capabilites {
+message Capabilities {
   string device_name = 1;
   repeated Sensor sensors = 2;
   repeated Function functions = 3;
@@ -86,20 +79,37 @@ message Capabilites {
 message Report {
   int32 sensor_id = 1;
   oneof value {
-    float float_val = 2;
-    string str_val = 3;
-    bool bool_val = 4;
+    int32 int_val = 2;
+    float float_val = 3;
+    string str_val = 4;
+    bool bool_val = 5;
   }
 }
 
 message Hello {}
 
-message Uplink {
-  UplinkType type = 1;
+message Call {
+  int32 function_id = 1;
+  oneof value {
+    int32 int_val = 2;
+    string str_val = 3;
+    bool bool_val = 4;
+    float float_val = 5;
+  }
+  optional int32 wake_after_secs = 6;
+}
 
+message Downlink {
   oneof payload {
-    Report report = 2;
-    Capabilities capabilities = 3;
+    Call call = 1;
+    Hello hello = 2;
+  }
+}
+
+message Uplink {
+  oneof payload {
+    Report report = 1;
+    Capabilities capabilities = 2;
     Hello hello = 3;
   }
 }
