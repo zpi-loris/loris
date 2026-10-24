@@ -1,13 +1,11 @@
-using System.Threading.Channels;
-using app.Messages;
+using app.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 
-builder.Services.AddSingleton(deviceChannel => Channel.CreateUnbounded<DeviceMessage>());
-builder.Services.AddSingleton(eventChannel => Channel.CreateUnbounded<BaseEventMessage>());
-builder.Services.AddSingleton(dbWriteChannel => Channel.CreateUnbounded<IDbWriteMessage>());
+// Configure channels for the ingestion subsystem
+builder.Services.AddChannels();
 
 builder.Services.AddControllers();
 
@@ -19,10 +17,14 @@ var app = builder.Build();
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
+    app.UseSwaggerUi(options =>
+    {
+        options.DocumentPath = "/openapi/v1.json";
+    });
     app.MapOpenApi();
 }
 
-app.UseHttpsRedirection();
+// app.UseHttpsRedirection();
 
 app.UseAuthorization();
 
