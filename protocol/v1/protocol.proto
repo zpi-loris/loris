@@ -2,14 +2,6 @@ syntax = "proto3";
 
 package protocol.v1;
 
-enum MessageType {
-  MESSAGE_TYPE_UNSPECIFIED = 0;
-  MESSAGE_TYPE_CAPABILITES = 1;
-  MESSAGE_TYPE_REPORT = 2;
-  MESSAGE_TYPE_CALL = 3;
-  MESSAGE_TYPE_HELLO = 4;
-}
-
 enum ValueType {
   // General
   VALUE_TYPE_UNSPECIFIED = 0;
@@ -78,7 +70,7 @@ message Function {
   FuncArgType arg_type = 4;
 }
 
-message Capabilites {
+message Capabilities {
   string device_name = 1;
   repeated Sensor sensors = 2;
   repeated Function functions = 3;
@@ -87,32 +79,37 @@ message Capabilites {
 message Report {
   int32 sensor_id = 1;
   oneof value {
-    float float = 2;
-    string string = 3;
-    bool bool = 4;
+    int32 int_val = 2;
+    float float_val = 3;
+    string str_val = 4;
+    bool bool_val = 5;
   }
-}
-
-message Call {
-  int32 function_id = 1;
-  oneof value {
-    int32 int = 2;
-    string string = 3;
-    bool bool = 4;
-    float float = 5;
-  }
-  optional int32 wake_after_secs = 6;
 }
 
 message Hello {}
 
-message Message {
-  MessageType type = 1;
+message Call {
+  int32 function_id = 1;
+  oneof value {
+    int32 int_val = 2;
+    string str_val = 3;
+    bool bool_val = 4;
+    float float_val = 5;
+  }
+  optional int32 wake_after_secs = 6;
+}
 
-  oneof details {
-    Capabilites capabilites = 2;
-    Report report = 3;
-    Call call = 4;
-    Hello hello = 5;
+message Downlink {
+  oneof payload {
+    Call call = 1;
+    Hello hello = 2;
+  }
+}
+
+message Uplink {
+  oneof payload {
+    Report report = 1;
+    Capabilities capabilities = 2;
+    Hello hello = 3;
   }
 }
