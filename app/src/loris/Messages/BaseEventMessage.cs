@@ -1,9 +1,8 @@
 using app.Events;
 
-namespace app.Messages
+namespace app.Messages;
+
+public abstract record BaseEventMessage
 {
-    public abstract record BaseEventMessage
-    {
-        public required IEvent Event { get; init; }
-    }
+    public required IEvent Event { get; init; }
 }
