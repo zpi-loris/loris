@@ -1,0 +1,31 @@
+syntax = "proto3";
+
+package protocol.v1;
+
+enum DownlinkType {
+  DOWNLINK_TYPE_UNSPECIFIED = 0;
+  DOWNLINK_TYPE_CALL = 1;
+  DOWNLINK_TYPE_HELLO = 2;
+}
+
+message Call {
+  int32 function_id = 1;
+  oneof value {
+    int32 int_val = 2;
+    string str_val = 3;
+    bool bool_val = 4;
+    float float_val = 5;
+  }
+  optional int32 wake_after_secs = 6;
+}
+
+message Hello {}
+
+message Downlink {
+  DownlinkType type = 1;
+
+  oneof payload {
+    Call call = 2;
+    Hello hello = 3;
+  }
+}

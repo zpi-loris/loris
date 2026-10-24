@@ -2,12 +2,11 @@ syntax = "proto3";
 
 package protocol.v1;
 
-enum MessageType {
-  MESSAGE_TYPE_UNSPECIFIED = 0;
-  MESSAGE_TYPE_CAPABILITES = 1;
-  MESSAGE_TYPE_REPORT = 2;
-  MESSAGE_TYPE_CALL = 3;
-  MESSAGE_TYPE_HELLO = 4;
+enum UplinkType {
+  UNSPECIFIED = 0;
+  CAPABILITIES = 1;
+  REPORT = 2;
+  HELLO = 3;
 }
 
 enum ValueType {
@@ -87,32 +86,20 @@ message Capabilites {
 message Report {
   int32 sensor_id = 1;
   oneof value {
-    float float = 2;
-    string string = 3;
-    bool bool = 4;
+    float float_val = 2;
+    string str_val = 3;
+    bool bool_val = 4;
   }
-}
-
-message Call {
-  int32 function_id = 1;
-  oneof value {
-    int32 int = 2;
-    string string = 3;
-    bool bool = 4;
-    float float = 5;
-  }
-  optional int32 wake_after_secs = 6;
 }
 
 message Hello {}
 
-message Message {
-  MessageType type = 1;
+message Uplink {
+  UplinkType type = 1;
 
-  oneof details {
-    Capabilites capabilites = 2;
-    Report report = 3;
-    Call call = 4;
-    Hello hello = 5;
+  oneof payload {
+    Report report = 2;
+    Capabilities capabilities = 3;
+    Hello hello = 3;
   }
 }
