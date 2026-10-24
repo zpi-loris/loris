@@ -17,26 +17,5 @@ namespace app.Messages
                         : throw new ArgumentException("DevEUI must be 8 bytes long", nameof(value));
             }
         }
-
-        public void DoSomething()
-        {
-            switch (Payload.Type)
-            {
-                case MessageType.Capabilites:
-                    Console.WriteLine("This is a Capabilites");
-                    break;
-                case MessageType.Hello:
-                    Console.WriteLine("This is a Hello");
-                    break;
-                case MessageType.Report:
-                    Console.WriteLine("This is a Report");
-                    break;
-                // Te poniżej nie powinny się wydarzyć
-                case MessageType.Call:
-                case MessageType.Unspecified:
-                default:
-                    throw new ArgumentException("Dupa, coś nie pykło");
-            }
-        }
     }
 }
