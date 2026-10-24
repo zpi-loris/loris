@@ -45,6 +45,8 @@ fp-info-cache
 **RadioLib**
 **build/*
 
+**/compile_commands.json
+
 build
 build.clang
 
