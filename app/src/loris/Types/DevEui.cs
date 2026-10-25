@@ -1,4 +1,4 @@
-namespace app.Types;
+namespace Loris.Types;
 
 public readonly record struct DevEui(ulong Value)
 {

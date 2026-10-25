@@ -1,7 +1,7 @@
-using app.Events;
-using app.Protocol;
+using Loris.Events;
+using Loris.Protocol;
 
-namespace app.Messages;
+namespace Loris.Messages;
 
 public readonly record struct SensorEventMessage : IEventMessage
 {

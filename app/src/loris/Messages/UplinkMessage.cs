@@ -1,7 +1,7 @@
-using app.Protocol;
-using app.Types;
+using Loris.Protocol;
+using Loris.Types;
 
-namespace app.Messages;
+namespace Loris.Messages;
 
 public readonly record struct UplinkMessage : IChirpstackMessage
 {

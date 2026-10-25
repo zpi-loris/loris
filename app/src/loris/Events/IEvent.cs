@@ -1,4 +1,4 @@
-namespace app.Events;
+namespace Loris.Events;
 
 /// <summary>
 /// Defines an event key used for mapping
