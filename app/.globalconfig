@@ -1,0 +1,5 @@
+is_global = true
+
+# CS1591: Missing XML comment for publicly visible type or member
+dotnet_diagnostic.CS1591.severity = none
+
