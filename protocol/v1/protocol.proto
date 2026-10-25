@@ -2,6 +2,8 @@ syntax = "proto3";
 
 package protocol.v1;
 
+option csharp_namespace = "app.Protocol";
+
 enum ValueType {
   // General
   VALUE_TYPE_UNSPECIFIED = 0;

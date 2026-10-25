@@ -1,5 +1,5 @@
 using app.Events;
-using Protocol.V1;
+using app.Protocol;
 
 namespace app.Messages;
 

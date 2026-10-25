@@ -1,9 +1,9 @@
 using System.Threading.Channels;
 using app.Messages;
+using app.Protocol;
 using app.Types;
 using Google.Protobuf;
 using Microsoft.AspNetCore.Mvc;
-using Protocol.V1;
 
 namespace app.Controllers;
 
@@ -43,10 +43,10 @@ public class ExampleUplinkController(
         using var reader = new StreamReader(Request.Body);
         var json = await reader.ReadToEndAsync();
 
-        Message message;
+        Uplink message;
         try
         {
-            message = _protoParser.Parse<Message>(json);
+            message = _protoParser.Parse<Uplink>(json);
         }
         catch (InvalidJsonException)
         {
