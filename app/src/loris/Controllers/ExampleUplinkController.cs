@@ -9,21 +9,24 @@ namespace app.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class ExampleUplinkController(Channel<IChirpstackMessage> channel) : ControllerBase
+public class ExampleUplinkController(
+    ChannelReader<IChirpstackMessage> reader,
+    ChannelWriter<IChirpstackMessage> writer
+) : ControllerBase
 {
     private readonly JsonParser _protoParser = JsonParser.Default;
     private readonly JsonFormatter _protoFormatter = JsonFormatter.Default;
-    private readonly Channel<IChirpstackMessage> _channel = channel;
+    private readonly ChannelReader<IChirpstackMessage> _reader = reader;
+    private readonly ChannelWriter<IChirpstackMessage> _writer = writer;
 
     [HttpGet]
     public async Task<string?> GetLastPayload()
     {
-        var reader = _channel.Reader;
-        if (reader.Count == 0)
+        if (_reader.Count == 0)
         {
             return null;
         }
-        var message = await reader.ReadAsync();
+        var message = await _reader.ReadAsync();
         if (message is UplinkMessage uplink)
         {
             return _protoFormatter.Format(uplink.Payload);
@@ -54,9 +57,7 @@ public class ExampleUplinkController(Channel<IChirpstackMessage> channel) : Cont
             return BadRequest("Invalid protocol buffer");
         }
 
-        var writer = _channel.Writer;
-
-        await writer.WriteAsync(
+        await _writer.WriteAsync(
             new UplinkMessage()
             {
                 DevEUI = DevEui.Parse("11:8f:3d:af:58:5b".Replace(":", "")),
