@@ -1,0 +1,27 @@
+/ {
+	// We set alias here so later in code we can completely abstract device
+	// tree and reference the sensor by just the alias
+	// aliases = {
+	// 	temp-sensor = &temp_sensor
+	// }
+
+    zephyr,user {
+        io-channels = <&adc0 7>;
+    };
+};
+
+
+&adc0 {
+    status = "okay";
+    #address-cells = <1>;
+    #size-cells = <0>;
+
+    channel7: channel@7 {
+        reg = <7>;
+        zephyr,gain = "ADC_GAIN_1_4"; 
+        zephyr,reference = "ADC_REF_INTERNAL";
+        zephyr,acquisition-time = <ADC_ACQ_TIME_DEFAULT>;
+        zephyr,resolution = <12>;
+    };
+};
+
