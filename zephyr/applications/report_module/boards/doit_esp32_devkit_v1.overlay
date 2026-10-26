@@ -1,0 +1,17 @@
+/ {
+	// We set alias here so later in code we can completely abstract device
+	// tree and reference the sensor by just the alias
+	// aliases = {
+	// 	temp-sensor = &temp_sensor
+	// }
+
+    zephyr,user {
+        // Define a virtual "property" to access the ADC from C
+        io-channels = <&adc1 7>; // Channel 7 of ADC1 (GPIO35)
+    };
+};
+
+
+&adc1 {
+    status = "okay";
+};
