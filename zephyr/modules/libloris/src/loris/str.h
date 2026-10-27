@@ -41,7 +41,7 @@ result_t str_alloc_dynamic(str_t* out, const char *cstr);
 
 // allocate the string using a slab if its length < SLAB_STR_SIZE, dynamically
 // otherwise
-result_t str_alloc(str_t* out, const char *cstr);
+result_t str_alloc_smart(str_t* out, const char *cstr);
 
 // allocate the string in a SLAB_STR_SIZE slab byte buffer
 //
