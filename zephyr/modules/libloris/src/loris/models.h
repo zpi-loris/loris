@@ -130,7 +130,7 @@ typedef struct hello {
 
 typedef struct disconnect {
   char dummy_field;
-} disconnect_t
+} disconnect_t;
 
 typedef enum call_value_type {
   CALL_VALUE_INT,
