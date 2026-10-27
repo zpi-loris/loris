@@ -2,6 +2,8 @@ syntax = "proto3";
 
 package protocol.v1;
 
+option csharp_namespace = "app.Protocol";
+
 enum ValueType {
   // General
   VALUE_TYPE_UNSPECIFIED = 0;
@@ -88,6 +90,8 @@ message Report {
 
 message Hello {}
 
+message Disconnect {}
+
 message Call {
   int32 function_id = 1;
   oneof value {
@@ -103,6 +107,7 @@ message Downlink {
   oneof payload {
     Call call = 1;
     Hello hello = 2;
+    Disconnect disconnect = 3;
   }
 }
 
