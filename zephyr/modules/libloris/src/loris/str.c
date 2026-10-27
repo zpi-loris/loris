@@ -25,6 +25,8 @@ result_t str_alloc_static(str_t* out, const char* cstr) {
     return ERROR;
   }
 
+  str_free(out);
+
   *out = (str_t){ 
     .ptr = (char*)cstr,
     .len = strlen(cstr),
