@@ -1,4 +1,4 @@
-namespace app.Messages;
+namespace Loris.Messages;
 
 /// <summary>
 /// Marker interface for messages received

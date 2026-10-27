@@ -1,6 +1,6 @@
-using app.Events;
+using Loris.Events;
 
-namespace app.Messages;
+namespace Loris.Messages;
 
 /// <summary>
 /// Represents an event notification payload

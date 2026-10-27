@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 
-namespace app.Messages;
+namespace Loris.Messages;
 
 /// <summary>
 /// Defines a database persistence contract for messages

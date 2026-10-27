@@ -1,4 +1,4 @@
-using app.Extensions;
+using Loris.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
 

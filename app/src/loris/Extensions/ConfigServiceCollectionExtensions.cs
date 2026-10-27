@@ -1,7 +1,7 @@
 using System.Threading.Channels;
-using app.Messages;
+using Loris.Messages;
 
-namespace app.Extensions;
+namespace Loris.Extensions;
 
 public static class ConfigServiceCollectionExtensions
 {

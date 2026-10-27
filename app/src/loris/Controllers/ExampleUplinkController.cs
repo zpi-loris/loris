@@ -1,11 +1,11 @@
 using System.Threading.Channels;
-using app.Messages;
-using app.Protocol;
-using app.Types;
 using Google.Protobuf;
+using Loris.Messages;
+using Loris.Protocol;
+using Loris.Types;
 using Microsoft.AspNetCore.Mvc;
 
-namespace app.Controllers;
+namespace Loris.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
