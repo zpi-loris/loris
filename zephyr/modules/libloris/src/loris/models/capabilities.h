@@ -29,8 +29,8 @@ function_t add_function(sys_slist_t *function_list, char *name,
                         char *description, func_arg_type_t,
                         void (*call_function)(), int32_t wake_interval_sec);
 
-capabilities_t create_capabilities(const char *device_name,
-                                   device_class_t device_class,
-                                   sys_slist_t *sensor_list,
-                                   sys_slist_t *function_list);
+result_t create_capabilities(capabilities_t *out, const char *device_name,
+                             device_class_t device_class,
+                             sys_slist_t *sensor_list,
+                             sys_slist_t *function_list);
 #endif
