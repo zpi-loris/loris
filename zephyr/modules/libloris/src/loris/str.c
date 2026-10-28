@@ -11,16 +11,16 @@ void str_free(str_t* str) {
     return;
   }
 
-  if (str->alloc_type == STR_ALLOC_DYNAMIC) {
+  if (str->src_type == STR_SRC_DYNAMIC) {
     k_free((void *)str->ptr);
-  } else if (str->alloc_type == STR_ALLOC_SLAB) {
+  } else if (str->src_type == STR_SRC_SLAB) {
     k_mem_slab_free(&str_slab, (void *)(str->ptr));
   }
 
   *str = LORIS_STR_NONE;
 }
 
-result_t str_alloc_static(str_t* out, const char* cstr) {
+result_t str_from_static(str_t* out, const char* cstr) {
   if (out == NULL || cstr == NULL) {
     return ERROR;
   }
@@ -30,8 +30,37 @@ result_t str_alloc_static(str_t* out, const char* cstr) {
   *out = (str_t){ 
     .ptr = (char*)cstr,
     .len = strlen(cstr),
-    .alloc_type = STR_ALLOC_STATIC
+    .src_type = STR_SRC_STATIC
   };
+  return OK;
+}
+
+result_t str_borrow_cstr(str_t *out, const char *cstr) {
+  if (out == NULL || cstr == NULL) {
+    return ERROR;
+  }
+
+  str_free(out);
+
+  *out = (str_t){
+    .ptr = cstr,
+    .len = strlen(cstr),
+    .src_type = STR_SRC_BORROWED
+  };
+
+  return OK;
+}
+
+result_t str_borrow(str_t *out, const str_t *src) {
+  if (out == NULL || src == NULL) {
+    return ERROR;
+  }
+
+  str_free(out);
+
+  *out = *src;
+  out->src_type = STR_SRC_BORROWED;
+
   return OK;
 }
 
@@ -57,7 +86,7 @@ result_t str_alloc_slab(str_t* out, const char* cstr) {
 
   out->ptr = buf;
   out->len = len;
-  out->alloc_type = STR_ALLOC_SLAB;
+  out->src_type = STR_SRC_SLAB;
 
   return OK;
 }
@@ -80,7 +109,7 @@ result_t str_alloc_dynamic(str_t* out, const char *cstr) {
 
   out->ptr = buf;
   out->len = len;
-  out->alloc_type = STR_ALLOC_DYNAMIC;
+  out->src_type = STR_SRC_DYNAMIC;
 
   return OK;
 }
@@ -90,10 +119,26 @@ result_t str_alloc_smart(str_t *out, const char *cstr) {
     return ERROR;
   }
 
-  // NOTE: strlen is used twice, but I'm not sure whether its worth extracting
-  if (strlen(cstr) < SLAB_STR_SIZE) {
-    return str_alloc_slab(out, cstr);
+  char* buf;
+  size_t len = strlen(cstr);
+  if (strlen(cstr) < SLAB_STR_SIZE && k_mem_slab_alloc(&str_slab, (void**)&buf, K_NO_WAIT) == 0) {
+    out->src_type = STR_SRC_SLAB;
   } else {
-    return str_alloc_dynamic(out, cstr);
+    buf = k_malloc(len + 1);
+    if (buf == NULL) {
+      return ERROR;
+    }
+
+    out->src_type = STR_SRC_DYNAMIC;
   }
+
+  memcpy(buf, cstr, len);
+  buf[len] = '\0';
+
+  str_free(out);
+
+  out->ptr = buf;
+  out->len = len;
+
+  return OK;
 }
