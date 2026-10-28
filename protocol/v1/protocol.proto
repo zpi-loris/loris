@@ -103,11 +103,29 @@ message Call {
   optional int32 wake_after_secs = 6;
 }
 
+enum UpPingType {
+  UP_PING_TYPE_UNSPECIFIED = 0;
+  UP_PING_TYPE_HELLO = 1;
+}
+
+message UpPing {
+  UpPingType type = 1;
+}
+
+enum DownPingType {
+  DOWN_PING_TYPE_UNSPECIFIED = 0;
+  DOWN_PING_TYPE_HELLO = 1;
+  DOWN_PING_TYPE_DISCONNECT = 2;
+}
+
+message DownPing {
+  DownPingType type = 1;
+}
+
 message Downlink {
   oneof payload {
     Call call = 1;
-    Hello hello = 2;
-    Disconnect disconnect = 3;
+    DownPing ping = 2;
   }
 }
 
@@ -115,6 +133,6 @@ message Uplink {
   oneof payload {
     Report report = 1;
     Capabilities capabilities = 2;
-    Hello hello = 3;
+    UpPing ping = 3;
   }
 }
