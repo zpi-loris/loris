@@ -14,12 +14,24 @@ follow https://dotnet.microsoft.com/en-us/download
 To build and run the app use
 
 ```bash
-dotnet build
-dotnet run
+# from app/ directory point of view
+dotnet build src/loris
+dotnet src/loris/bin/Debug/net10.0
 
-# or just use
+# or just use inside the src/loris directory
+#
+# this is for development
 dotnet run
 ```
 
 These will install any neede dependencies, build the project and run it
 respectively
+
+## Running tests
+
+To run test use:
+
+```bash
+# from app/ directory point of view
+dotnet test test/lorisTests
+```
