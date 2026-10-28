@@ -88,10 +88,6 @@ message Report {
   }
 }
 
-message Hello {}
-
-message Disconnect {}
-
 message Call {
   int32 function_id = 1;
   oneof value {
