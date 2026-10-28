@@ -140,6 +140,12 @@ public class LoraWanServerMqttClient(ILogger<LoraWanServerMqttClient> logger) : 
         };
     }
 
+    public override Task StopAsync(CancellationToken cancellationToken)
+    {
+        _mrevent.Set();
+        return base.StopAsync(cancellationToken);
+    }
+
     public override void Dispose()
     {
         base.Dispose();
