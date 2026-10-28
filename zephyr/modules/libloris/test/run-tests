@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+
+west twister -T "." -p native_sim \
+    -v -i --clobber-output \
+    -x CMAKE_EXPORT_COMPILE_COMMANDS=ON --keep-artifacts compile_commands.json \
+    --outdir "./twister_out"

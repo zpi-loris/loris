@@ -97,6 +97,10 @@ typedef struct hello {
   char dummy_field;
 } hello_t;
 
+typedef struct disconnect {
+  char dummy_field;
+} disconnect_t;
+
 typedef enum call_value_type {
   CALL_VALUE_INT,
   CALL_VALUE_FLOAT,

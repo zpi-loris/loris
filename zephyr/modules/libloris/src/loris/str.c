@@ -25,6 +25,8 @@ result_t str_alloc_static(str_t* out, const char* cstr) {
     return ERROR;
   }
 
+  str_free(out);
+
   *out = (str_t){ 
     .ptr = (char*)cstr,
     .len = strlen(cstr),
@@ -83,7 +85,7 @@ result_t str_alloc_dynamic(str_t* out, const char *cstr) {
   return OK;
 }
 
-result_t str_alloc(str_t *out, const char *cstr) {
+result_t str_alloc_smart(str_t *out, const char *cstr) {
   if (out == NULL || cstr == NULL) {
     return ERROR;
   }
