@@ -8,15 +8,16 @@
 
 #define SLAB_STR_SIZE 128
 
-typedef enum str_alloc_type {
-  STR_ALLOC_NONE = 0,
-  STR_ALLOC_STATIC = 1,
-  STR_ALLOC_SLAB = 2,
-  STR_ALLOC_DYNAMIC = 3,
-} str_alloc_type_t;
+typedef enum str_src_type {
+  STR_SRC_NONE = 0,
+  STR_SRC_STATIC = 1,
+  STR_SRC_BORROWED = 2,
+  STR_SRC_SLAB = 3,
+  STR_SRC_DYNAMIC = 4,
+} str_src_type_t;
 
 typedef struct str {
-  char *ptr;
+  const char *ptr;
 
   /*
    * length without the null terminator '\0' -- only the payload,
@@ -24,18 +25,16 @@ typedef struct str {
   */
   size_t len;
 
-  str_alloc_type_t alloc_type;
+  str_src_type_t src_type;
 } str_t;
 
-#define LORIS_STR_NONE ((str_t){ .ptr = NULL, .len = 0, .alloc_type = STR_ALLOC_NONE})
+#define LORIS_STR_NONE ((str_t){ .ptr = NULL, .len = 0, .src_type = STR_SRC_NONE})
 
 void str_free(str_t* str);
 
-// Warning: strings allocated using this function might be in read-only memory,
-// thus the user of a statically allocated str_t should not mutate the
-// underlying cstr pointer, even though it's not marked as const (to allows
-// dynamically and slab allocated strings to be mutated)
-result_t str_alloc_static(str_t* out, const char* cstr);
+result_t str_from_static(str_t* out, const char* cstr);
+result_t str_borrow_cstr(str_t* out, const char* cstr);
+result_t str_borrow(str_t* out, const str_t* src);
 
 result_t str_alloc_dynamic(str_t* out, const char *cstr);
 
