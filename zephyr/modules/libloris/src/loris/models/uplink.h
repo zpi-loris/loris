@@ -5,19 +5,19 @@
 #include "loris/models/capabilities.h"
 #include "loris/models/capabilities.h"
 
-// TODO: substitute with new ping message
-typedef struct hello {
-  char dummy_field;
-} hello_t;
+typedef enum up_ping_type {
+  UP_PING_TYPE_UNSPECIFIED = 0,
+  UP_PING_TYPE_HELLO = 1
+} up_ping_type_t;
 
-typedef struct disconnect {
-  char dummy_field;
-} disconnect_t;
+typedef struct up_ping {
+   up_ping_type_t type;
+} up_ping_t;
 
 typedef enum uplink_payload_type {
   UPLINK_PAYLOAD_TYPE_REPORT = 1,
   UPLINK_PAYLOAD_TYPE_CAPABILITIES = 2,
-  UPLINK_PAYLOAD_TYPE_HELLO = 3,
+  UPLINK_PAYLOAD_TYPE_PING = 3,
 } uplink_payload_type_t;
 
 typedef struct uplink {
@@ -25,7 +25,7 @@ typedef struct uplink {
   union {
     report_t report;
     capabilities_t capabilities;
-    hello_t hello;
+    up_ping_t ping;
   } payload;
 } uplink_t;
 

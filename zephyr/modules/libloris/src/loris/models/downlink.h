@@ -3,21 +3,26 @@
 
 #include "loris/models/call.h"
 
-// TODO: substitute for ping 
-#include "loris/models/uplink.h"
+typedef enum down_ping_type {
+  DOWN_PING_TYPE_UNSPECIFIED = 0,
+  DOWN_PING_TYPE_HELLO = 1,
+  DOWN_PING_TYPE_DISCONNECT = 2
+} down_ping_type_t;
+
+typedef struct down_ping {
+  down_ping_type_t type;
+} down_ping_t;
 
 typedef enum downlink_payload_type {
   DOWNLINK_PAYLOAD_TYPE_CALL = 1,
-  DOWNLINK_PAYLOAD_TYPE_HELLO = 2,
-  DOWNLINK_PAYLOAD_TYPE_DISCONNECT = 3,
+  DOWNLINK_PAYLOAD_TYPE_PING = 2,
 } downlink_payload_type_t;
 
 typedef struct downlink {
   downlink_payload_type_t payload_type;
   union {
     call_t call;
-    hello_t hello;
-    disconnect_t disconnect;
+    down_ping_t ping;
   } payload;
 } downlink_t;
 
