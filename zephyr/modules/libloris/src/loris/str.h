@@ -16,7 +16,7 @@ typedef enum str_alloc_type {
 } str_alloc_type_t;
 
 typedef struct str {
-  char *ptr;
+  const char *ptr;
 
   /*
    * length without the null terminator '\0' -- only the payload,
@@ -31,10 +31,6 @@ typedef struct str {
 
 void str_free(str_t* str);
 
-// Warning: strings allocated using this function might be in read-only memory,
-// thus the user of a statically allocated str_t should not mutate the
-// underlying cstr pointer, even though it's not marked as const (to allows
-// dynamically and slab allocated strings to be mutated)
 result_t str_alloc_static(str_t* out, const char* cstr);
 
 result_t str_alloc_dynamic(str_t* out, const char *cstr);

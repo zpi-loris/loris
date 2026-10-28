@@ -12,7 +12,7 @@ void str_free(str_t* str) {
   }
 
   if (str->alloc_type == STR_ALLOC_DYNAMIC) {
-    k_free(str->ptr);
+    k_free((void *)str->ptr);
   } else if (str->alloc_type == STR_ALLOC_SLAB) {
     k_mem_slab_free(&str_slab, (void *)(str->ptr));
   }
