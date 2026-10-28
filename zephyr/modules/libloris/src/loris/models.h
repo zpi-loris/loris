@@ -75,62 +75,6 @@ typedef enum device_class {
   DEVICE_CLASS_C = 2
 } device_class_t;
 
-/*
- * Callback to a function that reads data from a sensor
- */
-typedef union {
-  int (*int_read_func)();
-  float (*float_read_func)();
-  bool (*bool_read_func)();
-  str_t (*str_read_func)();
-} read_func;
-
-typedef struct sensor {
-  int32_t id;
-  str_t name;
-  str_t description;
-  value_type_t value_type;
-
-  // Determines whether 'unit' field is present
-  bool has_unit;
-  // Unit is optional, if not present should always be set to LORIS_STR_NONE
-  str_t unit;
-  report_t read_function;
-  // wake_interval_sec is optional, if not present should always be set to 0
-  int32_t wake_interval_sec;
-} sensor_t;
-
-typedef struct sensor_node {
-  sys_snode_t node;
-  sensor_t sensor;
-} sensor_node_t;
-
-typedef struct function {
-  int32_t id;
-  str_t name;
-  str_t description;
-  func_arg_type_t arg_type;
-  // Callback to a function that makes the actuator do something
-  void (*call_function)();
-  // wake_interval_sec is optional, if not present should always be set to 0
-  int32_t wake_interval_sec;
-} function_t;
-
-typedef struct function_node {
-  sys_snode_t node;
-  function_t function;
-} function_node_t;
-
-typedef struct capabilities {
-  str_t device_name;
-  device_class_t device_class;
-
-  // NOTE: sys_slist functions are not thread safe
-  sys_slist_t sensors;
-  // NOTE: sys_slist functions are not thread safe
-  sys_slist_t functions;
-} capabilities_t;
-
 typedef enum report_value_type {
   REPORT_VALUE_INT,
   REPORT_VALUE_FLOAT,
@@ -172,5 +116,52 @@ typedef struct call {
   bool has_wake_after_secs;
   int32_t wake_after_secs;
 } call_t;
+
+typedef struct sensor {
+  int32_t id;
+  str_t name;
+  str_t description;
+  value_type_t value_type;
+
+  // Determines whether 'unit' field is present
+  bool has_unit;
+  // Unit is optional, if not present should always be set to LORIS_STR_NONE
+  str_t unit;
+  report_t (*read_func)(struct sensor *sensor);
+  // wake_interval_sec is optional, if not present should always be set to 0
+  int32_t wake_interval_sec;
+} sensor_t;
+
+typedef struct sensor_node {
+  sys_snode_t node;
+  sensor_t sensor;
+} sensor_node_t;
+
+typedef struct function {
+  int32_t id;
+  str_t name;
+  str_t description;
+  func_arg_type_t arg_type;
+  // Callback to a function that makes the actuator do something
+  // TODO: add different arg types (union probably)
+  void (*call_function)();
+  // wake_interval_sec is optional, if not present should always be set to 0
+  int32_t wake_interval_sec;
+} function_t;
+
+typedef struct function_node {
+  sys_snode_t node;
+  function_t function;
+} function_node_t;
+
+typedef struct capabilities {
+  str_t device_name;
+  device_class_t device_class;
+
+  // NOTE: sys_slist functions are not thread safe
+  sys_slist_t sensors;
+  // NOTE: sys_slist functions are not thread safe
+  sys_slist_t functions;
+} capabilities_t;
 
 #endif
