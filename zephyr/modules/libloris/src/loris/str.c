@@ -1,5 +1,6 @@
 #include <zephyr/kernel.h>
 #include <string.h>
+#include <stdio.h>
 
 #include "loris/result.h"
 #include "loris/str.h"
@@ -121,15 +122,16 @@ result_t str_alloc_smart(str_t *out, const char *cstr) {
 
   char* buf;
   size_t len = strlen(cstr);
+  str_src_type_t src_type;
   if (strlen(cstr) < SLAB_STR_SIZE && k_mem_slab_alloc(&str_slab, (void**)&buf, K_NO_WAIT) == 0) {
-    out->src_type = STR_SRC_SLAB;
+    src_type = STR_SRC_SLAB;
   } else {
     buf = k_malloc(len + 1);
     if (buf == NULL) {
       return ERROR;
     }
 
-    out->src_type = STR_SRC_DYNAMIC;
+    src_type = STR_SRC_DYNAMIC;
   }
 
   memcpy(buf, cstr, len);
@@ -139,6 +141,7 @@ result_t str_alloc_smart(str_t *out, const char *cstr) {
 
   out->ptr = buf;
   out->len = len;
+  out->src_type = src_type;
 
   return OK;
 }
