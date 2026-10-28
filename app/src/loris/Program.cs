@@ -1,4 +1,5 @@
 using Loris.Extensions;
+using Loris.MQTT.Client;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -6,6 +7,8 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Configure channels for the ingestion subsystem
 builder.Services.AddChannels();
+
+builder.Services.AddHostedService<LoraWanServerMqttClient>();
 
 builder.Services.AddControllers();
 
