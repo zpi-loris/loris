@@ -3,6 +3,7 @@ syntax = "proto3";
 package protocol.v1;
 
 option csharp_namespace = "app.Protocol";
+import 'nanopb.proto';
 
 enum ValueType {
   // General
@@ -92,7 +93,7 @@ message Call {
   int32 function_id = 1;
   oneof value {
     int32 int_val = 2;
-    string str_val = 3;
+    string str_val = 3 [(nanopb).callback_datatype = "str_t"];
     bool bool_val = 4;
     float float_val = 5;
   }
