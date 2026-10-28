@@ -40,8 +40,6 @@ result_t str_alloc_slab(str_t* out, const char* cstr) {
     return ERROR;
   }
 
-  str_free(out);
-
   size_t len = strlen(cstr);
   if (len >= SLAB_STR_SIZE) {
     return ERROR;
@@ -55,6 +53,8 @@ result_t str_alloc_slab(str_t* out, const char* cstr) {
   memcpy(buf, cstr, len);
   buf[len] = '\0';
 
+  str_free(out);
+
   out->ptr = buf;
   out->len = len;
   out->alloc_type = STR_ALLOC_SLAB;
@@ -67,8 +67,6 @@ result_t str_alloc_dynamic(str_t* out, const char *cstr) {
     return ERROR;
   }
 
-  str_free(out);
-
   size_t len = strlen(cstr);
   char* buf = k_malloc(len + 1);
   if (buf == NULL) {
@@ -77,6 +75,8 @@ result_t str_alloc_dynamic(str_t* out, const char *cstr) {
 
   memcpy(buf, cstr, len);
   buf[len] = '\0';
+
+  str_free(out);
 
   out->ptr = buf;
   out->len = len;
