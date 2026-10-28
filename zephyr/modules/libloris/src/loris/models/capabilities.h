@@ -23,7 +23,8 @@ typedef struct capabilities {
 
 sensor_t add_sensor(sys_slist_t *sensor_list, char *name, char *description,
                     value_type_t value_type, char *unit,
-                    read_func read_function, int32_t wake_interval_sec);
+                    report_t (*report_func)(struct sensor),
+                    int32_t wake_interval_sec);
 
 function_t add_function(sys_slist_t *function_list, char *name,
                         char *description, func_arg_type_t,
