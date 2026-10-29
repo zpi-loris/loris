@@ -41,7 +41,7 @@ public static partial class IngestionLogging
         EventId = 1010,
         EventName = nameof(PayloadUtf8DecodingFailed),
         Level = LogLevel.Warning,
-        Message = "Failed to decode payload: Invalid UTF-8 sequence (Length: {PayloadLength} bytes)"
+        Message = "Failed to decode integration payload: Invalid UTF-8 sequence (Length: {PayloadLength} bytes)"
     )]
     public static partial void PayloadUtf8DecodingFailed(
         this ILogger logger,
@@ -53,7 +53,7 @@ public static partial class IngestionLogging
         EventId = 1011,
         EventName = nameof(PayloadJsonParsingFailed),
         Level = LogLevel.Warning,
-        Message = "Failed to parse payload: Content is not valid JSON (Length: {PayloadLength} bytes)"
+        Message = "Failed to parse integration payload: Content is not valid JSON (Length: {PayloadLength} bytes)"
     )]
     public static partial void PayloadJsonParsingFailed(
         this ILogger logger,
@@ -65,17 +65,18 @@ public static partial class IngestionLogging
         EventId = 1012,
         EventName = nameof(PayloadProtobufSchemaMismatch),
         Level = LogLevel.Warning,
-        Message = "JSON payload does not match UplinkEvent protobuf schema"
+        Message = "JSON integration payload does not match UplinkEvent protobuf schema"
     )]
     public static partial void PayloadProtobufSchemaMismatch(
         this ILogger logger,
         InvalidProtocolBufferException ex
     );
 
+    // Debug because this is dropped by design
     [LoggerMessage(
         EventId = 1014,
         EventName = nameof(UplinkProtobufSchemaMismatch),
-        Level = LogLevel.Warning,
+        Level = LogLevel.Debug,
         Message = "Uplink bytes do not match Loris Uplink protobuf schema"
     )]
     public static partial void UplinkProtobufSchemaMismatch(
