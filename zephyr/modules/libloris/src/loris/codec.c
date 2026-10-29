@@ -10,13 +10,8 @@
 
 LOG_MODULE_REGISTER(codec);
 
-//  == Protobuf named callback functions  ==
-bool protocol_v1_Call_callback(pb_istream_t* istream, pb_ostream_t* ostream, const pb_field_t *field) {
-  LOG_DBG("Call msg callback called");
-  if (ostream && field->tag == PROTOCOL_V1_CALL_STR_VAL_TAG) {
-    LOG_DBG("running in ENCODING mode\n");
-
-    str_t* str = (str_t *)field->pData;
+// === Utility callbacks ===
+bool pb_callback_encode_str(pb_ostream_t* ostream, const pb_field_t *field, const str_t* str) {
     if (str->ptr == NULL) {
       return false;
     }
@@ -29,11 +24,9 @@ bool protocol_v1_Call_callback(pb_istream_t* istream, pb_ostream_t* ostream, con
     }
 
     return pb_encode_string(ostream, (const uint8_t*)str->ptr, str->len);
-  }
+}
 
-  if (istream && field->tag == PROTOCOL_V1_CALL_STR_VAL_TAG) {
-    LOG_DBG("running in DECODING mode\n");
-
+bool pb_callback_decode_str(pb_istream_t* istream, const pb_field_t *field) {
     size_t len = istream->bytes_left;
     str_t s = {0};
     if (str_alloc_smart_len(&s, len) != OK) {
@@ -41,23 +34,37 @@ bool protocol_v1_Call_callback(pb_istream_t* istream, pb_ostream_t* ostream, con
       return false;
     }
 
-    ((char*)s.ptr)[len] = '\0';
-
     if (!pb_read(istream, (char*)s.ptr, len)) {
       LOG_WRN("pb_read failed\n");
       str_free(&s);
       return false;
     }
 
-    str_t* str = (str_t *)field->pData;
-    *str = s;
+    *(str_t*)field->pData = s;
 
     return true;
+}
+
+//  == Protobuf named callback functions  ==
+bool protocol_v1_Call_callback(pb_istream_t* istream, pb_ostream_t* ostream, const pb_field_t *field) {
+  LOG_DBG("Call msg callback called");
+  if (ostream && field->tag == PROTOCOL_V1_CALL_STR_VAL_TAG) {
+    LOG_DBG("running in ENCODING mode\n");
+
+    str_t* str = (str_t *)field->pData;
+    return pb_callback_encode_str(ostream, field, str);
+  }
+
+  if (istream && field->tag == PROTOCOL_V1_CALL_STR_VAL_TAG) {
+    LOG_DBG("running in DECODING mode\n");
+
+    return pb_callback_decode_str(istream, field);
   } 
 
   LOG_WRN("Both istream and ostream are null!\n");
   return false;
 }
+
 
 result_t encode_uplink(
     char* out_buf,
@@ -68,7 +75,6 @@ result_t encode_uplink(
   return ERROR;
 }
 
-// TODO: figure out how to cleanup this mapping
 result_t encode_downlink(
     char *out_buf,
     size_t out_buf_size,
@@ -79,24 +85,21 @@ result_t encode_downlink(
   pb_ostream_t ostream = pb_ostream_from_buffer(out_buf, out_buf_size);
 
   protocol_v1_downlink_t pb_dl = {0};
+  pb_dl.which_payload = dl->payload_type;
   if (dl->payload_type == DOWNLINK_PAYLOAD_TYPE_CALL) {
-    pb_dl.which_payload = PROTOCOL_V1_DOWNLINK_CALL_TAG;
     pb_dl.payload.call.function_id = dl->payload.call.function_id;
+    pb_dl.payload.call.which_value = dl->payload.call.which_value;
     switch (dl->payload.call.which_value) {
       case CALL_VALUE_INT:
-        pb_dl.payload.call.which_value = PROTOCOL_V1_CALL_INT_VAL_TAG;
         pb_dl.payload.call.value.int_val = dl->payload.call.value.int_val;
         break;
       case CALL_VALUE_FLOAT:
-        pb_dl.payload.call.which_value = PROTOCOL_V1_CALL_FLOAT_VAL_TAG;
         pb_dl.payload.call.value.float_val = dl->payload.call.value.float_val;
         break;
       case CALL_VALUE_STRING:
-        pb_dl.payload.call.which_value = PROTOCOL_V1_CALL_STR_VAL_TAG;
         str_borrow(&pb_dl.payload.call.value.str_val, &dl->payload.call.value.str_val);
         break;
       case CALL_VALUE_BOOL:
-        pb_dl.payload.call.which_value = PROTOCOL_V1_CALL_BOOL_VAL_TAG;
         pb_dl.payload.call.value.bool_val = dl->payload.call.value.bool_val;
         break;
       default:
@@ -106,23 +109,11 @@ result_t encode_downlink(
     pb_dl.payload.call.has_wake_after_secs = dl->payload.call.has_wake_after_secs;
     pb_dl.payload.call.wake_after_secs = dl->payload.call.wake_after_secs;
   } else if (dl->payload_type == DOWNLINK_PAYLOAD_TYPE_PING) {
-    pb_dl.which_payload = PROTOCOL_V1_DOWNLINK_PING_TAG;
-    switch (dl->payload.ping.type) {
-      case DOWN_PING_TYPE_DISCONNECT:
-        pb_dl.payload.ping.type = PROTOCOL_V1_DOWN_PING_TYPE_DOWN_PING_TYPE_DISCONNECT;
-        break;
-      case DOWN_PING_TYPE_HELLO:
-        pb_dl.payload.ping.type = PROTOCOL_V1_DOWN_PING_TYPE_DOWN_PING_TYPE_HELLO;
-        break;
-      default:
-        LOG_WRN("Unknown or invalid down ping type\n");
-        return ERROR;
-    }
+    pb_dl.payload.ping.type = (int)dl->payload.ping.type;
   } else {
     LOG_WRN("Unknown or invalid downlink payload type\n");
     return ERROR;
   }
-
 
   if (!pb_encode(&ostream, &protocol_v1_downlink_t_msg, &pb_dl)) {
     LOG_WRN("ENCODING FAILED!\n");
@@ -146,24 +137,21 @@ result_t decode_downlink(downlink_t *out, const char* buf_in, size_t buf_size) {
     return ERROR;
   };
 
+  out->payload_type = PROTOCOL_V1_DOWNLINK_CALL_TAG;
   if (pb_dl.which_payload == PROTOCOL_V1_DOWNLINK_CALL_TAG) {
-    out->payload_type = DOWNLINK_PAYLOAD_TYPE_CALL;
     out->payload.call.function_id = pb_dl.payload.call.function_id;
+    out->payload.call.which_value = pb_dl.payload.call.which_value;
     switch (pb_dl.payload.call.which_value) {
       case PROTOCOL_V1_CALL_INT_VAL_TAG:
-        out->payload.call.which_value = CALL_VALUE_INT;
         out->payload.call.value.int_val = pb_dl.payload.call.value.int_val;
         break;
       case PROTOCOL_V1_CALL_FLOAT_VAL_TAG:
-        out->payload.call.which_value = CALL_VALUE_FLOAT;
         out->payload.call.value.float_val = pb_dl.payload.call.value.float_val;
         break;
       case PROTOCOL_V1_CALL_STR_VAL_TAG:
-        out->payload.call.which_value = CALL_VALUE_STRING;
         str_move(&out->payload.call.value.str_val, &pb_dl.payload.call.value.str_val);
         break;
       case PROTOCOL_V1_CALL_BOOL_VAL_TAG:
-        out->payload.call.which_value = CALL_VALUE_BOOL;
         out->payload.call.value.bool_val = pb_dl.payload.call.value.bool_val;
         break;
       default:
@@ -173,18 +161,7 @@ result_t decode_downlink(downlink_t *out, const char* buf_in, size_t buf_size) {
     out->payload.call.has_wake_after_secs = pb_dl.payload.call.has_wake_after_secs;
     out->payload.call.wake_after_secs = pb_dl.payload.call.wake_after_secs;
   } else if (pb_dl.which_payload == PROTOCOL_V1_DOWNLINK_PING_TAG) {
-    out->payload_type = DOWNLINK_PAYLOAD_TYPE_PING;
-    switch (pb_dl.payload.ping.type) {
-      case PROTOCOL_V1_DOWN_PING_TYPE_DOWN_PING_TYPE_DISCONNECT:
-        out->payload.ping.type = DOWN_PING_TYPE_DISCONNECT;
-        break;
-      case PROTOCOL_V1_DOWN_PING_TYPE_DOWN_PING_TYPE_HELLO:
-        out->payload.ping.type = DOWN_PING_TYPE_HELLO;
-        break;
-      default:
-        LOG_WRN("Unknown or invalid down ping type\n");
-        return ERROR;
-    }
+    out->payload.ping.type = (int)pb_dl.payload.ping.type;
   } else {
     LOG_WRN("Unknown or invalid downlink payload type\n");
     return ERROR;
@@ -193,5 +170,14 @@ result_t decode_downlink(downlink_t *out, const char* buf_in, size_t buf_size) {
   return OK;
 }
 void downlink_free(downlink_t* dl) {
-  LOG_ERR("NOT IMPLEMENTED\n");
+  if (dl->payload_type != DOWNLINK_PAYLOAD_TYPE_CALL) {
+    return;
+  }
+
+  if (dl->payload.call.which_value != CALL_VALUE_STRING) {
+    return;
+  }
+
+  str_free(&dl->payload.call.value.str_val);
+  LOG_DBG("freed downlink\n");
 } 
