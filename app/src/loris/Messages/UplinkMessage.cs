@@ -1,4 +1,4 @@
-using Loris.Models;
+using Loris.Protocol;
 using Loris.Types;
 
 namespace Loris.Messages;

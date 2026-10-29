@@ -2,6 +2,9 @@ using System.Globalization;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+// using Chirpstack.Integration;
+using Google.Protobuf;
+using Loris.Protocol;
 using MQTTnet;
 using MQTTnet.Diagnostics.Logger;
 
@@ -20,6 +23,7 @@ public class LoraWanServerMqttClient(ILogger<LoraWanServerMqttClient> logger) : 
     private readonly ManualResetEvent _mrevent = new(false);
     private CancellationTokenSource? _serviceConnected;
     private readonly MqttClientFactory _mqttFactory = new();
+    private readonly JsonParser _jsonParser = JsonParser.Default;
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
@@ -37,10 +41,10 @@ public class LoraWanServerMqttClient(ILogger<LoraWanServerMqttClient> logger) : 
 
         mqttClient.DisconnectedAsync += async e =>
         {
-            // drop active subscribe
+            // drop active subscribtion
             _serviceConnected?.Cancel();
 
-            // resume connection loop
+            // resume connection loop by releasing thread lock
             _mrevent.Set();
         };
 
@@ -85,6 +89,7 @@ public class LoraWanServerMqttClient(ILogger<LoraWanServerMqttClient> logger) : 
                 _logger.LogInformation("Client is connected");
 
                 await mqttClient.SubscribeAsync(mqttSubscribeOptions, linkedToken);
+                // lock thread
                 _mrevent.WaitOne();
             }
         }
@@ -101,6 +106,7 @@ public class LoraWanServerMqttClient(ILogger<LoraWanServerMqttClient> logger) : 
             }
             else
             {
+                // rethrow host cancellation
                 throw;
             }
         }
@@ -114,22 +120,30 @@ public class LoraWanServerMqttClient(ILogger<LoraWanServerMqttClient> logger) : 
     {
         mqttClient.ApplicationMessageReceivedAsync += message =>
         {
-            // message
-            _logger.LogInformation("Received application message");
-
             try
             {
                 var json = JsonDocument.Parse(message.ApplicationMessage.Payload);
-                var uplink = JsonSerializer.Deserialize(
+                var uplinkEvent = JsonSerializer.Deserialize(
                     json,
                     SourceGenerationContext.Default.UplinkEventDto
                 );
-                _logger.LogInformation(
-                    "Uplink received on {topic}: {uplink}",
-                    message.ApplicationMessage.Topic,
-                    uplink
-                );
+                // var UplinkEventBytes = message.ApplicationMessage.Payload;
+                // var uplinkEventJson = UTF8Encoding.UTF8.GetString(UplinkEventBytes);
+                // var uplinkEvent = _jsonParser.Parse<UplinkEvent>(uplinkEventJson);
+                var uplinkBytes = uplinkEvent.Data;
+                var uplinkJson = Encoding.UTF8.GetString(uplinkBytes);
+                var uplink = _jsonParser.Parse<Uplink>(uplinkJson);
+
+                _logger.LogInformation("Uplink received on {topic}: {uplink}", _topic, uplink);
+
+                // TODO: parse, and push to channel
+                // _logger.LogInformation(
+                //     "Uplink received on {topic}: {uplink}",
+                //     message.ApplicationMessage.Topic,
+                //     uplink
+                // );
             }
+            // TODO: better error handling
             catch (Exception ex)
             {
                 Console.WriteLine(ex);
@@ -142,6 +156,7 @@ public class LoraWanServerMqttClient(ILogger<LoraWanServerMqttClient> logger) : 
 
     public override Task StopAsync(CancellationToken cancellationToken)
     {
+        // release thread lock
         _mrevent.Set();
         return base.StopAsync(cancellationToken);
     }
@@ -173,7 +188,7 @@ public record UplinkEventDto
     /// Base64 encoded payload
     /// </summary>
     [JsonPropertyName("data")]
-    public string Data { get; init; } = string.Empty;
+    public byte[] Data { get; init; } = [];
 }
 
 public record DeviceInfoDto

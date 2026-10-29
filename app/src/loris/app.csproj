@@ -6,12 +6,28 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
-
   <ItemGroup>
     <PackageReference Include="Google.Protobuf" Version="3.36.2" />
+    <PackageReference Include="Grpc.AspNetCore" Version="2.85.0" />
+    <PackageReference Include="Grpc.Tools" Version="2.85.0">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.2" />
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.13" />
     <PackageReference Include="MQTTnet" Version="5.2.0.1603" />
     <PackageReference Include="NSwag.AspNetCore" Version="14.7.1" />
+  </ItemGroup>
+  <ItemGroup>
+    <Protobuf Include="..\..\..\protocol\v1\protocol.proto" Link="Protos\protocol.proto" />
+    <Protobuf Include="..\..\proto\chirpstack\common\common.proto" Link="Protos\common.proto">
+      <SourceUrl>https://raw.githubusercontent.com/chirpstack/chirpstack/refs/heads/master/api/proto/common/common.proto</SourceUrl>
+    </Protobuf>
+    <Protobuf Include="..\..\proto\chirpstack\gw\gw.proto" AdditionalImportDirs="..\..\proto\chirpstack\" Link="Protos\gw.proto">
+      <SourceUrl>https://raw.githubusercontent.com/chirpstack/chirpstack/refs/heads/master/api/proto/gw/gw.proto</SourceUrl>
+    </Protobuf>
+    <Protobuf Include="..\..\proto\chirpstack\integration\integration.proto" AdditionalImportDirs="..\..\proto\chirpstack\" Link="Protos\integration.proto">
+      <SourceUrl>https://raw.githubusercontent.com/chirpstack/chirpstack/refs/heads/master/api/proto/integration/integration.proto</SourceUrl>
+    </Protobuf>
   </ItemGroup>
 </Project>
