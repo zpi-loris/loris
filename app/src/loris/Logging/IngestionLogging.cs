@@ -1,3 +1,4 @@
+using Google.Protobuf;
 using Loris.Protocol;
 
 namespace Loris.Logging;
@@ -22,15 +23,11 @@ public static partial class IngestionLogging
 
     [LoggerMessage(
         EventId = 1003,
-        EventName = nameof(UplinkEventReceived),
+        EventName = nameof(UplinkReceived),
         Level = LogLevel.Debug,
         Message = "Uplink received on {Topic}: {Uplink}"
     )]
-    public static partial void UplinkEventReceived(
-        this ILogger logger,
-        string topic,
-        Uplink uplink
-    );
+    public static partial void UplinkReceived(this ILogger logger, string topic, Uplink uplink);
 
     [LoggerMessage(
         EventId = 1004,
@@ -39,4 +36,50 @@ public static partial class IngestionLogging
         Message = "Trying to connect to mqtt://{Host}:{Port}"
     )]
     public static partial void ConnectingToBroker(this ILogger logger, string host, int port);
+
+    [LoggerMessage(
+        EventId = 1010,
+        EventName = nameof(PayloadUtf8DecodingFailed),
+        Level = LogLevel.Warning,
+        Message = "Failed to decode payload: Invalid UTF-8 sequence (Length: {PayloadLength} bytes)"
+    )]
+    public static partial void PayloadUtf8DecodingFailed(
+        this ILogger logger,
+        Exception ex,
+        long payloadLength
+    );
+
+    [LoggerMessage(
+        EventId = 1011,
+        EventName = nameof(PayloadJsonParsingFailed),
+        Level = LogLevel.Warning,
+        Message = "Failed to parse payload: Content is not valid JSON (Length: {PayloadLength} bytes)"
+    )]
+    public static partial void PayloadJsonParsingFailed(
+        this ILogger logger,
+        InvalidJsonException ex,
+        long payloadLength
+    );
+
+    [LoggerMessage(
+        EventId = 1012,
+        EventName = nameof(PayloadProtobufSchemaMismatch),
+        Level = LogLevel.Warning,
+        Message = "JSON payload does not match UplinkEvent protobuf schema"
+    )]
+    public static partial void PayloadProtobufSchemaMismatch(
+        this ILogger logger,
+        InvalidProtocolBufferException ex
+    );
+
+    [LoggerMessage(
+        EventId = 1014,
+        EventName = nameof(UplinkProtobufSchemaMismatch),
+        Level = LogLevel.Warning,
+        Message = "Uplink bytes do not match Loris Uplink protobuf schema"
+    )]
+    public static partial void UplinkProtobufSchemaMismatch(
+        this ILogger logger,
+        InvalidProtocolBufferException ex
+    );
 }

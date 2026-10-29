@@ -1,3 +1,4 @@
+using System.Buffers;
 using System.Text;
 using System.Threading.Channels;
 using Chirpstack.Integration;
@@ -54,7 +55,7 @@ public class LoraWanServerMqttClient(
             _mrevent.Set();
         };
 
-        SetupMessageHandling(mqttClient);
+        SetupMessageHandling(mqttClient, stoppingToken);
 
         while (!stoppingToken.IsCancellationRequested)
         {
@@ -122,20 +123,22 @@ public class LoraWanServerMqttClient(
         }
     }
 
-    private void SetupMessageHandling(IMqttClient mqttClient)
+    private void SetupMessageHandling(IMqttClient mqttClient, CancellationToken stoppingToken)
     {
         mqttClient.ApplicationMessageReceivedAsync += async message =>
         {
             try
             {
-                var UplinkEventBytes = message.ApplicationMessage.Payload;
-                var uplinkEventJson = Encoding.UTF8.GetString(UplinkEventBytes);
-                var uplinkEvent = UplinkEvent.Parser.ParseJson(uplinkEventJson);
+                UplinkEvent? uplinkEvent = DecodeUplinkEventPayload(
+                    message.ApplicationMessage.Payload
+                );
 
-                var uplinkBytes = uplinkEvent.Data.ToArray();
-                var uplink = Uplink.Parser.ParseFrom(uplinkBytes);
+                if (uplinkEvent is null)
+                    return;
 
-                _logger.UplinkEventReceived(_topic, uplink);
+                var uplink = Uplink.Parser.ParseFrom(uplinkEvent.Data);
+
+                _logger.UplinkReceived(_topic, uplink);
 
                 await _channelWriter.WriteAsync(
                     new UplinkMessage
@@ -143,15 +146,41 @@ public class LoraWanServerMqttClient(
                         DevEUI = DevEui.Parse(uplinkEvent.DeviceInfo.DevEui),
                         Payload = uplink,
                         DateTime = uplinkEvent.Time.ToDateTime(),
-                    }
+                    },
+                    stoppingToken
                 );
             }
-            catch (Exception ex)
+            catch (InvalidProtocolBufferException ex)
             {
-                Console.WriteLine(ex);
-                throw;
+                _logger.UplinkProtobufSchemaMismatch(ex);
             }
         };
+    }
+
+    private UplinkEvent? DecodeUplinkEventPayload(ReadOnlySequence<byte> payload)
+    {
+        try
+        {
+            var uplinkEventJson = payload.IsSingleSegment
+                ? Encoding.UTF8.GetString(payload.FirstSpan)
+                : Encoding.UTF8.GetString(payload.ToArray());
+
+            return UplinkEvent.Parser.ParseJson(uplinkEventJson);
+        }
+        catch (DecoderFallbackException ex)
+        {
+            _logger.PayloadUtf8DecodingFailed(ex, payload.Length);
+        }
+        catch (InvalidJsonException ex)
+        {
+            _logger.PayloadJsonParsingFailed(ex, payload.Length);
+        }
+        catch (InvalidProtocolBufferException ex)
+        {
+            _logger.PayloadProtobufSchemaMismatch(ex);
+        }
+
+        return null;
     }
 
     public override Task StopAsync(CancellationToken cancellationToken)
