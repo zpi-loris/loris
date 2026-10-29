@@ -46,7 +46,6 @@ result_t add_sensor(sys_slist_t *sensor_list, const char *name,
   str_t s_name;
   str_t s_desc;
   str_t s_unit = LORIS_STR_NONE;
-  sys_snode_t s_node = {.next = NULL};
   bool has_unit = false;
 
   if (str_from_static(&s_name, name) == ERROR) {
@@ -73,14 +72,14 @@ result_t add_sensor(sys_slist_t *sensor_list, const char *name,
 
   sys_snode_t *prev_node = sys_slist_peek_tail(sensor_list);
   if (prev_node != NULL) {
-    prev_node->next = &s_node;
+    prev_node->next = &sensor_s_nodes[sensor_id];
   }
 
   // TODO: figure out how to save s_node and sensor_node so they do not get
   // removed from stack
-  sensor_node_t sensor_node = {.sensor = sensor, .node = s_node};
+  sensor_node_t sensor_node = {.sensor = sensor,
+                               .node = sensor_s_nodes[sensor_id]};
   sensor_nodes[sensor_id] = sensor_node;
-  sensor_s_nodes[sensor_id] = s_node;
 
   sys_slist_append(sensor_list, &sensor_s_nodes[sensor_id]);
 
@@ -97,7 +96,6 @@ result_t add_function(sys_slist_t *function_list, char *name, char *description,
 
   str_t s_name;
   str_t s_desc;
-  sys_snode_t s_node = {.next = NULL};
 
   if (str_from_static(&s_name, name) == ERROR) {
     return ERROR;
@@ -114,12 +112,12 @@ result_t add_function(sys_slist_t *function_list, char *name, char *description,
 
   sys_snode_t *prev_node = sys_slist_peek_tail(function_list);
   if (prev_node != NULL) {
-    prev_node->next = &s_node;
+    prev_node->next = &func_s_nodes[func_id];
   }
 
-  function_node_t function_node = {.function = function, .node = s_node};
+  function_node_t function_node = {.function = function,
+                                   .node = func_s_nodes[func_id]};
   func_nodes[func_id] = function_node;
-  func_s_nodes[func_id] = s_node;
 
   sys_slist_append(function_list, &func_s_nodes[func_id]);
 

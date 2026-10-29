@@ -4,7 +4,7 @@
 #include "loris/models/report.h"
 #include "loris/models/uplink.h"
 
-ZTEST_SUITE(codec_downlink, NULL, NULL, NULL, NULL, NULL );
+ZTEST_SUITE(codec_downlink, NULL, NULL, NULL, NULL, NULL);
 // ZTEST_SUITE(uplink, NULL, NULL, NULL, NULL, NULL);
 //
 // ZTEST(uplink, test_encodes_and_decodes_report) {
@@ -32,20 +32,17 @@ ZTEST_SUITE(codec_downlink, NULL, NULL, NULL, NULL, NULL );
 // }
 
 ZTEST(codec_downlink, test_encodes_and_decodes_call) {
-  downlink_t dl = {
-    .payload_type = DOWNLINK_PAYLOAD_TYPE_CALL,
-    .payload.call = {
-      .function_id = 2,
-      .which_value = CALL_VALUE_STRING,
-      .value.str_val = {
-        .ptr = "hehe",
-        .len = 4,
-        .src_type = STR_SRC_STATIC,
-      },
-      .has_wake_after_secs = true,
-      .wake_after_secs = 3
-    }
-  };
+  downlink_t dl = {.payload_type = DOWNLINK_PAYLOAD_TYPE_CALL,
+                   .payload.call = {.function_id = 2,
+                                    .which_value = CALL_VALUE_STRING,
+                                    .value.str_val =
+                                        {
+                                            .ptr = "hehe",
+                                            .len = 4,
+                                            .src_type = STR_SRC_STATIC,
+                                        },
+                                    .has_wake_after_secs = true,
+                                    .wake_after_secs = 3}};
 
   char buf[1024];
   size_t bytes_written = 0;
@@ -63,5 +60,4 @@ ZTEST(codec_downlink, test_encodes_and_decodes_call) {
   zassert_equal(decoded.payload.call.value.str_val.src_type, STR_SRC_SLAB);
   zassert_equal(decoded.payload.call.has_wake_after_secs, true);
   zassert_equal(decoded.payload.call.wake_after_secs, 3);
-
 }
