@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <zephyr/kernel.h>
+#include <zephyr/logging/log.h>
 
 #include "loris/protobuf/pb.h"
 #include "loris/protobuf/pb_decode.h"
@@ -7,38 +8,43 @@
 #include "loris/protobuf/protocol.pb.h"
 #include "loris/codec.h"
 
+LOG_MODULE_REGISTER(codec);
 
 //  == Protobuf named callback functions  ==
 bool protocol_v1_Call_callback(pb_istream_t* istream, pb_ostream_t* ostream, const pb_field_t *field) {
-  printf("Call callback called!\n"); // TODO: substitue printf with log calls (zephyr has builtin logging)
+  LOG_DBG("Call msg callback called");
   if (ostream && field->tag == PROTOCOL_V1_CALL_STR_VAL_TAG) {
-    printf("ENCODING MODE\n");
+    LOG_DBG("running in ENCODING mode\n");
 
     str_t* str = (str_t *)field->pData;
     if (str->ptr == NULL) {
       return false;
     }
 
-    printf("Encoding <%s>!\n", str->ptr);
+    LOG_DBG("Encoding '%s'\n", str->ptr);
 
-    if (!pb_encode_tag_for_field(ostream, field))
+    if (!pb_encode_tag_for_field(ostream, field)) {
+      LOG_WRN("pb_encode_tag_for_field failed\n");
       return false;
+    }
 
     return pb_encode_string(ostream, (const uint8_t*)str->ptr, str->len);
   }
 
   if (istream && field->tag == PROTOCOL_V1_CALL_STR_VAL_TAG) {
-    printf("DECODING MODE\n");
+    LOG_DBG("running in DECODING mode\n");
 
     size_t len = istream->bytes_left;
     str_t s = {0};
     if (str_alloc_smart_len(&s, len) != OK) {
+      LOG_WRN("str_alloc_smart_len failed\n");
       return false;
     }
 
     ((char*)s.ptr)[len] = '\0';
 
     if (!pb_read(istream, (char*)s.ptr, len)) {
+      LOG_WRN("pb_read failed\n");
       str_free(&s);
       return false;
     }
@@ -49,7 +55,7 @@ bool protocol_v1_Call_callback(pb_istream_t* istream, pb_ostream_t* ostream, con
     return true;
   } 
 
-  printf("Both istream and ostream are null!\n");
+  LOG_WRN("Both istream and ostream are null!\n");
   return false;
 }
 
@@ -69,6 +75,7 @@ result_t encode_downlink(
     const downlink_t *dl,
     size_t *bytes_written
 ) {
+  LOG_DBG("Encoding downlink\n");
   pb_ostream_t ostream = pb_ostream_from_buffer(out_buf, out_buf_size);
 
   protocol_v1_downlink_t pb_dl = {0};
@@ -93,7 +100,7 @@ result_t encode_downlink(
         pb_dl.payload.call.value.bool_val = dl->payload.call.value.bool_val;
         break;
       default:
-        printf("Unknown or invalid call value type");
+        LOG_WRN("Unknown or invalid call value type\n");
         return ERROR;
     }
     pb_dl.payload.call.has_wake_after_secs = dl->payload.call.has_wake_after_secs;
@@ -108,17 +115,17 @@ result_t encode_downlink(
         pb_dl.payload.ping.type = PROTOCOL_V1_DOWN_PING_TYPE_DOWN_PING_TYPE_HELLO;
         break;
       default:
-        printf("Unknown or invalid down ping type");
+        LOG_WRN("Unknown or invalid down ping type\n");
         return ERROR;
     }
   } else {
-    printf("Unknown or invalid downlink payload type");
+    LOG_WRN("Unknown or invalid downlink payload type\n");
     return ERROR;
   }
 
 
   if (!pb_encode(&ostream, &protocol_v1_downlink_t_msg, &pb_dl)) {
-    printf("ENCODING FAILED!\n");
+    LOG_WRN("ENCODING FAILED!\n");
     return ERROR;
   }
 
@@ -126,7 +133,7 @@ result_t encode_downlink(
     *bytes_written = ostream.bytes_written;
   }
 
-  printf("Correctly encoded!\n");
+  LOG_DBG("Correctly encoded!\n");
   return OK;
 }
 
@@ -160,7 +167,7 @@ result_t decode_downlink(downlink_t *out, const char* buf_in, size_t buf_size) {
         out->payload.call.value.bool_val = pb_dl.payload.call.value.bool_val;
         break;
       default:
-        printf("Unknown or invalid call value type");
+        LOG_WRN("Unknown or invalid call value type\n");
         return ERROR;
     }
     out->payload.call.has_wake_after_secs = pb_dl.payload.call.has_wake_after_secs;
@@ -175,16 +182,16 @@ result_t decode_downlink(downlink_t *out, const char* buf_in, size_t buf_size) {
         out->payload.ping.type = DOWN_PING_TYPE_HELLO;
         break;
       default:
-        printf("Unknown or invalid down ping type");
+        LOG_WRN("Unknown or invalid down ping type\n");
         return ERROR;
     }
   } else {
-    printf("Unknown or invalid downlink payload type");
+    LOG_WRN("Unknown or invalid downlink payload type\n");
     return ERROR;
   }
 
   return OK;
 }
 void downlink_free(downlink_t* dl) {
-  fprintf(stderr, "NOT IMPLEMENTED");
+  LOG_ERR("NOT IMPLEMENTED\n");
 } 
