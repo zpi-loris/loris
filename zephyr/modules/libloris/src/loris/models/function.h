@@ -19,6 +19,8 @@ typedef enum func_arg_type {
 } func_arg_type_t;
 
 typedef struct function {
+  sys_snode_t node;
+
   int32_t id;
   str_t name;
   str_t description;
@@ -29,10 +31,5 @@ typedef struct function {
   // wake_interval_sec is optional, if not present should always be set to 0
   int32_t wake_interval_sec;
 } function_t;
-
-typedef struct function_node {
-  sys_snode_t node;
-  function_t function;
-} function_node_t;
 
 #endif

@@ -56,6 +56,8 @@ typedef enum value_type {
 } value_type_t;
 
 typedef struct sensor {
+  sys_snode_t node;
+
   int32_t id;
   str_t name;
   str_t description;
@@ -69,10 +71,5 @@ typedef struct sensor {
   // wake_interval_sec is optional, if not present should always be set to 0
   int32_t wake_interval_sec;
 } sensor_t;
-
-typedef struct sensor_node {
-  sys_snode_t node;
-  sensor_t sensor;
-} sensor_node_t;
 
 #endif
