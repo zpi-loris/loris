@@ -1,16 +1,13 @@
-using System.Globalization;
 using System.Text;
-using System.Text.Json;
-using System.Text.Json.Serialization;
 using System.Threading.Channels;
 using Chirpstack.Integration;
 // using Chirpstack.Integration;
 using Google.Protobuf;
+using Loris.Logging;
 using Loris.Messages;
 using Loris.Protocol;
 using Loris.Types;
 using MQTTnet;
-using MQTTnet.Diagnostics.Logger;
 
 namespace Loris.MQTT.Client;
 
@@ -28,10 +25,11 @@ public class LoraWanServerMqttClient(
     private readonly int _reconectEverySecond = 5;
     private readonly string _topic = "application/+/device/+/event/up";
 
+    private readonly MqttClientFactory _mqttFactory = new();
+
+    // TODO describe threading
     private readonly ManualResetEvent _mrevent = new(false);
     private CancellationTokenSource? _serviceConnected;
-    private readonly MqttClientFactory _mqttFactory = new();
-    private readonly JsonParser _jsonParser = JsonParser.Default;
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
@@ -89,7 +87,7 @@ public class LoraWanServerMqttClient(
     {
         try
         {
-            _logger.LogInformation("Trying to connect to {host}:{port}", _host, _port);
+            _logger.ConnectingToBroker(_host, _port);
             if (!await mqttClient.TryPingAsync(externalToken))
             {
                 // throws if not successful
@@ -103,13 +101,13 @@ public class LoraWanServerMqttClient(
         }
         catch (MQTTnet.Exceptions.MqttCommunicationException)
         {
-            _logger.LogError("Can't reach the broker {host}:{port}", _host, _port);
+            _logger.IntegrationUnreachable(_host, _port);
         }
         catch (OperationCanceledException)
         {
             if (_serviceConnected?.IsCancellationRequested == true)
             {
-                _logger.LogInformation("broker {host}:{port} disconnected", _host, _port);
+                _logger.IntegrationDisconnected(_host, _port);
                 _serviceConnected.Dispose();
             }
             else
@@ -132,11 +130,12 @@ public class LoraWanServerMqttClient(
             {
                 var UplinkEventBytes = message.ApplicationMessage.Payload;
                 var uplinkEventJson = Encoding.UTF8.GetString(UplinkEventBytes);
-                var uplinkEvent = _jsonParser.Parse<UplinkEvent>(uplinkEventJson);
+                var uplinkEvent = UplinkEvent.Parser.ParseJson(uplinkEventJson);
+
                 var uplinkBytes = uplinkEvent.Data.ToArray();
                 var uplink = Uplink.Parser.ParseFrom(uplinkBytes);
 
-                _logger.LogInformation("Uplink received on {topic}: {uplink}", _topic, uplink);
+                _logger.UplinkEventReceived(_topic, uplink);
 
                 await _channelWriter.WriteAsync(
                     new UplinkMessage
@@ -146,15 +145,7 @@ public class LoraWanServerMqttClient(
                         DateTime = uplinkEvent.Time.ToDateTime(),
                     }
                 );
-
-                // TODO: parse, and push to channel
-                // _logger.LogInformation(
-                //     "Uplink received on {topic}: {uplink}",
-                //     message.ApplicationMessage.Topic,
-                //     uplink
-                // );
             }
-            // TODO: better error handling
             catch (Exception ex)
             {
                 Console.WriteLine(ex);
@@ -177,38 +168,3 @@ public class LoraWanServerMqttClient(
         _mrevent.Dispose();
     }
 }
-
-// sealed class MyLogger(ILogger<LoraWanServerMqttClient> logger) : IMqttNetLogger
-// {
-//     public bool IsEnabled { get; set; } = true;
-//
-//     private readonly ILogger<LoraWanServerMqttClient> _logger = logger;
-//
-//     public void Publish(
-//         MqttNetLogLevel level,
-//         string source,
-//         string message,
-//         object[] parameters,
-//         Exception exception
-//     )
-//     {
-//         Action log = level switch
-//         {
-//             MqttNetLogLevel.Info => () =>
-//                 _logger.LogInformation(
-//                     exception: exception,
-//                     message: message,
-//                     args: parameters
-//                 ),
-//             MqttNetLogLevel.Warning => () =>
-//                 _logger.LogWarning(exception: exception, message: message, args: parameters),
-//             MqttNetLogLevel.Error => () =>
-//                 _logger.LogError(exception: exception, message: message, args: parameters),
-//             MqttNetLogLevel.Verbose => () =>
-//                 _logger.LogDebug(exception: exception, message: message, args: parameters),
-//             _ => () => { },
-//         };
-//
-//         log();
-//     }
-// }
