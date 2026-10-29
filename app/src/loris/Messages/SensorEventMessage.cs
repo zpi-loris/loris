@@ -1,5 +1,5 @@
 using Loris.Events;
-using Loris.Protocol;
+using Loris.Models;
 
 namespace Loris.Messages;
 

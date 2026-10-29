@@ -1,7 +1,7 @@
 using System.Threading.Channels;
 using Google.Protobuf;
 using Loris.Messages;
-using Loris.Protocol;
+using Loris.Models;
 using Loris.Types;
 using Microsoft.AspNetCore.Mvc;
 

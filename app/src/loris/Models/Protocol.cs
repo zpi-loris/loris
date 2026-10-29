@@ -9,7 +9,7 @@ using pb = global::Google.Protobuf;
 using pbc = global::Google.Protobuf.Collections;
 using pbr = global::Google.Protobuf.Reflection;
 using scg = global::System.Collections.Generic;
-namespace Loris.Protocol {
+namespace Loris.Models {
 
   /// <summary>Holder for reflection information generated from protocol/v1/protocol.proto</summary>
   public static partial class ProtocolReflection {
@@ -35,50 +35,52 @@ namespace Loris.Protocol {
             "cxgDIAMoCzIVLnByb3RvY29sLnYxLkZ1bmN0aW9uInMKBlJlcG9ydBIRCglz",
             "ZW5zb3JfaWQYASABKAUSEQoHaW50X3ZhbBgCIAEoBUgAEhMKCWZsb2F0X3Zh",
             "bBgDIAEoAkgAEhEKB3N0cl92YWwYBCABKAlIABISCghib29sX3ZhbBgFIAEo",
-            "CEgAQgcKBXZhbHVlIgcKBUhlbGxvIqUBCgRDYWxsEhMKC2Z1bmN0aW9uX2lk",
-            "GAEgASgFEhEKB2ludF92YWwYAiABKAVIABIRCgdzdHJfdmFsGAMgASgJSAAS",
-            "EgoIYm9vbF92YWwYBCABKAhIABITCglmbG9hdF92YWwYBSABKAJIABIcCg93",
-            "YWtlX2FmdGVyX3NlY3MYBiABKAVIAYgBAUIHCgV2YWx1ZUISChBfd2FrZV9h",
-            "ZnRlcl9zZWNzIl0KCERvd25saW5rEiEKBGNhbGwYASABKAsyES5wcm90b2Nv",
-            "bC52MS5DYWxsSAASIwoFaGVsbG8YAiABKAsyEi5wcm90b2NvbC52MS5IZWxs",
-            "b0gAQgkKB3BheWxvYWQikgEKBlVwbGluaxIlCgZyZXBvcnQYASABKAsyEy5w",
-            "cm90b2NvbC52MS5SZXBvcnRIABIxCgxjYXBhYmlsaXRpZXMYAiABKAsyGS5w",
-            "cm90b2NvbC52MS5DYXBhYmlsaXRpZXNIABIjCgVoZWxsbxgDIAEoCzISLnBy",
-            "b3RvY29sLnYxLkhlbGxvSABCCQoHcGF5bG9hZCq6BgoJVmFsdWVUeXBlEhoK",
-            "FlZBTFVFX1RZUEVfVU5TUEVDSUZJRUQQABIWChJWQUxVRV9UWVBFX05VTUVS",
-            "SUMQARITCg9WQUxVRV9UWVBFX1RFWFQQAhITCg9WQUxVRV9UWVBFX0JPT0wQ",
-            "AxIaChZWQUxVRV9UWVBFX1RFTVBFUkFUVVJFEAQSFwoTVkFMVUVfVFlQRV9Q",
-            "UkVTU1VSRRAFEhgKFFZBTFVFX1RZUEVfRlJFUVVFTkNZEAYSFwoTVkFMVUVf",
-            "VFlQRV9NT0lTVFVSRRAHEhUKEVZBTFVFX1RZUEVfVVBUSU1FEAgSEwoPVkFM",
-            "VUVfVFlQRV9BUkVBEAkSFwoTVkFMVUVfVFlQRV9ESVNUQU5DRRAKEhcKE1ZB",
-            "TFVFX1RZUEVfRFVSQVRJT04QCxIaChZWQUxVRV9UWVBFX0lMTFVNSU5BTkNF",
-            "EAwSFAoQVkFMVUVfVFlQRV9XQVRFUhANEhUKEVZBTFVFX1RZUEVfV0VJR0hU",
-            "EA4SEgoOVkFMVUVfVFlQRV9BUUkQDxISCg5WQUxVRV9UWVBFX0NPMhAQEhIK",
-            "DlZBTFVFX1RZUEVfUE0xEBESEwoPVkFMVUVfVFlQRV9QTTI1EBISEgoOVkFM",
-            "VUVfVFlQRV9QTTQQExITCg9WQUxVRV9UWVBFX1BNMTAQFBIXChNWQUxVRV9U",
-            "WVBFX0hVTUlESVRZEBUSGQoVVkFMVUVfVFlQRV9XSU5EX1NQRUVEEBYSFgoS",
-            "VkFMVUVfVFlQRV9CQVRURVJZEBcSFQoRVkFMVUVfVFlQRV9FTkVSR1kQGBIW",
-            "ChJWQUxVRV9UWVBFX1ZPTFRBR0UQGRIWChJWQUxVRV9UWVBFX0NVUlJFTlQQ",
-            "GhIYChRWQUxVRV9UWVBFX0RBVEFfUkFURRAbEhgKFFZBTFVFX1RZUEVfREFU",
-            "QV9TSVpFEBwSHgoaVkFMVUVfVFlQRV9TSUdOQUxfU1RSRU5HVEgQHRIRCg1W",
-            "QUxVRV9UWVBFX1BIEB4SGAoUVkFMVUVfVFlQRV9QT1RBU1NJVU0QHxIZChVW",
-            "QUxVRV9UWVBFX1BIT1NQSE9SVVMQIBIXChNWQUxVRV9UWVBFX05JVFJPR0VO",
-            "ECEqpgEKC0Z1bmNBcmdUeXBlEh0KGUZVTkNfQVJHX1RZUEVfVU5TUEVDSUZJ",
-            "RUQQABIWChJGVU5DX0FSR19UWVBFX1ZPSUQQARIVChFGVU5DX0FSR19UWVBF",
-            "X0lOVBACEhcKE0ZVTkNfQVJHX1RZUEVfRkxPQVQQAxIYChRGVU5DX0FSR19U",
-            "WVBFX1NUUklORxAEEhYKEkZVTkNfQVJHX1RZUEVfQk9PTBAFQg+qAgxhcHAu",
-            "UHJvdG9jb2xiBnByb3RvMw=="));
+            "CEgAQgcKBXZhbHVlIgcKBUhlbGxvIgwKCkRpc2Nvbm5lY3QipQEKBENhbGwS",
+            "EwoLZnVuY3Rpb25faWQYASABKAUSEQoHaW50X3ZhbBgCIAEoBUgAEhEKB3N0",
+            "cl92YWwYAyABKAlIABISCghib29sX3ZhbBgEIAEoCEgAEhMKCWZsb2F0X3Zh",
+            "bBgFIAEoAkgAEhwKD3dha2VfYWZ0ZXJfc2VjcxgGIAEoBUgBiAEBQgcKBXZh",
+            "bHVlQhIKEF93YWtlX2FmdGVyX3NlY3MijAEKCERvd25saW5rEiEKBGNhbGwY",
+            "ASABKAsyES5wcm90b2NvbC52MS5DYWxsSAASIwoFaGVsbG8YAiABKAsyEi5w",
+            "cm90b2NvbC52MS5IZWxsb0gAEi0KCmRpc2Nvbm5lY3QYAyABKAsyFy5wcm90",
+            "b2NvbC52MS5EaXNjb25uZWN0SABCCQoHcGF5bG9hZCKSAQoGVXBsaW5rEiUK",
+            "BnJlcG9ydBgBIAEoCzITLnByb3RvY29sLnYxLlJlcG9ydEgAEjEKDGNhcGFi",
+            "aWxpdGllcxgCIAEoCzIZLnByb3RvY29sLnYxLkNhcGFiaWxpdGllc0gAEiMK",
+            "BWhlbGxvGAMgASgLMhIucHJvdG9jb2wudjEuSGVsbG9IAEIJCgdwYXlsb2Fk",
+            "KroGCglWYWx1ZVR5cGUSGgoWVkFMVUVfVFlQRV9VTlNQRUNJRklFRBAAEhYK",
+            "ElZBTFVFX1RZUEVfTlVNRVJJQxABEhMKD1ZBTFVFX1RZUEVfVEVYVBACEhMK",
+            "D1ZBTFVFX1RZUEVfQk9PTBADEhoKFlZBTFVFX1RZUEVfVEVNUEVSQVRVUkUQ",
+            "BBIXChNWQUxVRV9UWVBFX1BSRVNTVVJFEAUSGAoUVkFMVUVfVFlQRV9GUkVR",
+            "VUVOQ1kQBhIXChNWQUxVRV9UWVBFX01PSVNUVVJFEAcSFQoRVkFMVUVfVFlQ",
+            "RV9VUFRJTUUQCBITCg9WQUxVRV9UWVBFX0FSRUEQCRIXChNWQUxVRV9UWVBF",
+            "X0RJU1RBTkNFEAoSFwoTVkFMVUVfVFlQRV9EVVJBVElPThALEhoKFlZBTFVF",
+            "X1RZUEVfSUxMVU1JTkFOQ0UQDBIUChBWQUxVRV9UWVBFX1dBVEVSEA0SFQoR",
+            "VkFMVUVfVFlQRV9XRUlHSFQQDhISCg5WQUxVRV9UWVBFX0FRSRAPEhIKDlZB",
+            "TFVFX1RZUEVfQ08yEBASEgoOVkFMVUVfVFlQRV9QTTEQERITCg9WQUxVRV9U",
+            "WVBFX1BNMjUQEhISCg5WQUxVRV9UWVBFX1BNNBATEhMKD1ZBTFVFX1RZUEVf",
+            "UE0xMBAUEhcKE1ZBTFVFX1RZUEVfSFVNSURJVFkQFRIZChVWQUxVRV9UWVBF",
+            "X1dJTkRfU1BFRUQQFhIWChJWQUxVRV9UWVBFX0JBVFRFUlkQFxIVChFWQUxV",
+            "RV9UWVBFX0VORVJHWRAYEhYKElZBTFVFX1RZUEVfVk9MVEFHRRAZEhYKElZB",
+            "TFVFX1RZUEVfQ1VSUkVOVBAaEhgKFFZBTFVFX1RZUEVfREFUQV9SQVRFEBsS",
+            "GAoUVkFMVUVfVFlQRV9EQVRBX1NJWkUQHBIeChpWQUxVRV9UWVBFX1NJR05B",
+            "TF9TVFJFTkdUSBAdEhEKDVZBTFVFX1RZUEVfUEgQHhIYChRWQUxVRV9UWVBF",
+            "X1BPVEFTU0lVTRAfEhkKFVZBTFVFX1RZUEVfUEhPU1BIT1JVUxAgEhcKE1ZB",
+            "TFVFX1RZUEVfTklUUk9HRU4QISqmAQoLRnVuY0FyZ1R5cGUSHQoZRlVOQ19B",
+            "UkdfVFlQRV9VTlNQRUNJRklFRBAAEhYKEkZVTkNfQVJHX1RZUEVfVk9JRBAB",
+            "EhUKEUZVTkNfQVJHX1RZUEVfSU5UEAISFwoTRlVOQ19BUkdfVFlQRV9GTE9B",
+            "VBADEhgKFEZVTkNfQVJHX1RZUEVfU1RSSU5HEAQSFgoSRlVOQ19BUkdfVFlQ",
+            "RV9CT09MEAVCD6oCDExvcmlzLk1vZGVsc2IGcHJvdG8z"));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { },
-          new pbr::GeneratedClrTypeInfo(new[] {typeof(global::Loris.Protocol.ValueType), typeof(global::Loris.Protocol.FuncArgType), }, null, new pbr::GeneratedClrTypeInfo[] {
-            new pbr::GeneratedClrTypeInfo(typeof(global::Loris.Protocol.Sensor), global::Loris.Protocol.Sensor.Parser, new[]{ "Id", "Name", "Description", "ValueType", "Unit" }, new[]{ "Unit" }, null, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::Loris.Protocol.Function), global::Loris.Protocol.Function.Parser, new[]{ "Id", "Name", "Description", "ArgType" }, null, null, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::Loris.Protocol.Capabilities), global::Loris.Protocol.Capabilities.Parser, new[]{ "DeviceName", "Sensors", "Functions" }, null, null, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::Loris.Protocol.Report), global::Loris.Protocol.Report.Parser, new[]{ "SensorId", "IntVal", "FloatVal", "StrVal", "BoolVal" }, new[]{ "Value" }, null, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::Loris.Protocol.Hello), global::Loris.Protocol.Hello.Parser, null, null, null, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::Loris.Protocol.Call), global::Loris.Protocol.Call.Parser, new[]{ "FunctionId", "IntVal", "StrVal", "BoolVal", "FloatVal", "WakeAfterSecs" }, new[]{ "Value", "WakeAfterSecs" }, null, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::Loris.Protocol.Downlink), global::Loris.Protocol.Downlink.Parser, new[]{ "Call", "Hello" }, new[]{ "Payload" }, null, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::Loris.Protocol.Uplink), global::Loris.Protocol.Uplink.Parser, new[]{ "Report", "Capabilities", "Hello" }, new[]{ "Payload" }, null, null, null)
+          new pbr::GeneratedClrTypeInfo(new[] {typeof(global::Loris.Models.ValueType), typeof(global::Loris.Models.FuncArgType), }, null, new pbr::GeneratedClrTypeInfo[] {
+            new pbr::GeneratedClrTypeInfo(typeof(global::Loris.Models.Sensor), global::Loris.Models.Sensor.Parser, new[]{ "Id", "Name", "Description", "ValueType", "Unit" }, new[]{ "Unit" }, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Loris.Models.Function), global::Loris.Models.Function.Parser, new[]{ "Id", "Name", "Description", "ArgType" }, null, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Loris.Models.Capabilities), global::Loris.Models.Capabilities.Parser, new[]{ "DeviceName", "Sensors", "Functions" }, null, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Loris.Models.Report), global::Loris.Models.Report.Parser, new[]{ "SensorId", "IntVal", "FloatVal", "StrVal", "BoolVal" }, new[]{ "Value" }, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Loris.Models.Hello), global::Loris.Models.Hello.Parser, null, null, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Loris.Models.Disconnect), global::Loris.Models.Disconnect.Parser, null, null, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Loris.Models.Call), global::Loris.Models.Call.Parser, new[]{ "FunctionId", "IntVal", "StrVal", "BoolVal", "FloatVal", "WakeAfterSecs" }, new[]{ "Value", "WakeAfterSecs" }, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Loris.Models.Downlink), global::Loris.Models.Downlink.Parser, new[]{ "Call", "Hello", "Disconnect" }, new[]{ "Payload" }, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Loris.Models.Uplink), global::Loris.Models.Uplink.Parser, new[]{ "Report", "Capabilities", "Hello" }, new[]{ "Payload" }, null, null, null)
           }));
     }
     #endregion
@@ -170,7 +172,7 @@ namespace Loris.Protocol {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::Loris.Protocol.ProtocolReflection.Descriptor.MessageTypes[0]; }
+      get { return global::Loris.Models.ProtocolReflection.Descriptor.MessageTypes[0]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -242,10 +244,10 @@ namespace Loris.Protocol {
 
     /// <summary>Field number for the "value_type" field.</summary>
     public const int ValueTypeFieldNumber = 4;
-    private global::Loris.Protocol.ValueType valueType_ = global::Loris.Protocol.ValueType.Unspecified;
+    private global::Loris.Models.ValueType valueType_ = global::Loris.Models.ValueType.Unspecified;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public global::Loris.Protocol.ValueType ValueType {
+    public global::Loris.Models.ValueType ValueType {
       get { return valueType_; }
       set {
         valueType_ = value;
@@ -308,7 +310,7 @@ namespace Loris.Protocol {
       if (Id != 0) hash ^= Id.GetHashCode();
       if (Name.Length != 0) hash ^= Name.GetHashCode();
       if (Description.Length != 0) hash ^= Description.GetHashCode();
-      if (ValueType != global::Loris.Protocol.ValueType.Unspecified) hash ^= ValueType.GetHashCode();
+      if (ValueType != global::Loris.Models.ValueType.Unspecified) hash ^= ValueType.GetHashCode();
       if (HasUnit) hash ^= Unit.GetHashCode();
       if (_unknownFields != null) {
         hash ^= _unknownFields.GetHashCode();
@@ -340,7 +342,7 @@ namespace Loris.Protocol {
         output.WriteRawTag(26);
         output.WriteString(Description);
       }
-      if (ValueType != global::app.Protocol.ValueType.Unspecified) {
+      if (ValueType != global::Loris.Models.ValueType.Unspecified) {
         output.WriteRawTag(32);
         output.WriteEnum((int) ValueType);
       }
@@ -370,7 +372,7 @@ namespace Loris.Protocol {
         output.WriteRawTag(26);
         output.WriteString(Description);
       }
-      if (ValueType != global::Loris.Protocol.ValueType.Unspecified) {
+      if (ValueType != global::Loris.Models.ValueType.Unspecified) {
         output.WriteRawTag(32);
         output.WriteEnum((int) ValueType);
       }
@@ -397,7 +399,7 @@ namespace Loris.Protocol {
       if (Description.Length != 0) {
         size += 1 + pb::CodedOutputStream.ComputeStringSize(Description);
       }
-      if (ValueType != global::Loris.Protocol.ValueType.Unspecified) {
+      if (ValueType != global::Loris.Models.ValueType.Unspecified) {
         size += 1 + pb::CodedOutputStream.ComputeEnumSize((int) ValueType);
       }
       if (HasUnit) {
@@ -424,7 +426,7 @@ namespace Loris.Protocol {
       if (other.Description.Length != 0) {
         Description = other.Description;
       }
-      if (other.ValueType != global::Loris.Protocol.ValueType.Unspecified) {
+      if (other.ValueType != global::Loris.Models.ValueType.Unspecified) {
         ValueType = other.ValueType;
       }
       if (other.HasUnit) {
@@ -462,7 +464,7 @@ namespace Loris.Protocol {
             break;
           }
           case 32: {
-            ValueType = (global::app.Protocol.ValueType) input.ReadEnum();
+            ValueType = (global::Loris.Models.ValueType) input.ReadEnum();
             break;
           }
           case 42: {
@@ -501,7 +503,7 @@ namespace Loris.Protocol {
             break;
           }
           case 32: {
-            ValueType = (global::Loris.Protocol.ValueType) input.ReadEnum();
+            ValueType = (global::Loris.Models.ValueType) input.ReadEnum();
             break;
           }
           case 42: {
@@ -530,7 +532,7 @@ namespace Loris.Protocol {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::Loris.Protocol.ProtocolReflection.Descriptor.MessageTypes[1]; }
+      get { return global::Loris.Models.ProtocolReflection.Descriptor.MessageTypes[1]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -601,10 +603,10 @@ namespace Loris.Protocol {
 
     /// <summary>Field number for the "arg_type" field.</summary>
     public const int ArgTypeFieldNumber = 4;
-    private global::Loris.Protocol.FuncArgType argType_ = global::Loris.Protocol.FuncArgType.Unspecified;
+    private global::Loris.Models.FuncArgType argType_ = global::Loris.Models.FuncArgType.Unspecified;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public global::Loris.Protocol.FuncArgType ArgType {
+    public global::Loris.Models.FuncArgType ArgType {
       get { return argType_; }
       set {
         argType_ = value;
@@ -640,7 +642,7 @@ namespace Loris.Protocol {
       if (Id != 0) hash ^= Id.GetHashCode();
       if (Name.Length != 0) hash ^= Name.GetHashCode();
       if (Description.Length != 0) hash ^= Description.GetHashCode();
-      if (ArgType != global::Loris.Protocol.FuncArgType.Unspecified) hash ^= ArgType.GetHashCode();
+      if (ArgType != global::Loris.Models.FuncArgType.Unspecified) hash ^= ArgType.GetHashCode();
       if (_unknownFields != null) {
         hash ^= _unknownFields.GetHashCode();
       }
@@ -671,7 +673,7 @@ namespace Loris.Protocol {
         output.WriteRawTag(26);
         output.WriteString(Description);
       }
-      if (ArgType != global::app.Protocol.FuncArgType.Unspecified) {
+      if (ArgType != global::Loris.Models.FuncArgType.Unspecified) {
         output.WriteRawTag(32);
         output.WriteEnum((int) ArgType);
       }
@@ -697,7 +699,7 @@ namespace Loris.Protocol {
         output.WriteRawTag(26);
         output.WriteString(Description);
       }
-      if (ArgType != global::Loris.Protocol.FuncArgType.Unspecified) {
+      if (ArgType != global::Loris.Models.FuncArgType.Unspecified) {
         output.WriteRawTag(32);
         output.WriteEnum((int) ArgType);
       }
@@ -720,7 +722,7 @@ namespace Loris.Protocol {
       if (Description.Length != 0) {
         size += 1 + pb::CodedOutputStream.ComputeStringSize(Description);
       }
-      if (ArgType != global::Loris.Protocol.FuncArgType.Unspecified) {
+      if (ArgType != global::Loris.Models.FuncArgType.Unspecified) {
         size += 1 + pb::CodedOutputStream.ComputeEnumSize((int) ArgType);
       }
       if (_unknownFields != null) {
@@ -744,7 +746,7 @@ namespace Loris.Protocol {
       if (other.Description.Length != 0) {
         Description = other.Description;
       }
-      if (other.ArgType != global::Loris.Protocol.FuncArgType.Unspecified) {
+      if (other.ArgType != global::Loris.Models.FuncArgType.Unspecified) {
         ArgType = other.ArgType;
       }
       _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
@@ -779,7 +781,7 @@ namespace Loris.Protocol {
             break;
           }
           case 32: {
-            ArgType = (global::app.Protocol.FuncArgType) input.ReadEnum();
+            ArgType = (global::Loris.Models.FuncArgType) input.ReadEnum();
             break;
           }
         }
@@ -814,7 +816,7 @@ namespace Loris.Protocol {
             break;
           }
           case 32: {
-            ArgType = (global::Loris.Protocol.FuncArgType) input.ReadEnum();
+            ArgType = (global::Loris.Models.FuncArgType) input.ReadEnum();
             break;
           }
         }
@@ -839,7 +841,7 @@ namespace Loris.Protocol {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::Loris.Protocol.ProtocolReflection.Descriptor.MessageTypes[2]; }
+      get { return global::Loris.Models.ProtocolReflection.Descriptor.MessageTypes[2]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -885,23 +887,23 @@ namespace Loris.Protocol {
 
     /// <summary>Field number for the "sensors" field.</summary>
     public const int SensorsFieldNumber = 2;
-    private static readonly pb::FieldCodec<global::Loris.Protocol.Sensor> _repeated_sensors_codec
-        = pb::FieldCodec.ForMessage(18, global::Loris.Protocol.Sensor.Parser);
-    private readonly pbc::RepeatedField<global::Loris.Protocol.Sensor> sensors_ = new pbc::RepeatedField<global::Loris.Protocol.Sensor>();
+    private static readonly pb::FieldCodec<global::Loris.Models.Sensor> _repeated_sensors_codec
+        = pb::FieldCodec.ForMessage(18, global::Loris.Models.Sensor.Parser);
+    private readonly pbc::RepeatedField<global::Loris.Models.Sensor> sensors_ = new pbc::RepeatedField<global::Loris.Models.Sensor>();
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public pbc::RepeatedField<global::Loris.Protocol.Sensor> Sensors {
+    public pbc::RepeatedField<global::Loris.Models.Sensor> Sensors {
       get { return sensors_; }
     }
 
     /// <summary>Field number for the "functions" field.</summary>
     public const int FunctionsFieldNumber = 3;
-    private static readonly pb::FieldCodec<global::Loris.Protocol.Function> _repeated_functions_codec
-        = pb::FieldCodec.ForMessage(26, global::Loris.Protocol.Function.Parser);
-    private readonly pbc::RepeatedField<global::Loris.Protocol.Function> functions_ = new pbc::RepeatedField<global::Loris.Protocol.Function>();
+    private static readonly pb::FieldCodec<global::Loris.Models.Function> _repeated_functions_codec
+        = pb::FieldCodec.ForMessage(26, global::Loris.Models.Function.Parser);
+    private readonly pbc::RepeatedField<global::Loris.Models.Function> functions_ = new pbc::RepeatedField<global::Loris.Models.Function>();
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public pbc::RepeatedField<global::Loris.Protocol.Function> Functions {
+    public pbc::RepeatedField<global::Loris.Models.Function> Functions {
       get { return functions_; }
     }
 
@@ -1089,7 +1091,7 @@ namespace Loris.Protocol {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::Loris.Protocol.ProtocolReflection.Descriptor.MessageTypes[3]; }
+      get { return global::Loris.Models.ProtocolReflection.Descriptor.MessageTypes[3]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -1530,7 +1532,7 @@ namespace Loris.Protocol {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::Loris.Protocol.ProtocolReflection.Descriptor.MessageTypes[4]; }
+      get { return global::Loris.Models.ProtocolReflection.Descriptor.MessageTypes[4]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -1677,6 +1679,167 @@ namespace Loris.Protocol {
   }
 
   [global::System.Diagnostics.DebuggerDisplayAttribute("{ToString(),nq}")]
+  public sealed partial class Disconnect : pb::IMessage<Disconnect>
+  #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+      , pb::IBufferMessage
+  #endif
+  {
+    private static readonly pb::MessageParser<Disconnect> _parser = new pb::MessageParser<Disconnect>(() => new Disconnect());
+    private pb::UnknownFieldSet _unknownFields;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public static pb::MessageParser<Disconnect> Parser { get { return _parser; } }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public static pbr::MessageDescriptor Descriptor {
+      get { return global::Loris.Models.ProtocolReflection.Descriptor.MessageTypes[5]; }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    pbr::MessageDescriptor pb::IMessage.Descriptor {
+      get { return Descriptor; }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public Disconnect() {
+      OnConstruction();
+    }
+
+    partial void OnConstruction();
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public Disconnect(Disconnect other) : this() {
+      _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public Disconnect Clone() {
+      return new Disconnect(this);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public override bool Equals(object other) {
+      return Equals(other as Disconnect);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool Equals(Disconnect other) {
+      if (ReferenceEquals(other, null)) {
+        return false;
+      }
+      if (ReferenceEquals(other, this)) {
+        return true;
+      }
+      return Equals(_unknownFields, other._unknownFields);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public override int GetHashCode() {
+      int hash = 1;
+      if (_unknownFields != null) {
+        hash ^= _unknownFields.GetHashCode();
+      }
+      return hash;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public override string ToString() {
+      return pb::JsonFormatter.ToDiagnosticString(this);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void WriteTo(pb::CodedOutputStream output) {
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+      output.WriteRawMessage(this);
+    #else
+      if (_unknownFields != null) {
+        _unknownFields.WriteTo(output);
+      }
+    #endif
+    }
+
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    void pb::IBufferMessage.InternalWriteTo(ref pb::WriteContext output) {
+      if (_unknownFields != null) {
+        _unknownFields.WriteTo(ref output);
+      }
+    }
+    #endif
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public int CalculateSize() {
+      int size = 0;
+      if (_unknownFields != null) {
+        size += _unknownFields.CalculateSize();
+      }
+      return size;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void MergeFrom(Disconnect other) {
+      if (other == null) {
+        return;
+      }
+      _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void MergeFrom(pb::CodedInputStream input) {
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+      input.ReadRawMessage(this);
+    #else
+      uint tag;
+      while ((tag = input.ReadTag()) != 0) {
+      if ((tag & 7) == 4) {
+        // Abort on any end group tag.
+        return;
+      }
+      switch(tag) {
+          default:
+            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
+            break;
+        }
+      }
+    #endif
+    }
+
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    void pb::IBufferMessage.InternalMergeFrom(ref pb::ParseContext input) {
+      uint tag;
+      while ((tag = input.ReadTag()) != 0) {
+      if ((tag & 7) == 4) {
+        // Abort on any end group tag.
+        return;
+      }
+      switch(tag) {
+          default:
+            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
+            break;
+        }
+      }
+    }
+    #endif
+
+  }
+
+  [global::System.Diagnostics.DebuggerDisplayAttribute("{ToString(),nq}")]
   public sealed partial class Call : pb::IMessage<Call>
   #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
       , pb::IBufferMessage
@@ -1692,7 +1855,7 @@ namespace Loris.Protocol {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::Loris.Protocol.ProtocolReflection.Descriptor.MessageTypes[5]; }
+      get { return global::Loris.Models.ProtocolReflection.Descriptor.MessageTypes[6]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -2186,7 +2349,7 @@ namespace Loris.Protocol {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::Loris.Protocol.ProtocolReflection.Descriptor.MessageTypes[6]; }
+      get { return global::Loris.Models.ProtocolReflection.Descriptor.MessageTypes[7]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -2213,6 +2376,9 @@ namespace Loris.Protocol {
         case PayloadOneofCase.Hello:
           Hello = other.Hello.Clone();
           break;
+        case PayloadOneofCase.Disconnect:
+          Disconnect = other.Disconnect.Clone();
+          break;
       }
 
       _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
@@ -2228,8 +2394,8 @@ namespace Loris.Protocol {
     public const int CallFieldNumber = 1;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public global::Loris.Protocol.Call Call {
-      get { return payloadCase_ == PayloadOneofCase.Call ? (global::Loris.Protocol.Call) payload_ : null; }
+    public global::Loris.Models.Call Call {
+      get { return payloadCase_ == PayloadOneofCase.Call ? (global::Loris.Models.Call) payload_ : null; }
       set {
         payload_ = value;
         payloadCase_ = value == null ? PayloadOneofCase.None : PayloadOneofCase.Call;
@@ -2240,11 +2406,23 @@ namespace Loris.Protocol {
     public const int HelloFieldNumber = 2;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public global::Loris.Protocol.Hello Hello {
-      get { return payloadCase_ == PayloadOneofCase.Hello ? (global::Loris.Protocol.Hello) payload_ : null; }
+    public global::Loris.Models.Hello Hello {
+      get { return payloadCase_ == PayloadOneofCase.Hello ? (global::Loris.Models.Hello) payload_ : null; }
       set {
         payload_ = value;
         payloadCase_ = value == null ? PayloadOneofCase.None : PayloadOneofCase.Hello;
+      }
+    }
+
+    /// <summary>Field number for the "disconnect" field.</summary>
+    public const int DisconnectFieldNumber = 3;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public global::Loris.Models.Disconnect Disconnect {
+      get { return payloadCase_ == PayloadOneofCase.Disconnect ? (global::Loris.Models.Disconnect) payload_ : null; }
+      set {
+        payload_ = value;
+        payloadCase_ = value == null ? PayloadOneofCase.None : PayloadOneofCase.Disconnect;
       }
     }
 
@@ -2254,6 +2432,7 @@ namespace Loris.Protocol {
       None = 0,
       Call = 1,
       Hello = 2,
+      Disconnect = 3,
     }
     private PayloadOneofCase payloadCase_ = PayloadOneofCase.None;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -2286,6 +2465,7 @@ namespace Loris.Protocol {
       }
       if (!object.Equals(Call, other.Call)) return false;
       if (!object.Equals(Hello, other.Hello)) return false;
+      if (!object.Equals(Disconnect, other.Disconnect)) return false;
       if (PayloadCase != other.PayloadCase) return false;
       return Equals(_unknownFields, other._unknownFields);
     }
@@ -2296,6 +2476,7 @@ namespace Loris.Protocol {
       int hash = 1;
       if (payloadCase_ == PayloadOneofCase.Call) hash ^= Call.GetHashCode();
       if (payloadCase_ == PayloadOneofCase.Hello) hash ^= Hello.GetHashCode();
+      if (payloadCase_ == PayloadOneofCase.Disconnect) hash ^= Disconnect.GetHashCode();
       hash ^= (int) payloadCase_;
       if (_unknownFields != null) {
         hash ^= _unknownFields.GetHashCode();
@@ -2323,6 +2504,10 @@ namespace Loris.Protocol {
         output.WriteRawTag(18);
         output.WriteMessage(Hello);
       }
+      if (payloadCase_ == PayloadOneofCase.Disconnect) {
+        output.WriteRawTag(26);
+        output.WriteMessage(Disconnect);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(output);
       }
@@ -2341,6 +2526,10 @@ namespace Loris.Protocol {
         output.WriteRawTag(18);
         output.WriteMessage(Hello);
       }
+      if (payloadCase_ == PayloadOneofCase.Disconnect) {
+        output.WriteRawTag(26);
+        output.WriteMessage(Disconnect);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(ref output);
       }
@@ -2357,6 +2546,9 @@ namespace Loris.Protocol {
       if (payloadCase_ == PayloadOneofCase.Hello) {
         size += 1 + pb::CodedOutputStream.ComputeMessageSize(Hello);
       }
+      if (payloadCase_ == PayloadOneofCase.Disconnect) {
+        size += 1 + pb::CodedOutputStream.ComputeMessageSize(Disconnect);
+      }
       if (_unknownFields != null) {
         size += _unknownFields.CalculateSize();
       }
@@ -2372,15 +2564,21 @@ namespace Loris.Protocol {
       switch (other.PayloadCase) {
         case PayloadOneofCase.Call:
           if (Call == null) {
-            Call = new global::Loris.Protocol.Call();
+            Call = new global::Loris.Models.Call();
           }
           Call.MergeFrom(other.Call);
           break;
         case PayloadOneofCase.Hello:
           if (Hello == null) {
-            Hello = new global::Loris.Protocol.Hello();
+            Hello = new global::Loris.Models.Hello();
           }
           Hello.MergeFrom(other.Hello);
+          break;
+        case PayloadOneofCase.Disconnect:
+          if (Disconnect == null) {
+            Disconnect = new global::Loris.Models.Disconnect();
+          }
+          Disconnect.MergeFrom(other.Disconnect);
           break;
       }
 
@@ -2404,7 +2602,7 @@ namespace Loris.Protocol {
             _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
             break;
           case 10: {
-            global::app.Protocol.Call subBuilder = new global::app.Protocol.Call();
+            global::Loris.Models.Call subBuilder = new global::Loris.Models.Call();
             if (payloadCase_ == PayloadOneofCase.Call) {
               subBuilder.MergeFrom(Call);
             }
@@ -2413,12 +2611,21 @@ namespace Loris.Protocol {
             break;
           }
           case 18: {
-            global::app.Protocol.Hello subBuilder = new global::app.Protocol.Hello();
+            global::Loris.Models.Hello subBuilder = new global::Loris.Models.Hello();
             if (payloadCase_ == PayloadOneofCase.Hello) {
               subBuilder.MergeFrom(Hello);
             }
             input.ReadMessage(subBuilder);
             Hello = subBuilder;
+            break;
+          }
+          case 26: {
+            global::Loris.Models.Disconnect subBuilder = new global::Loris.Models.Disconnect();
+            if (payloadCase_ == PayloadOneofCase.Disconnect) {
+              subBuilder.MergeFrom(Disconnect);
+            }
+            input.ReadMessage(subBuilder);
+            Disconnect = subBuilder;
             break;
           }
         }
@@ -2441,7 +2648,7 @@ namespace Loris.Protocol {
             _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
             break;
           case 10: {
-            global::Loris.Protocol.Call subBuilder = new global::Loris.Protocol.Call();
+            global::Loris.Models.Call subBuilder = new global::Loris.Models.Call();
             if (payloadCase_ == PayloadOneofCase.Call) {
               subBuilder.MergeFrom(Call);
             }
@@ -2450,12 +2657,21 @@ namespace Loris.Protocol {
             break;
           }
           case 18: {
-            global::Loris.Protocol.Hello subBuilder = new global::Loris.Protocol.Hello();
+            global::Loris.Models.Hello subBuilder = new global::Loris.Models.Hello();
             if (payloadCase_ == PayloadOneofCase.Hello) {
               subBuilder.MergeFrom(Hello);
             }
             input.ReadMessage(subBuilder);
             Hello = subBuilder;
+            break;
+          }
+          case 26: {
+            global::Loris.Models.Disconnect subBuilder = new global::Loris.Models.Disconnect();
+            if (payloadCase_ == PayloadOneofCase.Disconnect) {
+              subBuilder.MergeFrom(Disconnect);
+            }
+            input.ReadMessage(subBuilder);
+            Disconnect = subBuilder;
             break;
           }
         }
@@ -2480,7 +2696,7 @@ namespace Loris.Protocol {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::Loris.Protocol.ProtocolReflection.Descriptor.MessageTypes[7]; }
+      get { return global::Loris.Models.ProtocolReflection.Descriptor.MessageTypes[8]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -2525,8 +2741,8 @@ namespace Loris.Protocol {
     public const int ReportFieldNumber = 1;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public global::Loris.Protocol.Report Report {
-      get { return payloadCase_ == PayloadOneofCase.Report ? (global::Loris.Protocol.Report) payload_ : null; }
+    public global::Loris.Models.Report Report {
+      get { return payloadCase_ == PayloadOneofCase.Report ? (global::Loris.Models.Report) payload_ : null; }
       set {
         payload_ = value;
         payloadCase_ = value == null ? PayloadOneofCase.None : PayloadOneofCase.Report;
@@ -2537,8 +2753,8 @@ namespace Loris.Protocol {
     public const int CapabilitiesFieldNumber = 2;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public global::Loris.Protocol.Capabilities Capabilities {
-      get { return payloadCase_ == PayloadOneofCase.Capabilities ? (global::Loris.Protocol.Capabilities) payload_ : null; }
+    public global::Loris.Models.Capabilities Capabilities {
+      get { return payloadCase_ == PayloadOneofCase.Capabilities ? (global::Loris.Models.Capabilities) payload_ : null; }
       set {
         payload_ = value;
         payloadCase_ = value == null ? PayloadOneofCase.None : PayloadOneofCase.Capabilities;
@@ -2549,8 +2765,8 @@ namespace Loris.Protocol {
     public const int HelloFieldNumber = 3;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public global::Loris.Protocol.Hello Hello {
-      get { return payloadCase_ == PayloadOneofCase.Hello ? (global::Loris.Protocol.Hello) payload_ : null; }
+    public global::Loris.Models.Hello Hello {
+      get { return payloadCase_ == PayloadOneofCase.Hello ? (global::Loris.Models.Hello) payload_ : null; }
       set {
         payload_ = value;
         payloadCase_ = value == null ? PayloadOneofCase.None : PayloadOneofCase.Hello;
@@ -2695,19 +2911,19 @@ namespace Loris.Protocol {
       switch (other.PayloadCase) {
         case PayloadOneofCase.Report:
           if (Report == null) {
-            Report = new global::Loris.Protocol.Report();
+            Report = new global::Loris.Models.Report();
           }
           Report.MergeFrom(other.Report);
           break;
         case PayloadOneofCase.Capabilities:
           if (Capabilities == null) {
-            Capabilities = new global::Loris.Protocol.Capabilities();
+            Capabilities = new global::Loris.Models.Capabilities();
           }
           Capabilities.MergeFrom(other.Capabilities);
           break;
         case PayloadOneofCase.Hello:
           if (Hello == null) {
-            Hello = new global::Loris.Protocol.Hello();
+            Hello = new global::Loris.Models.Hello();
           }
           Hello.MergeFrom(other.Hello);
           break;
@@ -2733,7 +2949,7 @@ namespace Loris.Protocol {
             _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
             break;
           case 10: {
-            global::app.Protocol.Report subBuilder = new global::app.Protocol.Report();
+            global::Loris.Models.Report subBuilder = new global::Loris.Models.Report();
             if (payloadCase_ == PayloadOneofCase.Report) {
               subBuilder.MergeFrom(Report);
             }
@@ -2742,7 +2958,7 @@ namespace Loris.Protocol {
             break;
           }
           case 18: {
-            global::app.Protocol.Capabilities subBuilder = new global::app.Protocol.Capabilities();
+            global::Loris.Models.Capabilities subBuilder = new global::Loris.Models.Capabilities();
             if (payloadCase_ == PayloadOneofCase.Capabilities) {
               subBuilder.MergeFrom(Capabilities);
             }
@@ -2751,7 +2967,7 @@ namespace Loris.Protocol {
             break;
           }
           case 26: {
-            global::app.Protocol.Hello subBuilder = new global::app.Protocol.Hello();
+            global::Loris.Models.Hello subBuilder = new global::Loris.Models.Hello();
             if (payloadCase_ == PayloadOneofCase.Hello) {
               subBuilder.MergeFrom(Hello);
             }
@@ -2779,7 +2995,7 @@ namespace Loris.Protocol {
             _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
             break;
           case 10: {
-            global::Loris.Protocol.Report subBuilder = new global::Loris.Protocol.Report();
+            global::Loris.Models.Report subBuilder = new global::Loris.Models.Report();
             if (payloadCase_ == PayloadOneofCase.Report) {
               subBuilder.MergeFrom(Report);
             }
@@ -2788,7 +3004,7 @@ namespace Loris.Protocol {
             break;
           }
           case 18: {
-            global::Loris.Protocol.Capabilities subBuilder = new global::Loris.Protocol.Capabilities();
+            global::Loris.Models.Capabilities subBuilder = new global::Loris.Models.Capabilities();
             if (payloadCase_ == PayloadOneofCase.Capabilities) {
               subBuilder.MergeFrom(Capabilities);
             }
@@ -2797,7 +3013,7 @@ namespace Loris.Protocol {
             break;
           }
           case 26: {
-            global::Loris.Protocol.Hello subBuilder = new global::Loris.Protocol.Hello();
+            global::Loris.Models.Hello subBuilder = new global::Loris.Models.Hello();
             if (payloadCase_ == PayloadOneofCase.Hello) {
               subBuilder.MergeFrom(Hello);
             }
