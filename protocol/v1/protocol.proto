@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package protocol.v1;
 
-option csharp_namespace = "Loris.Models";
+option csharp_namespace = "Loris.Protocol";
 
 enum ValueType {
   // General
