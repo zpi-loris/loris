@@ -2,17 +2,25 @@ using System.Globalization;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Threading.Channels;
+using Chirpstack.Integration;
 // using Chirpstack.Integration;
 using Google.Protobuf;
+using Loris.Messages;
 using Loris.Protocol;
+using Loris.Types;
 using MQTTnet;
 using MQTTnet.Diagnostics.Logger;
 
 namespace Loris.MQTT.Client;
 
-public class LoraWanServerMqttClient(ILogger<LoraWanServerMqttClient> logger) : BackgroundService
+public class LoraWanServerMqttClient(
+    ILogger<LoraWanServerMqttClient> logger,
+    ChannelWriter<IChirpstackMessage> channelWriter
+) : BackgroundService
 {
     private readonly ILogger<LoraWanServerMqttClient> _logger = logger;
+    private readonly ChannelWriter<IChirpstackMessage> _channelWriter = channelWriter;
 
     // TODO: use environmental variables
     private readonly string _host = "192.168.10.111";
@@ -118,23 +126,26 @@ public class LoraWanServerMqttClient(ILogger<LoraWanServerMqttClient> logger) : 
 
     private void SetupMessageHandling(IMqttClient mqttClient)
     {
-        mqttClient.ApplicationMessageReceivedAsync += message =>
+        mqttClient.ApplicationMessageReceivedAsync += async message =>
         {
             try
             {
-                var json = JsonDocument.Parse(message.ApplicationMessage.Payload);
-                var uplinkEvent = JsonSerializer.Deserialize(
-                    json,
-                    SourceGenerationContext.Default.UplinkEventDto
-                );
-                // var UplinkEventBytes = message.ApplicationMessage.Payload;
-                // var uplinkEventJson = UTF8Encoding.UTF8.GetString(UplinkEventBytes);
-                // var uplinkEvent = _jsonParser.Parse<UplinkEvent>(uplinkEventJson);
-                var uplinkBytes = uplinkEvent.Data;
-                var uplinkJson = Encoding.UTF8.GetString(uplinkBytes);
-                var uplink = _jsonParser.Parse<Uplink>(uplinkJson);
+                var UplinkEventBytes = message.ApplicationMessage.Payload;
+                var uplinkEventJson = Encoding.UTF8.GetString(UplinkEventBytes);
+                var uplinkEvent = _jsonParser.Parse<UplinkEvent>(uplinkEventJson);
+                var uplinkBytes = uplinkEvent.Data.ToArray();
+                var uplink = Uplink.Parser.ParseFrom(uplinkBytes);
 
                 _logger.LogInformation("Uplink received on {topic}: {uplink}", _topic, uplink);
+
+                await _channelWriter.WriteAsync(
+                    new UplinkMessage
+                    {
+                        DevEUI = DevEui.Parse(uplinkEvent.DeviceInfo.DevEui),
+                        Payload = uplink,
+                        DateTime = uplinkEvent.Time.ToDateTime(),
+                    }
+                );
 
                 // TODO: parse, and push to channel
                 // _logger.LogInformation(
@@ -149,8 +160,6 @@ public class LoraWanServerMqttClient(ILogger<LoraWanServerMqttClient> logger) : 
                 Console.WriteLine(ex);
                 throw;
             }
-
-            return Task.CompletedTask;
         };
     }
 
@@ -167,55 +176,6 @@ public class LoraWanServerMqttClient(ILogger<LoraWanServerMqttClient> logger) : 
         _serviceConnected?.Dispose();
         _mrevent.Dispose();
     }
-}
-
-[JsonSourceGenerationOptions(WriteIndented = true)]
-[JsonSerializable(typeof(UplinkEventDto))]
-internal partial class SourceGenerationContext : JsonSerializerContext { }
-
-public record UplinkEventDto
-{
-    [JsonPropertyName("time")]
-    public DateTimeOffset Time { get; init; }
-
-    [JsonPropertyName("deviceInfo")]
-    public DeviceInfoDto DeviceInfo { get; init; } = default!;
-
-    [JsonPropertyName("devAddr")]
-    public string DevAddr { get; init; } = string.Empty;
-
-    /// <summary>
-    /// Base64 encoded payload
-    /// </summary>
-    [JsonPropertyName("data")]
-    public byte[] Data { get; init; } = [];
-}
-
-public record DeviceInfoDto
-{
-    [JsonPropertyName("tenantId")]
-    public Guid TenantId { get; init; }
-
-    [JsonPropertyName("tenantName")]
-    public string TenantName { get; init; } = string.Empty;
-
-    [JsonPropertyName("applicationId")]
-    public Guid ApplicationId { get; init; }
-
-    [JsonPropertyName("applicationName")]
-    public string ApplicationName { get; init; } = string.Empty;
-
-    [JsonPropertyName("deviceProfileId")]
-    public Guid DeviceProfileId { get; init; }
-
-    [JsonPropertyName("deviceProfileName")]
-    public string DeviceProfileName { get; init; } = string.Empty;
-
-    [JsonPropertyName("deviceName")]
-    public string DeviceName { get; init; } = string.Empty;
-
-    [JsonPropertyName("devEui")]
-    public string DevEui { get; init; } = string.Empty;
 }
 
 // sealed class MyLogger(ILogger<LoraWanServerMqttClient> logger) : IMqttNetLogger
