@@ -137,7 +137,7 @@ result_t decode_downlink(downlink_t *out, const char* buf_in, size_t buf_size) {
     return ERROR;
   };
 
-  out->payload_type = PROTOCOL_V1_DOWNLINK_CALL_TAG;
+  out->payload_type = pb_dl.which_payload;
   if (pb_dl.which_payload == PROTOCOL_V1_DOWNLINK_CALL_TAG) {
     out->payload.call.function_id = pb_dl.payload.call.function_id;
     out->payload.call.which_value = pb_dl.payload.call.which_value;
