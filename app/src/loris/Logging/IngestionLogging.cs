@@ -9,7 +9,7 @@ public static partial class IngestionLogging
         EventId = 1001,
         EventName = nameof(IntegrationUnreachable),
         Level = LogLevel.Warning,
-        Message = "Trying to connect to mqtt//{Host}:{Port}"
+        Message = "mqtt//{Host}:{Port} is unreachable"
     )]
     public static partial void IntegrationUnreachable(this ILogger logger, string host, int port);
 
