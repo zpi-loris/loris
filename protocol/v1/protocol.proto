@@ -75,8 +75,8 @@ message Function {
 
 message Capabilities {
   string device_name = 1 [(nanopb).callback_datatype = "str_t"];
-  repeated Sensor sensors = 2;
-  repeated Function functions = 3;
+  repeated Sensor sensors = 2 [(nanopb).callback_datatype = "sys_slist_t"];
+  repeated Function functions = 3 [(nanopb).callback_datatype = "sys_slist_t"];
 }
 
 message Report {

@@ -78,11 +78,11 @@ bool pb_callback_codec_str(pb_istream_t *istream, pb_ostream_t *ostream, const p
   return false;
 }
 
-bool pb_callback_encode_sensor_list(pb_ostream_t *ostream, const pb_field_t* field, void* const* arg) {
+bool pb_callback_encode_sensor_list(pb_ostream_t *ostream, const pb_field_t* field) {
   LOG_DBG("Encoding sensors\n");
 
   sys_snode_t* node;
-  sys_slist_t* list = *(sys_slist_t**)arg;
+  sys_slist_t* list = *(sys_slist_t**)field->pData;
 
   SYS_SLIST_FOR_EACH_NODE(list, node) {
     sensor_t* s;
@@ -109,15 +109,15 @@ bool pb_callback_encode_sensor_list(pb_ostream_t *ostream, const pb_field_t* fie
   return true;
 }
 
-bool pb_callback_decode_sensor_list(pb_istream_t *istream, const pb_field_t* field, void** arg) {
+bool pb_callback_decode_sensor_list(pb_istream_t *istream, const pb_field_t* field) {
   return false; // TODO
 }
 
-bool pb_callback_encode_function_list(pb_ostream_t *ostream, const pb_field_t* field, void* const* arg) {
+bool pb_callback_encode_function_list(pb_ostream_t *ostream, const pb_field_t* field) {
   LOG_DBG("Encoding functions\n");
 
   sys_snode_t* node;
-  sys_slist_t* list = *(sys_slist_t**)arg;
+  sys_slist_t* list = *(sys_slist_t**)field->pData;
 
   SYS_SLIST_FOR_EACH_NODE(list, node) {
     function_t* f;
@@ -139,7 +139,7 @@ bool pb_callback_encode_function_list(pb_ostream_t *ostream, const pb_field_t* f
   return true;
 }
 
-bool pb_callback_decode_function_list(pb_istream_t *istream, const pb_field_t* field, void** arg) {
+bool pb_callback_decode_function_list(pb_istream_t *istream, const pb_field_t* field) {
   return false; // TODO
 }
 
@@ -169,17 +169,38 @@ bool protocol_v1_Function_callback(pb_istream_t *istream, pb_ostream_t *ostream,
 
 bool protocol_v1_Capabilities_callback(pb_istream_t *istream, pb_ostream_t *ostream, const pb_field_t *field) {
   LOG_DBG("Capabilities msg callback called\n");
-  if (field->tag == PROTOCOL_V1_CAPABILITIES_SENSORS_TAG ||
-      field->tag == PROTOCOL_V1_CAPABILITIES_FUNCTIONS_TAG) {
-    return pb_default_field_callback(istream, ostream, field);
+  if (field->tag == PROTOCOL_V1_CAPABILITIES_SENSORS_TAG) {
+    if (ostream) {
+      LOG_DBG("Encoding sensors list\n");
+      return pb_callback_encode_sensor_list(ostream, field);
+    } else if (istream) {
+      LOG_DBG("Decoding sensors list\n");
+      return pb_callback_decode_sensor_list(istream, field);
+    } else {
+      LOG_WRN("both istream and ostream are NULL");
+      return false;
+    }
   }
 
-  if (field->tag != PROTOCOL_V1_CAPABILITIES_DEVICE_NAME_TAG) {
-    LOG_WRN("Unknown or invalid (field with no callback) field tag: %i\n", field->tag);
-    return false;
+  if (field->tag == PROTOCOL_V1_CAPABILITIES_FUNCTIONS_TAG) {
+    if (ostream) {
+      LOG_DBG("Encoding functions list\n");
+      return pb_callback_encode_function_list(ostream, field);
+    } else if (istream) {
+      LOG_DBG("Decoding functions list\n");
+      return pb_callback_decode_function_list(istream, field);
+    } else {
+      LOG_WRN("both istream and ostream are NULL");
+      return false;
+    }
   }
 
-  return pb_callback_codec_str(istream, ostream, field);
+  if (field->tag == PROTOCOL_V1_CAPABILITIES_DEVICE_NAME_TAG) {
+    return pb_callback_codec_str(istream, ostream, field);
+  }
+
+  LOG_WRN("Unknown or invalid (field with no callback) field tag: %i\n", field->tag);
+  return false;
 }
 
 bool protocol_v1_Report_callback(pb_istream_t *istream, pb_ostream_t *ostream, const pb_field_t *field) {
@@ -240,18 +261,8 @@ result_t encode_uplink(
     case UPLINK_PAYLOAD_TYPE_CAPABILITIES:
       str_borrow(&pb_ul.payload.capabilities.device_name, &ul->payload.capabilities.device_name);
 
-      // sensors
-      pb_ul.payload.capabilities.sensors.funcs.encode = &pb_callback_encode_sensor_list;
-
-      // NOTE: cast to void ptr to silence 'const qualifier discarded' warning,
-      // I want the function to take const uplink, but callback discards it,
-      // not sure what to do to ensure const in a different way
-      pb_ul.payload.capabilities.sensors.arg = (void*)&ul->payload.capabilities.sensors;
-
-      // functions
-      pb_ul.payload.capabilities.functions.funcs.encode = &pb_callback_encode_function_list;
-      // NOTE: same as above
-      pb_ul.payload.capabilities.functions.arg = (void*)&ul->payload.capabilities.functions;
+      pb_ul.payload.capabilities.sensors = ul->payload.capabilities.sensors;
+      pb_ul.payload.capabilities.functions = ul->payload.capabilities.functions;
       break;
     case UPLINK_PAYLOAD_TYPE_PING:
       pb_ul.payload.ping.type = (int)ul->payload.ping.type;
