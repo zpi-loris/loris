@@ -60,21 +60,21 @@ enum FuncArgType {
 
 message Sensor {
   int32 id = 1;
-  string name = 2;
-  string description = 3;
+  string name = 2 [(nanopb).callback_datatype = "str_t"];
+  string description = 3 [(nanopb).callback_datatype = "str_t"];
   ValueType value_type = 4;
-  optional string unit = 5;
+  optional string unit = 5 [(nanopb).callback_datatype = "str_t"];
 }
 
 message Function {
   int32 id = 1;
-  string name = 2;
-  string description = 3;
+  string name = 2 [(nanopb).callback_datatype = "str_t"];
+  string description = 3 [(nanopb).callback_datatype = "str_t"];
   FuncArgType arg_type = 4;
 }
 
 message Capabilities {
-  string device_name = 1;
+  string device_name = 1 [(nanopb).callback_datatype = "str_t"];
   repeated Sensor sensors = 2;
   repeated Function functions = 3;
 }
@@ -84,7 +84,7 @@ message Report {
   oneof value {
     int32 int_val = 2;
     float float_val = 3;
-    string str_val = 4;
+    string str_val = 4 [(nanopb).callback_datatype = "str_t"];
     bool bool_val = 5;
   }
 }
