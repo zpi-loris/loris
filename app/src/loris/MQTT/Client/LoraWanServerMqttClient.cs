@@ -96,7 +96,7 @@ public class LoraWanServerMqttClient(
 
                 await _mqttClient.SubscribeAsync(_mqttClientSubscribeOptions, linkedToken);
                 // lock thread
-                _mrevent.WaitOne();
+                _threadInControl.WaitOne();
             }
         }
         catch (MQTTnet.Exceptions.MqttCommunicationException)
@@ -122,15 +122,12 @@ public class LoraWanServerMqttClient(
         }
     }
 
-    private void SetupDisconnectedHandling()
+    private async Task HandleDisconnected(MqttClientDisconnectedEventArgs details)
     {
-        _mqttClient.DisconnectedAsync += async e =>
-        {
-            // drop active subscribtion
-            _serviceConnected?.Cancel();
+        // drop active subscribtion
+        _serviceConnected?.Cancel();
 
-            _threadInControl.Set();
-        };
+        _threadInControl.Set();
     }
 
     private async Task HandleMessage(
