@@ -1,9 +1,8 @@
 #ifndef LORIS_UPLINK_H
 #define LORIS_UPLINK_H
 
+#include "loris/models/capabilities.h"
 #include "loris/models/report.h"
-#include "loris/models/capabilities.h"
-#include "loris/models/capabilities.h"
 
 typedef enum up_ping_type {
   UP_PING_TYPE_UNSPECIFIED = 0,
@@ -11,7 +10,7 @@ typedef enum up_ping_type {
 } up_ping_type_t;
 
 typedef struct up_ping {
-   up_ping_type_t type;
+  up_ping_type_t type;
 } up_ping_t;
 
 typedef enum uplink_payload_type {

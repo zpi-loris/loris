@@ -26,7 +26,7 @@ result_t add_sensor(sys_slist_t *sensor_list, const char *name,
                     int32_t wake_interval_sec);
 
 result_t add_function(sys_slist_t *function_list, char *name, char *description,
-                      func_arg_type_t, call_func_u *call_function,
+                      func_arg_type_t, result_t (*call_function)(void *),
                       int32_t wake_interval_sec);
 
 result_t create_capabilities(capabilities_t *out, const char *device_name,

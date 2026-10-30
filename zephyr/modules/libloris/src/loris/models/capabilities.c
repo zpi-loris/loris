@@ -76,7 +76,8 @@ result_t add_sensor(sys_slist_t *sensor_list, const char *name,
 }
 
 result_t add_function(sys_slist_t *function_list, char *name, char *description,
-                      func_arg_type_t func_arg_type, call_func_u *call_func,
+                      func_arg_type_t func_arg_type,
+                      result_t (*call_func)(void *),
                       int32_t wake_interval_sec) {
   if (function_list == NULL || call_func == NULL) {
     return ERROR;
@@ -96,12 +97,12 @@ result_t add_function(sys_slist_t *function_list, char *name, char *description,
                                       .name = s_name,
                                       .description = s_desc,
                                       .arg_type = func_arg_type,
-                                      .call_function = *call_func,
+                                      .call_function = call_func,
                                       .wake_interval_sec = wake_interval_sec,
                                       .node = {.next = NULL}};
 
-  sys_slist_append(function_list, &func_buffer[sensor_id].node);
+  sys_slist_append(function_list, &func_buffer[func_id].node);
 
-  sensor_id++;
+  func_id++;
   return OK;
 }
