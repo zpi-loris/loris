@@ -33,14 +33,15 @@ public class LoraWanServerMqttClient(
     private readonly string _topic = "application/+/device/+/event/up";
 
     private readonly MqttClientFactory _mqttFactory = new();
-#pragma warning disable CS8618
+
+#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor.
     private IMqttClient _mqttClient;
     private MqttClientOptions _mqttClientOptions;
     private MqttClientSubscribeOptions _mqttClientSubscribeOptions;
-#pragma warning restore CS8618
+#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor.
 
     // TODO describe threading
-    private readonly ManualResetEvent _mrevent = new(false);
+    private readonly ManualResetEvent _threadInControl = new(false);
     private CancellationTokenSource? _serviceConnected;
 
     public override Task StartAsync(CancellationToken cancellationToken)
@@ -55,8 +56,9 @@ public class LoraWanServerMqttClient(
             .WithTopicFilter(t => t.WithTopic(_topic))
             .Build();
 
-        SetupDisconnectedHandling();
-        SetupMessageHandling(cancellationToken);
+        _mqttClient.DisconnectedAsync += HandleDisconnected;
+        _mqttClient.ApplicationMessageReceivedAsync += message =>
+            HandleMessage(message, cancellationToken);
 
         return base.StartAsync(cancellationToken);
     }
@@ -72,7 +74,7 @@ public class LoraWanServerMqttClient(
                 stoppingToken
             );
 
-            _mrevent.Reset();
+            _threadInControl.Reset();
 
             await ConnectAndSubscribe(linkedCts.Token, stoppingToken);
         }
@@ -127,43 +129,44 @@ public class LoraWanServerMqttClient(
             // drop active subscribtion
             _serviceConnected?.Cancel();
 
-            // resume connection loop by releasing thread lock
-            _mrevent.Set();
+            _threadInControl.Set();
         };
     }
 
-    private void SetupMessageHandling(CancellationToken stoppingToken)
+    private async Task HandleMessage(
+        MqttApplicationMessageReceivedEventArgs message,
+        CancellationToken stoppingToken
+    )
     {
-        _mqttClient.ApplicationMessageReceivedAsync += async message =>
+        var topic = message.ApplicationMessage.Topic;
+        var mqttPayload = message.ApplicationMessage.Payload;
+
+        // should always succeed
+        string mqttJsonPayload;
+        try
         {
-            var topic = message.ApplicationMessage.Topic;
-            var mqttPayload = message.ApplicationMessage.Payload;
+            mqttJsonPayload = mqttPayload.IsSingleSegment
+                ? Encoding.UTF8.GetString(mqttPayload.FirstSpan)
+                : Encoding.UTF8.GetString(mqttPayload.ToArray());
+        }
+        catch (DecoderFallbackException ex)
+        {
+            _logger.PayloadUtf8DecodingFailed(ex, mqttPayload.Length);
+            return;
+        }
 
-            // should always succeed
-            string mqttJsonPayload;
-            try
-            {
-                mqttJsonPayload = mqttPayload.IsSingleSegment
-                    ? Encoding.UTF8.GetString(mqttPayload.FirstSpan)
-                    : Encoding.UTF8.GetString(mqttPayload.ToArray());
-            }
-            catch (DecoderFallbackException ex)
-            {
-                _logger.PayloadUtf8DecodingFailed(ex, mqttPayload.Length);
-                return;
-            }
+        // TODO: do some sort of topic routing
 
-            await HandleUplink(mqttJsonPayload, stoppingToken);
+        await HandleUplink(mqttJsonPayload, stoppingToken);
 
-            // if (topic == _topic)
-            // {
-            //     await HandleUplink(mqttJsonPayload, stoppingToken);
-            // }
-            // else if (topic == "someOtherTopic")
-            // {
-            //     Console.WriteLine("handling other payload");
-            // }
-        };
+        // if (topic == _topic)
+        // {
+        //     await HandleUplink(mqttJsonPayload, stoppingToken);
+        // }
+        // else if (topic == "someOtherTopic")
+        // {
+        //     Console.WriteLine("handling other payload");
+        // }
     }
 
     private async Task HandleUplink(string json, CancellationToken stoppingToken)
@@ -222,15 +225,14 @@ public class LoraWanServerMqttClient(
     public override Task StopAsync(CancellationToken cancellationToken)
     {
         // release thread lock
-        _mrevent.Set();
+        _threadInControl.Set();
         return base.StopAsync(cancellationToken);
     }
 
     public override void Dispose()
     {
         base.Dispose();
-        _serviceConnected?.Dispose();
-        _mrevent.Dispose();
+        _threadInControl.Dispose();
         _mqttClient.Dispose();
     }
 }
