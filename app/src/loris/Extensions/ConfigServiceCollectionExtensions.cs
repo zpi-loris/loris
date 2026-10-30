@@ -17,12 +17,12 @@ public static class ConfigServiceCollectionExtensions
                 SingleReader = true,
             };
 
-            var chirpstackChannel = Channel.CreateBounded<IChirpstackMessage>(boundedOptions);
+            var deviceChannel = Channel.CreateBounded<IDeviceMessage>(boundedOptions);
             var dbWriteChannel = Channel.CreateBounded<IDbWriteMessage>(boundedOptions);
             var eventChannel = Channel.CreateBounded<IEventMessage>(boundedOptions);
 
-            services.AddSingleton(chirpstackChannel.Writer);
-            services.AddSingleton(chirpstackChannel.Reader);
+            services.AddSingleton(deviceChannel.Writer);
+            services.AddSingleton(deviceChannel.Reader);
 
             services.AddSingleton(dbWriteChannel.Writer);
             services.AddSingleton(dbWriteChannel.Reader);

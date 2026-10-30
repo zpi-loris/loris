@@ -14,11 +14,11 @@ namespace Loris.MQTT.Client;
 
 public class LoraWanServerMqttClient(
     ILogger<LoraWanServerMqttClient> logger,
-    ChannelWriter<IChirpstackMessage> channelWriter
+    ChannelWriter<IDeviceMessage> channelWriter
 ) : BackgroundService
 {
     private readonly ILogger<LoraWanServerMqttClient> _logger = logger;
-    private readonly ChannelWriter<IChirpstackMessage> _channelWriter = channelWriter;
+    private readonly ChannelWriter<IDeviceMessage> _deviceChannelWriter = channelWriter;
 
     // TODO: use environmental variables
     private readonly string _host = "192.168.10.111";
@@ -165,7 +165,7 @@ public class LoraWanServerMqttClient(
                 ? Encoding.UTF8.GetString(payload.FirstSpan)
                 : Encoding.UTF8.GetString(payload.ToArray());
 
-            return UplinkEvent.Parser.ParseJson(uplinkEventJson);
+            await _deviceChannelWriter.WriteAsync(message, stoppingToken);
         }
         catch (DecoderFallbackException ex)
         {
