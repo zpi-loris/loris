@@ -5,8 +5,8 @@
 #include <stdbool.h>
 #include <zephyr/sys/slist.h>
 
-#include "loris/str.h"
 #include "loris/models/report.h"
+#include "loris/str.h"
 
 /*
  * Value type used in capabilities.sensor
@@ -68,11 +68,7 @@ typedef struct sensor {
   report_t (*read_func)(struct sensor *sensor);
   // wake_interval_sec is optional, if not present should always be set to 0
   int32_t wake_interval_sec;
-} sensor_t;
-
-typedef struct sensor_node {
   sys_snode_t node;
-  sensor_t sensor;
-} sensor_node_t;
+} sensor_t;
 
 #endif

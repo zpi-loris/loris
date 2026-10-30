@@ -37,11 +37,7 @@ typedef struct function {
   call_func_u call_function;
   // wake_interval_sec is optional, if not present should always be set to 0
   int32_t wake_interval_sec;
-} function_t;
-
-typedef struct function_node {
   sys_snode_t node;
-  function_t function;
-} function_node_t;
+} function_t;
 
 #endif
