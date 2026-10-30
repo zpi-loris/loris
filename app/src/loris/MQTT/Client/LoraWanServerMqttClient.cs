@@ -124,10 +124,13 @@ public class LoraWanServerMqttClient(
 
     private async Task HandleDisconnected(MqttClientDisconnectedEventArgs details)
     {
-        // drop active subscribtion
-        _serviceConnected?.Cancel();
+        if (details.ClientWasConnected)
+        {
+            // drop active subscribtion
+            _serviceConnected?.Cancel();
 
-        _threadInControl.Set();
+            _threadInControl.Set();
+        }
     }
 
     private async Task HandleMessage(
