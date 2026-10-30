@@ -1,14 +1,20 @@
 using System.Buffers;
 using System.Text;
 using System.Threading.Channels;
-using Chirpstack.Integration;
-// using Chirpstack.Integration;
 using Google.Protobuf;
 using Loris.Logging;
 using Loris.Messages;
 using Loris.Protocol;
 using Loris.Types;
 using MQTTnet;
+//
+// ========
+// Aliasese
+// ========
+//
+// It is by design to alias to not confuse our events
+// with chirpstack integration events
+using ChirpstackUplink = Chirpstack.Integration.UplinkEvent;
 
 namespace Loris.MQTT.Client;
 
@@ -27,36 +33,36 @@ public class LoraWanServerMqttClient(
     private readonly string _topic = "application/+/device/+/event/up";
 
     private readonly MqttClientFactory _mqttFactory = new();
+#pragma warning disable CS8618
+    private IMqttClient _mqttClient;
+    private MqttClientOptions _mqttClientOptions;
+    private MqttClientSubscribeOptions _mqttClientSubscribeOptions;
+#pragma warning restore CS8618
 
     // TODO describe threading
     private readonly ManualResetEvent _mrevent = new(false);
     private CancellationTokenSource? _serviceConnected;
 
-    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+    public override Task StartAsync(CancellationToken cancellationToken)
     {
-        using var mqttClient = _mqttFactory.CreateMqttClient();
-
-        var mqttClientOptions = _mqttFactory
+        _mqttClient = _mqttFactory.CreateMqttClient();
+        _mqttClientOptions = _mqttFactory
             .CreateClientOptionsBuilder()
             .WithTcpServer(_host, _port)
             .Build();
-        var topicFilter = _mqttFactory.CreateTopicFilterBuilder().WithTopic(_topic).Build();
-        var mqttSubscribeOptions = _mqttFactory
+        _mqttClientSubscribeOptions = _mqttFactory
             .CreateSubscribeOptionsBuilder()
-            .WithTopicFilter(topicFilter)
+            .WithTopicFilter(t => t.WithTopic(_topic))
             .Build();
 
-        mqttClient.DisconnectedAsync += async e =>
-        {
-            // drop active subscribtion
-            _serviceConnected?.Cancel();
+        SetupDisconnectedHandling();
+        SetupMessageHandling(cancellationToken);
 
-            // resume connection loop by releasing thread lock
-            _mrevent.Set();
-        };
+        return base.StartAsync(cancellationToken);
+    }
 
-        SetupMessageHandling(mqttClient, stoppingToken);
-
+    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+    {
         while (!stoppingToken.IsCancellationRequested)
         {
             _serviceConnected = new CancellationTokenSource();
@@ -68,20 +74,11 @@ public class LoraWanServerMqttClient(
 
             _mrevent.Reset();
 
-            await ConnectAndSubscribe(
-                mqttClient,
-                mqttClientOptions,
-                mqttSubscribeOptions,
-                linkedCts.Token,
-                stoppingToken
-            );
+            await ConnectAndSubscribe(linkedCts.Token, stoppingToken);
         }
     }
 
     private async Task ConnectAndSubscribe(
-        IMqttClient mqttClient,
-        MqttClientOptions mqttClientOptions,
-        MqttClientSubscribeOptions mqttSubscribeOptions,
         CancellationToken linkedToken,
         CancellationToken externalToken
     )
@@ -89,13 +86,13 @@ public class LoraWanServerMqttClient(
         try
         {
             _logger.ConnectingToBroker(_host, _port);
-            if (!await mqttClient.TryPingAsync(externalToken))
+            if (!await _mqttClient.TryPingAsync(externalToken))
             {
                 // throws if not successful
-                await mqttClient.ConnectAsync(mqttClientOptions, externalToken);
+                await _mqttClient.ConnectAsync(_mqttClientOptions, externalToken);
                 _logger.LogInformation("Client is connected");
 
-                await mqttClient.SubscribeAsync(mqttSubscribeOptions, linkedToken);
+                await _mqttClient.SubscribeAsync(_mqttClientSubscribeOptions, linkedToken);
                 // lock thread
                 _mrevent.WaitOne();
             }
@@ -123,64 +120,103 @@ public class LoraWanServerMqttClient(
         }
     }
 
-    private void SetupMessageHandling(IMqttClient mqttClient, CancellationToken stoppingToken)
+    private void SetupDisconnectedHandling()
     {
-        mqttClient.ApplicationMessageReceivedAsync += async message =>
+        _mqttClient.DisconnectedAsync += async e =>
         {
-            try
-            {
-                UplinkEvent? uplinkEvent = DecodeUplinkEventPayload(
-                    message.ApplicationMessage.Payload
-                );
+            // drop active subscribtion
+            _serviceConnected?.Cancel();
 
-                if (uplinkEvent is null)
-                    return;
-
-                var uplink = Uplink.Parser.ParseFrom(uplinkEvent.Data);
-
-                _logger.UplinkReceived(_topic, uplink);
-
-                await _channelWriter.WriteAsync(
-                    new UplinkMessage
-                    {
-                        DevEUI = DevEui.Parse(uplinkEvent.DeviceInfo.DevEui),
-                        Payload = uplink,
-                        DateTime = uplinkEvent.Time.ToDateTime(),
-                    },
-                    stoppingToken
-                );
-            }
-            catch (InvalidProtocolBufferException ex)
-            {
-                _logger.UplinkProtobufSchemaMismatch(ex);
-            }
+            // resume connection loop by releasing thread lock
+            _mrevent.Set();
         };
     }
 
-    private UplinkEvent? DecodeUplinkEventPayload(ReadOnlySequence<byte> payload)
+    private void SetupMessageHandling(CancellationToken stoppingToken)
     {
-        try
+        _mqttClient.ApplicationMessageReceivedAsync += async message =>
         {
-            var uplinkEventJson = payload.IsSingleSegment
-                ? Encoding.UTF8.GetString(payload.FirstSpan)
-                : Encoding.UTF8.GetString(payload.ToArray());
+            var topic = message.ApplicationMessage.Topic;
+            var mqttPayload = message.ApplicationMessage.Payload;
+
+            // should always succeed
+            string mqttJsonPayload;
+            try
+            {
+                mqttJsonPayload = mqttPayload.IsSingleSegment
+                    ? Encoding.UTF8.GetString(mqttPayload.FirstSpan)
+                    : Encoding.UTF8.GetString(mqttPayload.ToArray());
+            }
+            catch (DecoderFallbackException ex)
+            {
+                _logger.PayloadUtf8DecodingFailed(ex, mqttPayload.Length);
+                return;
+            }
+
+            await HandleUplink(mqttJsonPayload, stoppingToken);
+
+            // if (topic == _topic)
+            // {
+            //     await HandleUplink(mqttJsonPayload, stoppingToken);
+            // }
+            // else if (topic == "someOtherTopic")
+            // {
+            //     Console.WriteLine("handling other payload");
+            // }
+        };
+    }
+
+    private async Task HandleUplink(string json, CancellationToken stoppingToken)
+    {
+        if (TryExtractUplinkMessage(json, out var message))
+        {
+            _logger.UplinkReceived(_topic, message.Payload);
 
             await _deviceChannelWriter.WriteAsync(message, stoppingToken);
         }
-        catch (DecoderFallbackException ex)
+    }
+
+    private bool TryExtractUplinkMessage(string json, out UplinkMessage message)
+    {
+        message = default;
+
+        // Decode chirpstack uplink message from MQTT
+        ChirpstackUplink uplinkEvent;
+        try
         {
-            _logger.PayloadUtf8DecodingFailed(ex, payload.Length);
+            uplinkEvent = ChirpstackUplink.Parser.ParseJson(json);
         }
         catch (InvalidJsonException ex)
         {
-            _logger.PayloadJsonParsingFailed(ex, payload.Length);
+            _logger.PayloadJsonParsingFailed(ex, json.Length);
+            return false;
         }
         catch (InvalidProtocolBufferException ex)
         {
             _logger.PayloadProtobufSchemaMismatch(ex);
+            return false;
         }
 
-        return null;
+        // Decode loris protocol uplink from MQTT message payload
+        Uplink uplink;
+        try
+        {
+            uplink = Uplink.Parser.ParseFrom(uplinkEvent.Data);
+        }
+        catch (InvalidProtocolBufferException ex)
+        {
+            _logger.UplinkProtobufSchemaMismatch(ex);
+            return false;
+        }
+
+        // Create Device Channel Uplink Message
+        message = new UplinkMessage
+        {
+            Payload = uplink,
+            DevEUI = DevEui.Parse(uplinkEvent.DeviceInfo.DevEui),
+            DateTime = uplinkEvent.Time.ToDateTime(),
+        };
+        return true;
     }
 
     public override Task StopAsync(CancellationToken cancellationToken)
@@ -195,5 +231,6 @@ public class LoraWanServerMqttClient(
         base.Dispose();
         _serviceConnected?.Dispose();
         _mrevent.Dispose();
+        _mqttClient.Dispose();
     }
 }
