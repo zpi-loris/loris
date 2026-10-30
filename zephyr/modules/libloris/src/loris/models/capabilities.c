@@ -8,10 +8,8 @@
 
 static int32_t sensor_id = 0;
 static int32_t func_id = 0;
-static sensor_node_t sensor_nodes[CONFIG_LORIS_SENSORS_AMOUNT];
-static sys_snode_t sensor_s_nodes[CONFIG_LORIS_SENSORS_AMOUNT];
-static function_node_t func_nodes[CONFIG_LORIS_FUNCS_AMOUNT];
-static sys_snode_t func_s_nodes[CONFIG_LORIS_FUNCS_AMOUNT];
+static sensor_t sensor_buffer[CONFIG_LORIS_SENSORS_AMOUNT];
+static function_t func_buffer[CONFIG_LORIS_FUNCS_AMOUNT];
 
 result_t create_capabilities(capabilities_t *out, const char *device_name,
                              device_class_t device_class,
@@ -55,37 +53,27 @@ result_t add_sensor(sys_slist_t *sensor_list, const char *name,
     return ERROR;
   }
   if (unit != NULL) {
-    if (str_from_static(&s_desc, description) == ERROR) {
+    if (str_from_static(&s_unit, unit) == ERROR) {
       return ERROR;
     }
     has_unit = true;
   }
 
-  sensor_t sensor = {.id = sensor_id,
-                     .name = s_name,
-                     .description = s_desc,
-                     .value_type = value_type,
-                     .has_unit = has_unit,
-                     .unit = s_unit,
-                     .read_func = report_func,
-                     .wake_interval_sec = wake_interval_sec};
+  sensor_buffer[sensor_id] = (sensor_t){.id = sensor_id,
+                                        .name = s_name,
+                                        .description = s_desc,
+                                        .value_type = value_type,
+                                        .has_unit = has_unit,
+                                        .unit = s_unit,
+                                        .read_func = report_func,
+                                        .wake_interval_sec = wake_interval_sec,
+                                        .node = {.next = NULL}};
 
-  sys_snode_t *prev_node = sys_slist_peek_tail(sensor_list);
-  if (prev_node != NULL) {
-    prev_node->next = &sensor_s_nodes[sensor_id];
-  }
-
-  // TODO: figure out how to save s_node and sensor_node so they do not get
-  // removed from stack
-  sensor_node_t sensor_node = {.sensor = sensor,
-                               .node = sensor_s_nodes[sensor_id]};
-  sensor_nodes[sensor_id] = sensor_node;
-
-  sys_slist_append(sensor_list, &sensor_s_nodes[sensor_id]);
+  sys_slist_append(sensor_list, &sensor_buffer[sensor_id].node);
 
   sensor_id++;
   return OK;
-};
+}
 
 result_t add_function(sys_slist_t *function_list, char *name, char *description,
                       func_arg_type_t func_arg_type, call_func_u *call_func,
@@ -104,23 +92,16 @@ result_t add_function(sys_slist_t *function_list, char *name, char *description,
     return ERROR;
   }
 
-  function_t function = {.id = sensor_id,
-                         .name = s_name,
-                         .description = s_desc,
-                         .call_function = *call_func,
-                         .wake_interval_sec = wake_interval_sec};
+  func_buffer[func_id] = (function_t){.id = sensor_id,
+                                      .name = s_name,
+                                      .description = s_desc,
+                                      .arg_type = func_arg_type,
+                                      .call_function = *call_func,
+                                      .wake_interval_sec = wake_interval_sec,
+                                      .node = {.next = NULL}};
 
-  sys_snode_t *prev_node = sys_slist_peek_tail(function_list);
-  if (prev_node != NULL) {
-    prev_node->next = &func_s_nodes[func_id];
-  }
+  sys_slist_append(function_list, &func_buffer[sensor_id].node);
 
-  function_node_t function_node = {.function = function,
-                                   .node = func_s_nodes[func_id]};
-  func_nodes[func_id] = function_node;
-
-  sys_slist_append(function_list, &func_s_nodes[func_id]);
-
-  func_id++;
+  sensor_id++;
   return OK;
 }
