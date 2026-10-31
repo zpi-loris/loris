@@ -8,6 +8,7 @@
 #include "loris/models/report.h"
 #include "loris/str.h"
 
+// clang-format off
 /*
  * Value type used in capabilities.sensor
  */
@@ -57,6 +58,7 @@ typedef enum value_type {
 
 BUILD_ASSERT((int)VALUE_TYPE_UNSPECIFIED == (int)_PROTOCOL_V1_VALUE_TYPE_MIN, "Enums don't match, possible missing members");
 BUILD_ASSERT((int)VALUE_TYPE_NITROGEN    == (int)_PROTOCOL_V1_VALUE_TYPE_MAX, "Enums don't match, possible missing members");
+// clang-format on
 
 typedef struct sensor {
   sys_snode_t node;
@@ -70,7 +72,7 @@ typedef struct sensor {
   bool has_unit;
   // Unit is optional, if not present should always be set to LORIS_STR_NONE
   str_t unit;
-  report_t (*read_func)(struct sensor *sensor);
+  report_t (*read_func)(struct sensor* sensor);
   // wake_interval_sec is optional, if not present should always be set to 0
   int32_t wake_interval_sec;
 } sensor_t;

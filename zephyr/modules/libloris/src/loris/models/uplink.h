@@ -5,6 +5,7 @@
 #include "loris/models/capabilities.h"
 #include "loris/protobuf/protocol.pb.h"
 
+// clang-format on
 typedef enum up_ping_type {
   UP_PING_TYPE_UNSPECIFIED = PROTOCOL_V1_UP_PING_TYPE_UP_PING_TYPE_UNSPECIFIED,
   UP_PING_TYPE_HELLO       = PROTOCOL_V1_UP_PING_TYPE_UP_PING_TYPE_HELLO
@@ -12,16 +13,19 @@ typedef enum up_ping_type {
 
 BUILD_ASSERT((int)UP_PING_TYPE_UNSPECIFIED == (int)_PROTOCOL_V1_UP_PING_TYPE_MIN, "Enums don't match, possible missing members");
 BUILD_ASSERT((int)UP_PING_TYPE_HELLO       == (int)_PROTOCOL_V1_UP_PING_TYPE_MAX, "Enums don't match, possible missing members");
+// clang-format off
 
 typedef struct up_ping {
   up_ping_type_t type;
 } up_ping_t;
 
+// clang-format off
 typedef enum uplink_payload_type {
   UPLINK_PAYLOAD_TYPE_REPORT       = PROTOCOL_V1_UPLINK_REPORT_TAG,
   UPLINK_PAYLOAD_TYPE_CAPABILITIES = PROTOCOL_V1_UPLINK_CAPABILITIES_TAG,
   UPLINK_PAYLOAD_TYPE_PING         = PROTOCOL_V1_UPLINK_PING_TAG,
 } uplink_payload_type_t;
+// clang-format on
 
 typedef struct uplink {
   uplink_payload_type_t payload_type;
