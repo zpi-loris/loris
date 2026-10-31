@@ -49,12 +49,18 @@ public class LoraWanServerMqttClient : BackgroundService
 
         _mqttClientOptions = mqttFactory
             .CreateClientOptionsBuilder()
-            .WithTcpServer(_host, _port)
+            .WithTcpServer(settings.Host, settings.Port)
             .Build();
 
         _mqttClientSubscribeOptions = mqttFactory
             .CreateSubscribeOptionsBuilder()
-            .WithTopicFilter(t => t.WithTopic(_topic))
+            .WithTopicFilter(t =>
+                t.WithTopic(
+                    settings.ApplicationId.HasValue
+                        ? $"application/{settings.ApplicationId.Value}/device/+/event/up"
+                        : $"application/+/device/+/event/up"
+                )
+            )
             .Build();
     }
 

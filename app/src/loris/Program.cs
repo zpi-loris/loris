@@ -8,6 +8,8 @@ var builder = WebApplication.CreateBuilder(args);
 // Configure channels for the ingestion subsystem
 builder.Services.AddChannels();
 
+builder.Services.AddChirpstackIntegrationSettings(builder.Configuration);
+
 builder.Services.AddHostedService<LoraWanServerMqttClient>();
 
 builder.Services.AddControllers();

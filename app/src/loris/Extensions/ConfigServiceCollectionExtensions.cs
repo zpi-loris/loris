@@ -1,5 +1,7 @@
 using System.Threading.Channels;
 using Loris.Messages;
+using Loris.MQTT.Client;
+using Namotion.Reflection;
 
 namespace Loris.Extensions;
 
@@ -29,6 +31,26 @@ public static class ConfigServiceCollectionExtensions
 
             services.AddSingleton(eventChannel.Writer);
             services.AddSingleton(eventChannel.Reader);
+
+            return services;
+        }
+
+        public IServiceCollection AddChirpstackIntegrationSettings(
+            ConfigurationManager configuration
+        )
+        {
+            var host = configuration.TryGetPropertyValue<string>("Host");
+            var port = configuration.TryGetPropertyValue<int>("Port", 1883);
+            var applicationId = configuration.TryGetPropertyValue<Guid?>("ApplicationId");
+
+            services.AddSingleton(
+                new ClientSettings
+                {
+                    Host = host,
+                    Port = port,
+                    ApplicationId = applicationId,
+                }
+            );
 
             return services;
         }
