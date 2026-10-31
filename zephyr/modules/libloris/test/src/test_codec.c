@@ -144,7 +144,9 @@ void assert_sensors_equal(const sensor_t* s1, const sensor_t* s2) {
   zassert_str_equal(s1->description.ptr, s2->description.ptr);
   zassert_equal(s1->value_type, s2->value_type);
   zassert_equal(s1->has_unit, s2->has_unit);
-  zassert_str_equal(s1->unit.ptr, s2->unit.ptr);
+  if (s1->has_unit) {
+    zassert_str_equal(s1->unit.ptr, s2->unit.ptr);
+  }
 
   // Not transmitted
   // zassert_equal(s1->wake_interval_sec, s2->wake_interval_sec);
@@ -354,8 +356,8 @@ ZTEST(codec_uplink, test_encodes_and_decodes_capabilities) {
     .name = { .ptr = "CO2", .len = 3, .src_type = STR_SRC_STATIC },
     .description = { .ptr = "Carbon dioxide concentration", .len = 28, .src_type = STR_SRC_STATIC },
     .value_type = VALUE_TYPE_CO2,
-    .has_unit = true,
-    .unit = { .ptr = "ppm", .len = 3, .src_type = STR_SRC_STATIC },
+    .has_unit = false,
+    .unit = LORIS_STR_NONE,
     .read_func = NULL,
     .wake_interval_sec = 300,
   };
