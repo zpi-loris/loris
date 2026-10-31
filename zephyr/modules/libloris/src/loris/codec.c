@@ -524,15 +524,3 @@ result_t decode_downlink(downlink_t *out, const char* buf_in, size_t buf_size) {
 
   return OK;
 }
-void downlink_free(downlink_t* dl) {
-  if (dl->payload_type != DOWNLINK_PAYLOAD_TYPE_CALL) {
-    return;
-  }
-
-  if (dl->payload.call.which_value != CALL_VALUE_STRING) {
-    return;
-  }
-
-  str_free(&dl->payload.call.value.str_val);
-  LOG_DBG("freed downlink\n");
-} 

@@ -30,4 +30,6 @@ typedef struct downlink {
   } payload;
 } downlink_t;
 
+void downlink_free(downlink_t* dl);
+
 #endif
