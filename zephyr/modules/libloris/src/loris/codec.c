@@ -124,7 +124,7 @@ bool pb_callback_decode_sensor_to_list(pb_istream_t *istream, const pb_field_t* 
   protocol_v1_sensor_t read_sensor = PROTOCOL_V1_SENSOR_INIT_ZERO;
   if (!pb_decode(istream, &protocol_v1_sensor_t_msg, &read_sensor)) {
     LOG_DBG("Failed decoding sensor\n");
-    return ERROR;
+    return false;
   }
 
   LOG_DBG("Decoded sensor; id=%i, name='%s'\n", read_sensor.id, read_sensor.name.ptr);
@@ -189,7 +189,7 @@ bool pb_callback_decode_function_to_list(pb_istream_t *istream, const pb_field_t
   protocol_v1_function_t read_function = PROTOCOL_V1_FUNCTION_INIT_ZERO;
   if (!pb_decode(istream, &protocol_v1_function_t_msg, &read_function)) {
     LOG_DBG("Failed decoding function\n");
-    return ERROR;
+    return false;
   }
 
   function_t* f = k_calloc(1, sizeof(function_t));
