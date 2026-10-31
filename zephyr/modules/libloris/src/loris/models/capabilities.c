@@ -27,8 +27,8 @@ result_t create_capabilities(capabilities_t *out, const char *device_name,
 
   *out = (capabilities_t){.device_name = device_name_str,
                           .device_class = device_class,
-                          .functions = function_list,
-                          .sensors = sensor_list};
+                          .functions = *function_list,
+                          .sensors = *sensor_list};
 
   return OK;
 }

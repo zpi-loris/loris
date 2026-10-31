@@ -15,9 +15,9 @@ typedef struct capabilities {
   device_class_t device_class;
 
   // NOTE: sys_slist functions are not thread safe
-  sys_slist_t *sensors;
+  sys_slist_t sensors;
   // NOTE: sys_slist functions are not thread safe
-  sys_slist_t *functions;
+  sys_slist_t functions;
 } capabilities_t;
 
 result_t add_sensor(sys_slist_t *sensor_list, const char *name,
