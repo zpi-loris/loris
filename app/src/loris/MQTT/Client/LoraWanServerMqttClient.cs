@@ -18,13 +18,11 @@ using ChirpstackUplink = Chirpstack.Integration.UplinkEvent;
 
 namespace Loris.MQTT.Client;
 
-public class LoraWanServerMqttClient(
-    ILogger<LoraWanServerMqttClient> logger,
-    ChannelWriter<IDeviceMessage> channelWriter
-) : BackgroundService
+public class LoraWanServerMqttClient : BackgroundService
 {
-    private readonly ILogger<LoraWanServerMqttClient> _logger = logger;
-    private readonly ChannelWriter<IDeviceMessage> _deviceChannelWriter = channelWriter;
+    private readonly ILogger<LoraWanServerMqttClient> _logger;
+
+    private readonly ChannelWriter<IDeviceMessage> _deviceChannelWriter;
 
     // TODO: use environmental variables
     private readonly string _host = "192.168.10.111";
@@ -32,30 +30,55 @@ public class LoraWanServerMqttClient(
     private readonly int _reconectEverySecond = 5;
     private readonly string _topic = "application/+/device/+/event/up";
 
-    private readonly MqttClientFactory _mqttFactory = new();
+    private readonly IMqttClient _mqttClient;
+    private readonly MqttClientOptions _mqttClientOptions;
+    private readonly MqttClientSubscribeOptions _mqttClientSubscribeOptions;
 
-#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor.
-    private IMqttClient _mqttClient;
-    private MqttClientOptions _mqttClientOptions;
-    private MqttClientSubscribeOptions _mqttClientSubscribeOptions;
-#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor.
-
-    // TODO describe threading
-    private readonly ManualResetEvent _threadInControl = new(false);
-    private CancellationTokenSource? _serviceConnected;
-
-    public override Task StartAsync(CancellationToken cancellationToken)
+    public LoraWanServerMqttClient(
+        ClientSettings settings,
+        ILogger<LoraWanServerMqttClient> logger,
+        ChannelWriter<IDeviceMessage> deviceChannelWriter
+    )
     {
-        _mqttClient = _mqttFactory.CreateMqttClient();
-        _mqttClientOptions = _mqttFactory
+        _logger = logger;
+        _deviceChannelWriter = deviceChannelWriter;
+
+        var mqttFactory = new MqttClientFactory();
+
+        _mqttClient = mqttFactory.CreateMqttClient();
+
+        _mqttClientOptions = mqttFactory
             .CreateClientOptionsBuilder()
             .WithTcpServer(_host, _port)
             .Build();
-        _mqttClientSubscribeOptions = _mqttFactory
+
+        _mqttClientSubscribeOptions = mqttFactory
             .CreateSubscribeOptionsBuilder()
             .WithTopicFilter(t => t.WithTopic(_topic))
             .Build();
+    }
 
+    /// <summary>
+    /// This field is responsible for thread synchronization signalling.<br/>
+    /// The background service is calling the .WaitOne() method and one of two<br/>
+    /// behaviours occur, based on the state of the event:<br/><br/>
+    ///
+    /// - signalled (.Set() or true) - thread is blocked<br/>
+    /// - unsignalled (.Reset() or false) - thread is free<br/>
+    /// </summary>
+    private readonly ManualResetEvent _threadInControl = new(false);
+
+    /// <summary>
+    /// Responsible for stopping subscribe and message handlers<br/>
+    /// after the client is disconnected<br/>
+    /// <remarks>
+    /// <b>Note that this not stop the background service</b>
+    /// </remarks>
+    /// </summary>
+    private CancellationTokenSource? _disconnectedCts;
+
+    public override Task StartAsync(CancellationToken cancellationToken)
+    {
         _mqttClient.DisconnectedAsync += HandleDisconnected;
         _mqttClient.ApplicationMessageReceivedAsync += message =>
             HandleMessage(message, cancellationToken);
@@ -67,35 +90,51 @@ public class LoraWanServerMqttClient(
     {
         while (!stoppingToken.IsCancellationRequested)
         {
-            _serviceConnected = new CancellationTokenSource();
+            _threadInControl.Reset();
 
-            var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(
-                _serviceConnected.Token,
+            _disconnectedCts = new CancellationTokenSource();
+
+            using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(
+                _disconnectedCts.Token,
                 stoppingToken
             );
 
-            _threadInControl.Reset();
-
-            await ConnectAndSubscribe(linkedCts.Token, stoppingToken);
+            try
+            {
+                await ConnectAndSubscribe(linkedCts.Token);
+            }
+            catch (OperationCanceledException)
+            {
+                if (_disconnectedCts.IsCancellationRequested == true)
+                {
+                    _logger.IntegrationDisconnected(_host, _port);
+                    continue;
+                }
+                else
+                {
+                    throw;
+                }
+            }
+            finally
+            {
+                _disconnectedCts.Dispose();
+            }
         }
     }
 
-    private async Task ConnectAndSubscribe(
-        CancellationToken linkedToken,
-        CancellationToken externalToken
-    )
+    private async Task ConnectAndSubscribe(CancellationToken stoppingToken)
     {
+        _logger.ConnectingToBroker(_host, _port);
         try
         {
-            _logger.ConnectingToBroker(_host, _port);
-            if (!await _mqttClient.TryPingAsync(externalToken))
+            if (!await _mqttClient.TryPingAsync(stoppingToken))
             {
-                // throws if not successful
-                await _mqttClient.ConnectAsync(_mqttClientOptions, externalToken);
+                await _mqttClient.ConnectAsync(_mqttClientOptions, stoppingToken);
+
                 _logger.LogInformation("Client is connected");
 
-                await _mqttClient.SubscribeAsync(_mqttClientSubscribeOptions, linkedToken);
-                // lock thread
+                await _mqttClient.SubscribeAsync(_mqttClientSubscribeOptions, stoppingToken);
+
                 _threadInControl.WaitOne();
             }
         }
@@ -103,22 +142,9 @@ public class LoraWanServerMqttClient(
         {
             _logger.IntegrationUnreachable(_host, _port);
         }
-        catch (OperationCanceledException)
-        {
-            if (_serviceConnected?.IsCancellationRequested == true)
-            {
-                _logger.IntegrationDisconnected(_host, _port);
-                _serviceConnected.Dispose();
-            }
-            else
-            {
-                // rethrow host cancellation
-                throw;
-            }
-        }
         finally
         {
-            await Task.Delay(_reconectEverySecond * 1000, externalToken);
+            await Task.Delay(_reconectEverySecond * 1000, stoppingToken);
         }
     }
 
@@ -127,7 +153,7 @@ public class LoraWanServerMqttClient(
         if (details.ClientWasConnected)
         {
             // drop active subscribtion
-            _serviceConnected?.Cancel();
+            _disconnectedCts?.Cancel();
 
             _threadInControl.Set();
         }
