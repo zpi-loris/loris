@@ -11,11 +11,8 @@ static int32_t func_id = 0;
 static sensor_t sensor_buffer[CONFIG_LORIS_SENSORS_AMOUNT];
 static function_t func_buffer[CONFIG_LORIS_FUNCS_AMOUNT];
 
-result_t create_capabilities(capabilities_t *out, const char *device_name,
-                             device_class_t device_class,
-                             sys_slist_t *sensor_list,
-                             sys_slist_t *function_list) {
-
+result_t capabilities_init(capabilities_t* out, const char* device_name,
+                           device_class_t device_class) {
   if (out == NULL) {
     return ERROR;
   }
@@ -27,17 +24,20 @@ result_t create_capabilities(capabilities_t *out, const char *device_name,
 
   *out = (capabilities_t){.device_name = device_name_str,
                           .device_class = device_class,
-                          .functions = *function_list,
-                          .sensors = *sensor_list};
+                          .functions = {},
+                          .sensors = {}};
+
+  sys_slist_init(&out->sensors);
+  sys_slist_init(&out->functions);
 
   return OK;
 }
 
-result_t add_sensor(sys_slist_t *sensor_list, const char *name,
-                    const char *description, value_type_t value_type,
-                    const char *unit, report_t (*report_func)(struct sensor *),
-                    int32_t wake_interval_sec) {
-  if (sensor_list == NULL || report_func == NULL) {
+result_t add_sensor(capabilities_t* capabilities, const char* name,
+                    const char* description, value_type_t value_type,
+                    const char* unit, report_t (*report_func)(struct sensor*),
+                    int32_t interval_sec) {
+  if (capabilities == NULL) {
     return ERROR;
   }
 
@@ -66,20 +66,19 @@ result_t add_sensor(sys_slist_t *sensor_list, const char *name,
                                         .has_unit = has_unit,
                                         .unit = s_unit,
                                         .read_func = report_func,
-                                        .wake_interval_sec = wake_interval_sec,
+                                        .wake_interval_sec = interval_sec,
                                         .node = {.next = NULL}};
 
-  sys_slist_append(sensor_list, &sensor_buffer[sensor_id].node);
+  sys_slist_append(&capabilities->sensors, &sensor_buffer[sensor_id].node);
 
   sensor_id++;
   return OK;
 }
 
-result_t add_function(sys_slist_t *function_list, char *name, char *description,
-                      func_arg_type_t func_arg_type,
-                      result_t (*call_func)(void *),
-                      int32_t wake_interval_sec) {
-  if (function_list == NULL || call_func == NULL) {
+result_t add_function(capabilities_t* capabilities, char* name,
+                      char* description, func_arg_type_t func_arg_type,
+                      result_t (*call_func)(void*), int32_t wake_interval_sec) {
+  if (capabilities == NULL) {
     return ERROR;
   }
 
@@ -101,7 +100,7 @@ result_t add_function(sys_slist_t *function_list, char *name, char *description,
                                       .wake_interval_sec = wake_interval_sec,
                                       .node = {.next = NULL}};
 
-  sys_slist_append(function_list, &func_buffer[func_id].node);
+  sys_slist_append(&capabilities->functions, &func_buffer[func_id].node);
 
   func_id++;
   return OK;
