@@ -1,0 +1,5 @@
+config LORIS_TEST
+  bool "Compile additional test helper functions"
+  help
+    When 'y' compiles additional helper functions not needed in production,
+    e.g. uplink DECODING and downlink ENCODING.

@@ -11,18 +11,17 @@ result_t encode_uplink(
     const uplink_t* ul,
     size_t* bytes_written
 );
+result_t decode_downlink(downlink_t *out, const char* buf_in, size_t buf_size);
 
-// TODO guard the not needed in production decode and encode with #ifdef LORIS_TESTS
+#ifdef CONFIG_LORIS_TEST
 result_t decode_uplink(uplink_t *out, const char* buf_in, size_t buf_size);
-
 result_t encode_downlink(
     char* out_buf,
     size_t out_buf_size,
     const downlink_t *in,
     size_t* bytes_written
 );
-result_t decode_downlink(downlink_t *out, const char* buf_in, size_t buf_size);
-
 void uplink_free(uplink_t* ul);
+#endif
 
 #endif

@@ -2,15 +2,21 @@
 #include <zephyr/kernel.h>
 #include <zephyr/logging/log.h>
 
+#include "loris/codec.h"
 #include "loris/protobuf/pb.h"
 #include "loris/protobuf/pb_decode.h"
 #include "loris/protobuf/pb_encode.h"
 #include "loris/protobuf/protocol.pb.h"
-#include "loris/codec.h"
 
 LOG_MODULE_REGISTER(codec);
 
 // === Utility callbacks ===
+
+#ifdef CONFIG_LORIS_TEST
+bool pb_callback_decode_sensor_to_list(pb_istream_t *istream, const pb_field_t* field);
+bool pb_callback_decode_function_to_list(pb_istream_t *istream, const pb_field_t* field);
+#endif
+
 bool pb_callback_encode_str(pb_ostream_t* ostream, const pb_field_t *field, const str_t* str) {
   if (ostream == NULL) {
     LOG_DBG("ostream is NULL\n");
@@ -114,39 +120,6 @@ bool pb_callback_encode_sensor_list(pb_ostream_t *ostream, const pb_field_t* fie
   return true;
 }
 
-bool pb_callback_decode_sensor_to_list(pb_istream_t *istream, const pb_field_t* field) {
-  LOG_DBG("Decoding sensor to list\n");
-
-  sys_slist_t* list = (sys_slist_t*)field->pData;
-
-  // NOTE: dynamically allocates but this function is only used for testing
-  // purposes, so we don't care about memory fragmentation
-  protocol_v1_sensor_t read_sensor = PROTOCOL_V1_SENSOR_INIT_ZERO;
-  if (!pb_decode(istream, &protocol_v1_sensor_t_msg, &read_sensor)) {
-    LOG_DBG("Failed decoding sensor\n");
-    return false;
-  }
-
-  LOG_DBG("Decoded sensor; id=%i, name='%s'\n", read_sensor.id, read_sensor.name.ptr);
-
-  sensor_t* s = k_calloc(1, sizeof(sensor_t));
-  s->id = read_sensor.id;
-  str_move(&s->name, &read_sensor.name);
-  str_move(&s->description, &read_sensor.description);
-  s->value_type = (value_type_t)read_sensor.value_type;
-  if (read_sensor.unit.ptr != 0 && read_sensor.unit.len != 0) {
-    s->has_unit = true;
-    str_move(&s->unit, &read_sensor.unit);
-  } else {
-    s->has_unit = false;
-    s->unit = LORIS_STR_NONE;
-  }
-
-  sys_slist_append(list, &s->node);
-
-  return true;
-}
-
 bool pb_callback_encode_function_list(pb_ostream_t *ostream, const pb_field_t* field) {
   LOG_DBG("Encoding functions\n");
 
@@ -179,36 +152,13 @@ bool pb_callback_encode_function_list(pb_ostream_t *ostream, const pb_field_t* f
   return true;
 }
 
-bool pb_callback_decode_function_to_list(pb_istream_t *istream, const pb_field_t* field) {
-  LOG_DBG("Decoding function to list\n");
-
-  sys_slist_t* list = (sys_slist_t*)field->pData;
-
-  // NOTE: dynamically allocates but this function is only used for testing
-  // purposes, so we don't care about memory fragmentation
-  protocol_v1_function_t read_function = PROTOCOL_V1_FUNCTION_INIT_ZERO;
-  if (!pb_decode(istream, &protocol_v1_function_t_msg, &read_function)) {
-    LOG_DBG("Failed decoding function\n");
-    return false;
-  }
-
-  function_t* f = k_calloc(1, sizeof(function_t));
-  f->id = read_function.id;
-  str_move(&f->name, &read_function.name);
-  str_move(&f->description, &read_function.description);
-  f->arg_type = (func_arg_type_t)read_function.arg_type;
-
-  sys_slist_append(list, &f->node);
-
-  return true;
-}
 
 //  == Protobuf named callback functions  ==
 bool protocol_v1_Sensor_callback(pb_istream_t *istream, pb_ostream_t *ostream, const pb_field_t *field) {
   LOG_DBG("Sensor msg callback called\n");
   if (field->tag != PROTOCOL_V1_SENSOR_NAME_TAG &&
       field->tag != PROTOCOL_V1_SENSOR_DESCRIPTION_TAG &&
-      field->tag != PROTOCOL_V1_SENSOR_UNIT_TAG) { // TODO: check if its presents - its optional but theres no 'has_unit' field
+      field->tag != PROTOCOL_V1_SENSOR_UNIT_TAG) {
     LOG_WRN("Unknown or invalid (field with no callback) field tag\n");
     return false;
   }
@@ -227,15 +177,20 @@ bool protocol_v1_Function_callback(pb_istream_t *istream, pb_ostream_t *ostream,
   return pb_callback_codec_str(istream, ostream, field);
 }
 
+
 bool protocol_v1_Capabilities_callback(pb_istream_t *istream, pb_ostream_t *ostream, const pb_field_t *field) {
   LOG_DBG("Capabilities msg callback called\n");
   if (field->tag == PROTOCOL_V1_CAPABILITIES_SENSORS_TAG) {
     if (ostream) {
       return pb_callback_encode_sensor_list(ostream, field);
-    } else if (istream) {
+    }
+    #ifdef CONFIG_LORIS_TEST
+    else if (istream) {
       return pb_callback_decode_sensor_to_list(istream, field);
-    } else {
-      LOG_WRN("both istream and ostream are NULL");
+    }
+    #endif
+    else {
+      LOG_WRN("ostream is NULL (and istream if testing)");
       return false;
     }
   }
@@ -243,10 +198,14 @@ bool protocol_v1_Capabilities_callback(pb_istream_t *istream, pb_ostream_t *ostr
   if (field->tag == PROTOCOL_V1_CAPABILITIES_FUNCTIONS_TAG) {
     if (ostream) {
       return pb_callback_encode_function_list(ostream, field);
-    } else if (istream) {
+    }
+    #ifdef CONFIG_LORIS_TEST
+    else if (istream) {
       return pb_callback_decode_function_to_list(istream, field);
-    } else {
-      LOG_WRN("both istream and ostream are NULL");
+    }
+    #endif
+    else {
+      LOG_WRN("ostream is NULL (and istream if testing)");
       return false;
     }
   }
@@ -334,6 +293,7 @@ result_t encode_uplink(
   }
 
   if (bytes_written) {
+    LOG_DBG("Encoded %zu bytes\n", ostream.bytes_written);
     *bytes_written = ostream.bytes_written;
   }
 
@@ -341,7 +301,160 @@ result_t encode_uplink(
   return OK;
 }
 
-// NOTE: only for testing
+result_t decode_downlink(downlink_t *out, const char* buf_in, size_t buf_size) {
+  pb_istream_t istream = pb_istream_from_buffer(buf_in, buf_size);
+
+  protocol_v1_downlink_t pb_dl = PROTOCOL_V1_DOWNLINK_INIT_ZERO;
+
+  if(!pb_decode(&istream, &protocol_v1_downlink_t_msg, &pb_dl)) {
+    return ERROR;
+  };
+
+  out->payload_type = pb_dl.which_payload;
+  if (pb_dl.which_payload == PROTOCOL_V1_DOWNLINK_CALL_TAG) {
+    out->payload.call.function_id = pb_dl.payload.call.function_id;
+    out->payload.call.which_value = pb_dl.payload.call.which_value;
+    switch (pb_dl.payload.call.which_value) {
+      case PROTOCOL_V1_CALL_INT_VAL_TAG:
+        out->payload.call.value.int_val = pb_dl.payload.call.value.int_val;
+        break;
+      case PROTOCOL_V1_CALL_FLOAT_VAL_TAG:
+        out->payload.call.value.float_val = pb_dl.payload.call.value.float_val;
+        break;
+      case PROTOCOL_V1_CALL_STR_VAL_TAG:
+        str_move(&out->payload.call.value.str_val, &pb_dl.payload.call.value.str_val);
+        break;
+      case PROTOCOL_V1_CALL_BOOL_VAL_TAG:
+        out->payload.call.value.bool_val = pb_dl.payload.call.value.bool_val;
+        break;
+      default:
+        LOG_WRN("Unknown or invalid call value type\n");
+        return ERROR;
+    }
+    out->payload.call.has_wake_after_secs = pb_dl.payload.call.has_wake_after_secs;
+    out->payload.call.wake_after_secs = pb_dl.payload.call.wake_after_secs;
+  } else if (pb_dl.which_payload == PROTOCOL_V1_DOWNLINK_PING_TAG) {
+    out->payload.ping.type = (int)pb_dl.payload.ping.type;
+  } else {
+    LOG_WRN("Unknown or invalid downlink payload type\n");
+    return ERROR;
+  }
+
+  return OK;
+}
+
+#ifdef CONFIG_LORIS_TEST
+bool pb_callback_decode_sensor_to_list(pb_istream_t *istream, const pb_field_t* field) {
+  LOG_DBG("Decoding sensor to list\n");
+
+  sys_slist_t* list = (sys_slist_t*)field->pData;
+
+  // NOTE: dynamically allocates but this function is only used for testing
+  // purposes, so we don't care about memory fragmentation
+  protocol_v1_sensor_t read_sensor = PROTOCOL_V1_SENSOR_INIT_ZERO;
+  if (!pb_decode(istream, &protocol_v1_sensor_t_msg, &read_sensor)) {
+    LOG_DBG("Failed decoding sensor\n");
+    return false;
+  }
+
+  LOG_DBG("Decoded sensor; id=%i, name='%s'\n", read_sensor.id, read_sensor.name.ptr);
+
+  sensor_t* s = k_calloc(1, sizeof(sensor_t));
+  s->id = read_sensor.id;
+  str_move(&s->name, &read_sensor.name);
+  str_move(&s->description, &read_sensor.description);
+  s->value_type = (value_type_t)read_sensor.value_type;
+  if (read_sensor.unit.ptr != 0 && read_sensor.unit.len != 0) {
+    s->has_unit = true;
+    str_move(&s->unit, &read_sensor.unit);
+  } else {
+    s->has_unit = false;
+    s->unit = LORIS_STR_NONE;
+  }
+
+  sys_slist_append(list, &s->node);
+
+  return true;
+}
+
+bool pb_callback_decode_function_to_list(pb_istream_t *istream, const pb_field_t* field) {
+  LOG_DBG("Decoding function to list\n");
+
+  sys_slist_t* list = (sys_slist_t*)field->pData;
+
+  // NOTE: dynamically allocates but this function is only used for testing
+  // purposes, so we don't care about memory fragmentation
+  protocol_v1_function_t read_function = PROTOCOL_V1_FUNCTION_INIT_ZERO;
+  if (!pb_decode(istream, &protocol_v1_function_t_msg, &read_function)) {
+    LOG_DBG("Failed decoding function\n");
+    return false;
+  }
+
+  function_t* f = k_calloc(1, sizeof(function_t));
+  f->id = read_function.id;
+  str_move(&f->name, &read_function.name);
+  str_move(&f->description, &read_function.description);
+  f->arg_type = (func_arg_type_t)read_function.arg_type;
+
+  sys_slist_append(list, &f->node);
+
+  return true;
+}
+
+result_t encode_downlink(
+    char *out_buf,
+    size_t out_buf_size,
+    const downlink_t *dl,
+    size_t *bytes_written
+) {
+  LOG_DBG("Encoding downlink\n");
+  pb_ostream_t ostream = pb_ostream_from_buffer(out_buf, out_buf_size);
+
+  protocol_v1_downlink_t pb_dl = PROTOCOL_V1_DOWNLINK_INIT_ZERO;
+  pb_dl.which_payload = dl->payload_type;
+  if (dl->payload_type == DOWNLINK_PAYLOAD_TYPE_CALL) {
+    pb_dl.payload.call.function_id = dl->payload.call.function_id;
+    pb_dl.payload.call.which_value = dl->payload.call.which_value;
+    switch (dl->payload.call.which_value) {
+      case CALL_VALUE_INT:
+        pb_dl.payload.call.value.int_val = dl->payload.call.value.int_val;
+        break;
+      case CALL_VALUE_FLOAT:
+        pb_dl.payload.call.value.float_val = dl->payload.call.value.float_val;
+        break;
+      case CALL_VALUE_STRING:
+        str_borrow(&pb_dl.payload.call.value.str_val, &dl->payload.call.value.str_val);
+        break;
+      case CALL_VALUE_BOOL:
+        pb_dl.payload.call.value.bool_val = dl->payload.call.value.bool_val;
+        break;
+      default:
+        LOG_WRN("Unknown or invalid call value type\n");
+        return ERROR;
+    }
+    pb_dl.payload.call.has_wake_after_secs = dl->payload.call.has_wake_after_secs;
+    pb_dl.payload.call.wake_after_secs = dl->payload.call.wake_after_secs;
+  } else if (dl->payload_type == DOWNLINK_PAYLOAD_TYPE_PING) {
+    pb_dl.payload.ping.type = (int)dl->payload.ping.type;
+  } else {
+    LOG_WRN("Unknown or invalid downlink payload type\n");
+    return ERROR;
+  }
+
+  if (!pb_encode(&ostream, &protocol_v1_downlink_t_msg, &pb_dl)) {
+    LOG_WRN("ENCODING FAILED!\n");
+    return ERROR;
+  }
+
+  if (bytes_written) {
+    LOG_DBG("Encoded %zu bytes\n", ostream.bytes_written);
+    *bytes_written = ostream.bytes_written;
+  }
+
+  LOG_DBG("Correctly encoded!\n");
+  return OK;
+}
+
 result_t decode_uplink(uplink_t *out, const char* buf_in, size_t buf_size) {
   LOG_DBG("Decoding uplink\n");
   pb_istream_t istream = pb_istream_from_buffer(buf_in, buf_size);
@@ -395,7 +508,6 @@ result_t decode_uplink(uplink_t *out, const char* buf_in, size_t buf_size) {
   return OK;
 }
 
-// NOTE: only for testing
 void uplink_free(uplink_t* ul) {
   switch (ul->payload_type) {
     case UPLINK_PAYLOAD_TYPE_REPORT:
@@ -427,100 +539,4 @@ void uplink_free(uplink_t* ul) {
       break;
   }
 }
-
-
-// NOTE: only for testing
-result_t encode_downlink(
-    char *out_buf,
-    size_t out_buf_size,
-    const downlink_t *dl,
-    size_t *bytes_written
-) {
-  LOG_DBG("Encoding downlink\n");
-  pb_ostream_t ostream = pb_ostream_from_buffer(out_buf, out_buf_size);
-
-  protocol_v1_downlink_t pb_dl = PROTOCOL_V1_DOWNLINK_INIT_ZERO;
-  pb_dl.which_payload = dl->payload_type;
-  if (dl->payload_type == DOWNLINK_PAYLOAD_TYPE_CALL) {
-    pb_dl.payload.call.function_id = dl->payload.call.function_id;
-    pb_dl.payload.call.which_value = dl->payload.call.which_value;
-    switch (dl->payload.call.which_value) {
-      case CALL_VALUE_INT:
-        pb_dl.payload.call.value.int_val = dl->payload.call.value.int_val;
-        break;
-      case CALL_VALUE_FLOAT:
-        pb_dl.payload.call.value.float_val = dl->payload.call.value.float_val;
-        break;
-      case CALL_VALUE_STRING:
-        str_borrow(&pb_dl.payload.call.value.str_val, &dl->payload.call.value.str_val);
-        break;
-      case CALL_VALUE_BOOL:
-        pb_dl.payload.call.value.bool_val = dl->payload.call.value.bool_val;
-        break;
-      default:
-        LOG_WRN("Unknown or invalid call value type\n");
-        return ERROR;
-    }
-    pb_dl.payload.call.has_wake_after_secs = dl->payload.call.has_wake_after_secs;
-    pb_dl.payload.call.wake_after_secs = dl->payload.call.wake_after_secs;
-  } else if (dl->payload_type == DOWNLINK_PAYLOAD_TYPE_PING) {
-    pb_dl.payload.ping.type = (int)dl->payload.ping.type;
-  } else {
-    LOG_WRN("Unknown or invalid downlink payload type\n");
-    return ERROR;
-  }
-
-  if (!pb_encode(&ostream, &protocol_v1_downlink_t_msg, &pb_dl)) {
-    LOG_WRN("ENCODING FAILED!\n");
-    return ERROR;
-  }
-
-  if (bytes_written) {
-    *bytes_written = ostream.bytes_written;
-  }
-
-  LOG_DBG("Correctly encoded!\n");
-  return OK;
-}
-
-result_t decode_downlink(downlink_t *out, const char* buf_in, size_t buf_size) {
-  pb_istream_t istream = pb_istream_from_buffer(buf_in, buf_size);
-
-  protocol_v1_downlink_t pb_dl = PROTOCOL_V1_DOWNLINK_INIT_ZERO;
-
-  if(!pb_decode(&istream, &protocol_v1_downlink_t_msg, &pb_dl)) {
-    return ERROR;
-  };
-
-  out->payload_type = pb_dl.which_payload;
-  if (pb_dl.which_payload == PROTOCOL_V1_DOWNLINK_CALL_TAG) {
-    out->payload.call.function_id = pb_dl.payload.call.function_id;
-    out->payload.call.which_value = pb_dl.payload.call.which_value;
-    switch (pb_dl.payload.call.which_value) {
-      case PROTOCOL_V1_CALL_INT_VAL_TAG:
-        out->payload.call.value.int_val = pb_dl.payload.call.value.int_val;
-        break;
-      case PROTOCOL_V1_CALL_FLOAT_VAL_TAG:
-        out->payload.call.value.float_val = pb_dl.payload.call.value.float_val;
-        break;
-      case PROTOCOL_V1_CALL_STR_VAL_TAG:
-        str_move(&out->payload.call.value.str_val, &pb_dl.payload.call.value.str_val);
-        break;
-      case PROTOCOL_V1_CALL_BOOL_VAL_TAG:
-        out->payload.call.value.bool_val = pb_dl.payload.call.value.bool_val;
-        break;
-      default:
-        LOG_WRN("Unknown or invalid call value type\n");
-        return ERROR;
-    }
-    out->payload.call.has_wake_after_secs = pb_dl.payload.call.has_wake_after_secs;
-    out->payload.call.wake_after_secs = pb_dl.payload.call.wake_after_secs;
-  } else if (pb_dl.which_payload == PROTOCOL_V1_DOWNLINK_PING_TAG) {
-    out->payload.ping.type = (int)pb_dl.payload.ping.type;
-  } else {
-    LOG_WRN("Unknown or invalid downlink payload type\n");
-    return ERROR;
-  }
-
-  return OK;
-}
+#endif
