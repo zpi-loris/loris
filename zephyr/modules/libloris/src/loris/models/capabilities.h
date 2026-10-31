@@ -29,7 +29,7 @@ typedef struct capabilities {
  *
  * @return result_t enum
  */
-result_t init_capabilities(capabilities_t* out, const char* device_name,
+result_t capabilities_init(capabilities_t* out, const char* device_name,
                            device_class_t device_class);
 
 /**

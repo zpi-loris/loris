@@ -65,7 +65,7 @@ function_t* get_func_at_idx(sys_slist_t* func_list, int idx) {
 }
 
 ZTEST(capabilities, test_add_sensors_to_the_list) {
-  init_capabilities(&cap, "capabilities_sensors", DEVICE_CLASS_A);
+  capabilities_init(&cap, "capabilities_sensors", DEVICE_CLASS_A);
 
   zassert_equal(add_sensor(&cap, "test_name 1", "Measures temperature",
                            VALUE_TYPE_TEMPERATURE, "C", &report_func, 60),
