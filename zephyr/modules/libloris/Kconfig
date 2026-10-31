@@ -1,7 +1,13 @@
 config LORIS_SENSORS_AMOUNT
-	int
-	default 5
+  int
+  default 5
 
 config LORIS_FUNCS_AMOUNT
-	int
-	default 12
+  int
+  default 12
+
+config LORIS_TEST
+  bool "Compile additional test helper functions"
+  help
+    When 'y' compiles additional helper functions not needed in production,
+    e.g. uplink DECODING and downlink ENCODING.

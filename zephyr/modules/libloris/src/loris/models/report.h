@@ -5,13 +5,14 @@
 #include <stdbool.h>
 #include <zephyr/sys/slist.h>
 
+#include "loris/protobuf/protocol.pb.h"
 #include "loris/str.h"
 
 typedef enum report_value_type {
-  REPORT_VALUE_INT,
-  REPORT_VALUE_FLOAT,
-  REPORT_VALUE_STRING,
-  REPORT_VALUE_BOOL,
+  REPORT_VALUE_INT    = PROTOCOL_V1_REPORT_INT_VAL_TAG,
+  REPORT_VALUE_FLOAT  = PROTOCOL_V1_REPORT_FLOAT_VAL_TAG,
+  REPORT_VALUE_STRING = PROTOCOL_V1_REPORT_STR_VAL_TAG,
+  REPORT_VALUE_BOOL   = PROTOCOL_V1_REPORT_BOOL_VAL_TAG,
 } report_value_type_t;
 
 typedef struct report {
