@@ -6,7 +6,8 @@
 
 #include "loris/result.h"
 
-#define SLAB_STR_SIZE 128
+#define STR_SLAB_BLOCK_SIZE 128
+#define STR_SLAB_BLOCKS 8
 
 typedef enum str_src_type {
   STR_SRC_NONE = 0,
@@ -38,16 +39,26 @@ result_t str_borrow(str_t* out, const str_t* src);
 
 result_t str_alloc_dynamic(str_t* out, const char *cstr);
 
-// allocate the string using a slab if its length < SLAB_STR_SIZE, dynamically
+// allocate the string using a slab if its length < STR_SLAB_BLOCK_SIZE, dynamically
 // otherwise
 result_t str_alloc_smart(str_t* out, const char *cstr);
 
-// allocate the string in a SLAB_STR_SIZE slab byte buffer
+// allocate an empty buff of length+1 bytes (to account for the null
+// terminator) on the slab if possible, dynamically otherwise. Writes the null
+// terminator, to ensure the string is properly terminated.
+result_t str_alloc_smart_len(str_t* out, size_t len);
+
+// allocate the string in a STR_SLAB_BLOCK_SIZE slab byte buffer
 //
 // preferable when size of the string is known to be smaller than
-// SLAB_STR_SIZE, so we can avoid dynamic memory allocation problems like
+// STR_SLAB_BLOCK_SIZE, so we can avoid dynamic memory allocation problems like
 // memory fragmentation
 result_t str_alloc_slab(str_t* out, const char* cstr);
+
+result_t str_move(str_t* dst, str_t* src);
+
+// number of currently free blocks in the string slab
+size_t str_slab_num_free(void);
 
 
 #endif

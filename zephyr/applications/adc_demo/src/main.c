@@ -4,9 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include "loris/models.h"
 #include "zephyr/sys/slist.h"
-#include <loris/capabilities.h>
+#include <loris/models/capabilities.h>
 #include <zephyr/devicetree.h>
 #include <zephyr/drivers/adc.h>
 #include <zephyr/kernel.h>
@@ -23,10 +22,6 @@ struct adc_sequence sequence = {
 };
 
 int main(void) {
-  sys_slist_t sensor_list;
-  sys_slist_t function_list;
-  add_sensor(&sensor_list, "Temp Sensor", "Measures temperature",
-             VALUE_TYPE_TEMPERATURE, "C");
 
   int err;
 

@@ -1,0 +1,7 @@
+config LORIS_SENSORS_AMOUNT
+	int
+	default 5
+
+config LORIS_FUNCS_AMOUNT
+	int
+	default 12

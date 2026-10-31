@@ -25,14 +25,10 @@ typedef struct function {
   func_arg_type_t arg_type;
   // Callback to a function that makes the actuator do something
   // TODO: add different arg types (union probably)
-  void (*call_function)();
+  result_t (*call_function)(void *arg);
   // wake_interval_sec is optional, if not present should always be set to 0
   int32_t wake_interval_sec;
-} function_t;
-
-typedef struct function_node {
   sys_snode_t node;
-  function_t function;
-} function_node_t;
+} function_t;
 
 #endif

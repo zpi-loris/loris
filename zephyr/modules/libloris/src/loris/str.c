@@ -1,10 +1,11 @@
 #include <zephyr/kernel.h>
 #include <string.h>
+#include <stdio.h>
 
 #include "loris/result.h"
 #include "loris/str.h"
 
-K_MEM_SLAB_DEFINE_STATIC(str_slab, SLAB_STR_SIZE, 8, 8);
+K_MEM_SLAB_DEFINE_STATIC(str_slab, STR_SLAB_BLOCK_SIZE, STR_SLAB_BLOCKS, 8);
 
 void str_free(str_t* str) {
   if (str == NULL || str->ptr == NULL) {
@@ -70,7 +71,7 @@ result_t str_alloc_slab(str_t* out, const char* cstr) {
   }
 
   size_t len = strlen(cstr);
-  if (len >= SLAB_STR_SIZE) {
+  if (len >= STR_SLAB_BLOCK_SIZE) {
     return ERROR;
   }
 
@@ -119,26 +120,64 @@ result_t str_alloc_smart(str_t *out, const char *cstr) {
     return ERROR;
   }
 
-  char* buf;
   size_t len = strlen(cstr);
-  if (strlen(cstr) < SLAB_STR_SIZE && k_mem_slab_alloc(&str_slab, (void**)&buf, K_NO_WAIT) == 0) {
-    out->src_type = STR_SRC_SLAB;
+  if (str_alloc_smart_len(out, len) != OK) {
+    return ERROR;
+  }
+
+  // NOTE: kinda tricky getting rid of the const qualifier
+  // Might be good to rethink that
+  memcpy((char*)out->ptr, cstr, len); 
+  ((char*)out->ptr)[len] = '\0';
+
+  return OK;
+}
+
+result_t str_alloc_smart_len(str_t* out, size_t len) {
+  if (out == NULL) {
+    return ERROR;
+  }
+
+  char* buf;
+  str_src_type_t src_type;
+  if (len < STR_SLAB_BLOCK_SIZE && k_mem_slab_alloc(&str_slab, (void**)&buf, K_NO_WAIT) == 0) {
+    src_type = STR_SRC_SLAB;
   } else {
     buf = k_malloc(len + 1);
     if (buf == NULL) {
       return ERROR;
     }
 
-    out->src_type = STR_SRC_DYNAMIC;
+    src_type = STR_SRC_DYNAMIC;
   }
-
-  memcpy(buf, cstr, len);
-  buf[len] = '\0';
 
   str_free(out);
 
+  buf[len] = '\0';
+
   out->ptr = buf;
   out->len = len;
+  out->src_type = src_type;
 
   return OK;
+}
+
+result_t str_move(str_t* dst, str_t* src) {
+  if (dst == NULL || src == NULL) {
+    return ERROR;
+  }
+
+  if (dst == src) {
+    return OK;
+  }
+
+  str_free(dst);
+  *dst = *src;
+  *src = LORIS_STR_NONE;
+
+  return OK;
+}
+
+size_t str_slab_num_free(void) {
+  return k_mem_slab_num_free_get(&str_slab);
 }
