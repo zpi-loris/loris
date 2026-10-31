@@ -10,8 +10,6 @@
 
 LOG_MODULE_REGISTER(codec);
 
-// === Utility callbacks ===
-
 #ifdef CONFIG_LORIS_TEST
 bool pb_callback_decode_sensor_to_list(pb_istream_t *istream, const pb_field_t* field);
 bool pb_callback_decode_function_to_list(pb_istream_t *istream, const pb_field_t* field);
@@ -153,7 +151,6 @@ bool pb_callback_encode_function_list(pb_ostream_t *ostream, const pb_field_t* f
 }
 
 
-//  == Protobuf named callback functions  ==
 bool protocol_v1_Sensor_callback(pb_istream_t *istream, pb_ostream_t *ostream, const pb_field_t *field) {
   LOG_DBG("Sensor msg callback called\n");
   if (field->tag != PROTOCOL_V1_SENSOR_NAME_TAG &&
@@ -311,33 +308,36 @@ result_t decode_downlink(downlink_t *out, const char* buf_in, size_t buf_size) {
   };
 
   out->payload_type = pb_dl.which_payload;
-  if (pb_dl.which_payload == PROTOCOL_V1_DOWNLINK_CALL_TAG) {
-    out->payload.call.function_id = pb_dl.payload.call.function_id;
-    out->payload.call.which_value = pb_dl.payload.call.which_value;
-    switch (pb_dl.payload.call.which_value) {
-      case PROTOCOL_V1_CALL_INT_VAL_TAG:
-        out->payload.call.value.int_val = pb_dl.payload.call.value.int_val;
-        break;
-      case PROTOCOL_V1_CALL_FLOAT_VAL_TAG:
-        out->payload.call.value.float_val = pb_dl.payload.call.value.float_val;
-        break;
-      case PROTOCOL_V1_CALL_STR_VAL_TAG:
-        str_move(&out->payload.call.value.str_val, &pb_dl.payload.call.value.str_val);
-        break;
-      case PROTOCOL_V1_CALL_BOOL_VAL_TAG:
-        out->payload.call.value.bool_val = pb_dl.payload.call.value.bool_val;
-        break;
-      default:
-        LOG_WRN("Unknown or invalid call value type\n");
-        return ERROR;
-    }
-    out->payload.call.has_wake_after_secs = pb_dl.payload.call.has_wake_after_secs;
-    out->payload.call.wake_after_secs = pb_dl.payload.call.wake_after_secs;
-  } else if (pb_dl.which_payload == PROTOCOL_V1_DOWNLINK_PING_TAG) {
-    out->payload.ping.type = (int)pb_dl.payload.ping.type;
-  } else {
-    LOG_WRN("Unknown or invalid downlink payload type\n");
-    return ERROR;
+  switch (out->payload_type) {
+    case DOWNLINK_PAYLOAD_TYPE_CALL:
+      out->payload.call.function_id = pb_dl.payload.call.function_id;
+      out->payload.call.which_value = pb_dl.payload.call.which_value;
+      switch (out->payload.call.which_value) {
+        case CALL_VALUE_INT:
+          out->payload.call.value.int_val = pb_dl.payload.call.value.int_val;
+          break;
+        case CALL_VALUE_FLOAT:
+          out->payload.call.value.float_val = pb_dl.payload.call.value.float_val;
+          break;
+        case CALL_VALUE_STRING:
+          str_move(&out->payload.call.value.str_val, &pb_dl.payload.call.value.str_val);
+          break;
+        case CALL_VALUE_BOOL:
+          out->payload.call.value.bool_val = pb_dl.payload.call.value.bool_val;
+          break;
+        default:
+          LOG_WRN("Unknown or invalid call value type\n");
+          return ERROR;
+      }
+      out->payload.call.has_wake_after_secs = pb_dl.payload.call.has_wake_after_secs;
+      out->payload.call.wake_after_secs = pb_dl.payload.call.wake_after_secs;
+      break;
+    case DOWNLINK_PAYLOAD_TYPE_PING:
+      out->payload.ping.type = (int)pb_dl.payload.ping.type;
+      break;
+    default:
+      LOG_WRN("Unknown or invalid downlink payload type\n");
+      return ERROR;
   }
 
   return OK;
