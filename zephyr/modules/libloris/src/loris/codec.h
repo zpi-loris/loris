@@ -23,6 +23,8 @@ result_t encode_downlink(
 );
 result_t decode_downlink(downlink_t *out, const char* buf_in, size_t buf_size);
 
+void uplink_free(uplink_t* ul);
+
 void downlink_free(downlink_t* dl); // NOTE: maybe move to downlink.h
 
 #endif

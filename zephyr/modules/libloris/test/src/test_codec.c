@@ -139,13 +139,15 @@ ZTEST_P(codec_downlink, test_encodes_and_decodes_downping) {
 ZTEST_SUITE(codec_uplink, NULL, NULL, NULL, NULL, NULL);
 
 void assert_sensors_equal(const sensor_t* s1, const sensor_t* s2) {
-  zassert_equal(s1->id, s2->id);
+  zassert_equal(s1->id, s2->id, "%i != %i", s1->id, s2->id);
   zassert_str_equal(s1->name.ptr, s2->name.ptr);
   zassert_str_equal(s1->description.ptr, s2->description.ptr);
   zassert_equal(s1->value_type, s2->value_type);
   zassert_equal(s1->has_unit, s2->has_unit);
   zassert_str_equal(s1->unit.ptr, s2->unit.ptr);
-  zassert_equal(s1->wake_interval_sec, s2->wake_interval_sec);
+
+  // Not transmitted
+  // zassert_equal(s1->wake_interval_sec, s2->wake_interval_sec);
 }
 
 void assert_functions_equal(const function_t* f1, const function_t* f2) {
@@ -153,12 +155,16 @@ void assert_functions_equal(const function_t* f1, const function_t* f2) {
   zassert_str_equal(f1->name.ptr, f2->name.ptr);
   zassert_str_equal(f1->description.ptr, f2->description.ptr);
   zassert_equal(f1->arg_type, f2->arg_type);
-  zassert_equal(f1->wake_interval_sec, f2->wake_interval_sec);
+
+  // Not transmitted
+  // zassert_equal(f1->wake_interval_sec, f2->wake_interval_sec);
 }
 
 void assert_capabilities_equal(const capabilities_t* c1, const capabilities_t* c2) {
   zassert_str_equal(c1->device_name.ptr, c2->device_name.ptr);
-  zassert_equal(c1->device_class, c2->device_class);
+
+  // device class is not transmitted
+  // zassert_equal(c1->device_class, c2->device_class);
 
   // sensors
   zassert_equal(sys_slist_len(&c1->sensors), sys_slist_len(&c2->sensors));
@@ -267,6 +273,7 @@ ZTEST_P(codec_uplink, test_encodes_and_decodes_upping) {
   zassert_equal(decode_uplink(&decoded, buf, bytes_written), OK);
   zassert_equal(decoded.payload_type, UPLINK_PAYLOAD_TYPE_PING);
   zassert_equal(decoded.payload.ping.type, type);
+  uplink_free(&decoded);
 }
 
 typedef struct report_uplink_conf {
@@ -318,86 +325,88 @@ ZTEST_P(codec_uplink, test_encodes_and_decodes_report) {
   uplink_t decoded = {0};
   zassert_equal(decode_uplink(&decoded, buf, bytes_written), OK);
   zassert_equal(ul.payload_type, decoded.payload_type);
+  uplink_free(&decoded);
 }
 
 ZTEST(codec_uplink, test_encodes_and_decodes_capabilities) {
-    sensor_t s1 = {
-        .id = 1,
-        .name = { .ptr = "Temperature", .len = 11, .src_type = STR_SRC_STATIC },
-        .description = { .ptr = "Ambient temperature sensor", .len = 26, .src_type = STR_SRC_STATIC },
-        .value_type = VALUE_TYPE_TEMPERATURE,
-        .has_unit = true,
-        .unit = { .ptr = "C", .len = 1, .src_type = STR_SRC_STATIC },
-        .read_func = NULL,
-        .wake_interval_sec = 60,
-    };
-    sensor_t s2 = {
-        .id = 2,
-        .name = { .ptr = "Humidity", .len = 8, .src_type = STR_SRC_STATIC },
-        .description = { .ptr = "Relative humidity sensor", .len = 24, .src_type = STR_SRC_STATIC },
-        .value_type = VALUE_TYPE_HUMIDITY,
-        .has_unit = true,
-        .unit = { .ptr = "%", .len = 1, .src_type = STR_SRC_STATIC },
-        .read_func = NULL,
-        .wake_interval_sec = 120,
-    };
-    sensor_t s3 = {
-        .id = 3,
-        .name = { .ptr = "CO2", .len = 3, .src_type = STR_SRC_STATIC },
-        .description = { .ptr = "Carbon dioxide concentration", .len = 28, .src_type = STR_SRC_STATIC },
-        .value_type = VALUE_TYPE_CO2,
-        .has_unit = true,
-        .unit = { .ptr = "ppm", .len = 3, .src_type = STR_SRC_STATIC },
-        .read_func = NULL,
-        .wake_interval_sec = 300,
-    };
+  sensor_t s1 = {
+    .id = 1,
+    .name = { .ptr = "Temperature", .len = 11, .src_type = STR_SRC_STATIC },
+    .description = { .ptr = "Ambient temperature sensor", .len = 26, .src_type = STR_SRC_STATIC },
+    .value_type = VALUE_TYPE_TEMPERATURE,
+    .has_unit = true,
+    .unit = { .ptr = "C", .len = 1, .src_type = STR_SRC_STATIC },
+    .read_func = NULL,
+    .wake_interval_sec = 60,
+  };
+  sensor_t s2 = {
+    .id = 2,
+    .name = { .ptr = "Humidity", .len = 8, .src_type = STR_SRC_STATIC },
+    .description = { .ptr = "Relative humidity sensor", .len = 24, .src_type = STR_SRC_STATIC },
+    .value_type = VALUE_TYPE_HUMIDITY,
+    .has_unit = true,
+    .unit = { .ptr = "%", .len = 1, .src_type = STR_SRC_STATIC },
+    .read_func = NULL,
+    .wake_interval_sec = 120,
+  };
+  sensor_t s3 = {
+    .id = 3,
+    .name = { .ptr = "CO2", .len = 3, .src_type = STR_SRC_STATIC },
+    .description = { .ptr = "Carbon dioxide concentration", .len = 28, .src_type = STR_SRC_STATIC },
+    .value_type = VALUE_TYPE_CO2,
+    .has_unit = true,
+    .unit = { .ptr = "ppm", .len = 3, .src_type = STR_SRC_STATIC },
+    .read_func = NULL,
+    .wake_interval_sec = 300,
+  };
 
-    function_t f1 = {
-        .id = 10,
-        .name = { .ptr = "Reboot", .len = 6, .src_type = STR_SRC_STATIC },
-        .description = { .ptr = "Reboots the device", .len = 18, .src_type = STR_SRC_STATIC },
-        .arg_type = FUNC_ARG_TYPE_VOID,
-        .call_function = NULL,
-        .wake_interval_sec = 0,
-    };
-    function_t f2 = {
-        .id = 11,
-        .name = { .ptr = "SetInterval", .len = 11, .src_type = STR_SRC_STATIC },
-        .description = { .ptr = "Sets sensor update interval in seconds", .len = 39, .src_type = STR_SRC_STATIC },
-        .arg_type = FUNC_ARG_TYPE_INT,
-        .call_function = NULL,
-        .wake_interval_sec = 10,
-    };
+  function_t f1 = {
+    .id = 10,
+    .name = { .ptr = "Reboot", .len = 6, .src_type = STR_SRC_STATIC },
+    .description = { .ptr = "Reboots the device", .len = 18, .src_type = STR_SRC_STATIC },
+    .arg_type = FUNC_ARG_TYPE_VOID,
+    .call_function = NULL,
+    .wake_interval_sec = 0,
+  };
+  function_t f2 = {
+    .id = 11,
+    .name = { .ptr = "SetInterval", .len = 11, .src_type = STR_SRC_STATIC },
+    .description = { .ptr = "Sets sensor update interval in seconds", .len = 39, .src_type = STR_SRC_STATIC },
+    .arg_type = FUNC_ARG_TYPE_INT,
+    .call_function = NULL,
+    .wake_interval_sec = 10,
+  };
 
-    uplink_t ul = {
-        .payload_type = UPLINK_PAYLOAD_TYPE_CAPABILITIES,
-        .payload.capabilities = {
-            .device_name = {
-                .ptr = "WeatherStation_01",
-                .len = 17,
-                .src_type = STR_SRC_STATIC,
-            },
-            .device_class = 1,
-        }
-    };
+  uplink_t ul = {
+    .payload_type = UPLINK_PAYLOAD_TYPE_CAPABILITIES,
+    .payload.capabilities = {
+      .device_name = {
+        .ptr = "WeatherStation_01",
+        .len = 17,
+        .src_type = STR_SRC_STATIC,
+      },
+      .device_class = DEVICE_CLASS_A,
+    }
+  };
 
-    sys_slist_init(&ul.payload.capabilities.sensors);
-    sys_slist_append(&ul.payload.capabilities.sensors, &s1.node);
-    sys_slist_append(&ul.payload.capabilities.sensors, &s2.node);
-    sys_slist_append(&ul.payload.capabilities.sensors, &s3.node);
+  sys_slist_init(&ul.payload.capabilities.sensors);
+  sys_slist_append(&ul.payload.capabilities.sensors, &s1.node);
+  sys_slist_append(&ul.payload.capabilities.sensors, &s2.node);
+  sys_slist_append(&ul.payload.capabilities.sensors, &s3.node);
 
-    sys_slist_init(&ul.payload.capabilities.functions);
-    sys_slist_append(&ul.payload.capabilities.functions, &f1.node);
-    sys_slist_append(&ul.payload.capabilities.functions, &f2.node);
+  sys_slist_init(&ul.payload.capabilities.functions);
+  sys_slist_append(&ul.payload.capabilities.functions, &f1.node);
+  sys_slist_append(&ul.payload.capabilities.functions, &f2.node);
 
-    char buf[1024];
-    size_t bytes_written = 0;
-    zassert_equal(encode_uplink(buf, sizeof(buf), &ul, &bytes_written), OK);
-    zassert_true(bytes_written > 0);
+  char buf[1024];
+  size_t bytes_written = 0;
+  zassert_equal(encode_uplink(buf, sizeof(buf), &ul, &bytes_written), OK);
+  zassert_true(bytes_written > 0);
 
-    uplink_t decoded = {0};
-    zassert_equal(decode_uplink(&decoded, buf, bytes_written), OK);
-    assert_uplinks_equal(&ul, &decoded);
+  uplink_t decoded = {0};
+  zassert_equal(decode_uplink(&decoded, buf, bytes_written), OK);
+  assert_uplinks_equal(&ul, &decoded);
+  uplink_free(&decoded);
 }
 
 
