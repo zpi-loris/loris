@@ -27,6 +27,12 @@ dotnet run
 These will install any neede dependencies, build the project and run it
 respectively
 
+### Environmental variables
+
+#### Chirpstack integration
+
+For chirpstack integration operation there are currently 4 environmental variables defined for client configuration:
+
 ## Running tests
 
 To run test use:
