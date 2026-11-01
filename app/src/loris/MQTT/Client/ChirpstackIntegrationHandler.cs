@@ -27,9 +27,6 @@ public class ChirpstackIntegrationHandler(
     {
         if (TryExtractUplinkMessage(jsonPayload, out var message))
         {
-            // TODO: fix logger
-            _logger.UplinkReceived("Debugging topic", message.Payload);
-
             await _deviceChannelWriter.WriteAsync(message, stoppingToken);
         }
     }
@@ -46,12 +43,12 @@ public class ChirpstackIntegrationHandler(
         }
         catch (InvalidJsonException ex)
         {
-            _logger.PayloadJsonParsingFailed(ex, json.Length);
+            _logger.ChirpstackUplinkJsonParsingFailed(ex, json.Length);
             return false;
         }
         catch (InvalidProtocolBufferException ex)
         {
-            _logger.PayloadProtobufSchemaMismatch(ex);
+            _logger.ChirpstackUplinkSchemaMismatch(ex);
             return false;
         }
 
@@ -63,7 +60,18 @@ public class ChirpstackIntegrationHandler(
         }
         catch (InvalidProtocolBufferException ex)
         {
-            _logger.UplinkProtobufSchemaMismatch(ex);
+            _logger.LorisUplinkProtobufSchemaMismatch(ex);
+            return false;
+        }
+
+        DevEui devEui;
+        try
+        {
+            devEui = DevEui.Parse(uplinkEvent.DeviceInfo.DevEui);
+        }
+        catch (FormatException ex)
+        {
+            _logger.DevEuiParsingFailed(ex, uplinkEvent.DeviceInfo.DevEui);
             return false;
         }
 
@@ -71,7 +79,7 @@ public class ChirpstackIntegrationHandler(
         message = new UplinkMessage
         {
             Payload = uplink,
-            DevEUI = DevEui.Parse(uplinkEvent.DeviceInfo.DevEui),
+            DevEUI = devEui,
             DateTime = uplinkEvent.Time.ToDateTime(),
         };
         return true;

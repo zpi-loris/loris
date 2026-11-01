@@ -29,14 +29,13 @@ public static partial class IngestionLogging
     )]
     public static partial void UplinkReceived(this ILogger logger, string topic, Uplink uplink);
 
-    // Debug because this is dropped by design
     [LoggerMessage(
         EventId = 1302,
-        EventName = nameof(UplinkProtobufSchemaMismatch),
+        EventName = nameof(LorisUplinkProtobufSchemaMismatch),
         Level = LogLevel.Debug,
-        Message = "Uplink bytes do not match Loris Uplink protobuf schema"
+        Message = "Payload bytes do not match Loris Uplink protobuf schema"
     )]
-    public static partial void UplinkProtobufSchemaMismatch(
+    public static partial void LorisUplinkProtobufSchemaMismatch(
         this ILogger logger,
         InvalidProtocolBufferException ex
     );
@@ -99,11 +98,11 @@ public static partial class IngestionLogging
 
     [LoggerMessage(
         EventId = 1404,
-        EventName = nameof(PayloadJsonParsingFailed),
+        EventName = nameof(ChirpstackUplinkJsonParsingFailed),
         Level = LogLevel.Warning,
-        Message = "Failed to parse integration payload: Content is not valid JSON (Length: {PayloadLength} bytes)"
+        Message = "Failed to parse ChirpStack payload: Content is not valid JSON (Length: {PayloadLength} bytes)"
     )]
-    public static partial void PayloadJsonParsingFailed(
+    public static partial void ChirpstackUplinkJsonParsingFailed(
         this ILogger logger,
         InvalidJsonException ex,
         long payloadLength
@@ -111,11 +110,11 @@ public static partial class IngestionLogging
 
     [LoggerMessage(
         EventId = 1405,
-        EventName = nameof(PayloadProtobufSchemaMismatch),
+        EventName = nameof(ChirpstackUplinkSchemaMismatch),
         Level = LogLevel.Warning,
-        Message = "JSON integration payload does not match UplinkEvent protobuf schema"
+        Message = "ChirpStack JSON payload does not match UplinkEvent protobuf schema"
     )]
-    public static partial void PayloadProtobufSchemaMismatch(
+    public static partial void ChirpstackUplinkSchemaMismatch(
         this ILogger logger,
         InvalidProtocolBufferException ex
     );
@@ -130,5 +129,17 @@ public static partial class IngestionLogging
         this ILogger logger,
         string eventName,
         string topic
+    );
+
+    [LoggerMessage(
+        EventId = 1407,
+        EventName = nameof(DevEuiParsingFailed),
+        Level = LogLevel.Warning,
+        Message = "Failed to parse DevEUI '{DevEui}' from Chirpstack message"
+    )]
+    public static partial void DevEuiParsingFailed(
+        this ILogger logger,
+        Exception ex,
+        string devEui
     );
 }
