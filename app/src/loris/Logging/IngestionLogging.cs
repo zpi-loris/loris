@@ -6,12 +6,20 @@ namespace Loris.Logging;
 public static partial class IngestionLogging
 {
     [LoggerMessage(
-        EventId = 1001,
+        EventId = 1201,
         EventName = nameof(ConnectingToBroker),
         Level = LogLevel.Information,
         Message = "Trying to connect to mqtt://{Host}:{Port}"
     )]
     public static partial void ConnectingToBroker(this ILogger logger, string host, int port);
+
+    [LoggerMessage(
+        EventId = 1202,
+        EventName = nameof(ClientConnected),
+        Level = LogLevel.Information,
+        Message = "Connected to MQTT broker at mqtt://{Host}:{Port}"
+    )]
+    public static partial void ClientConnected(this ILogger logger, string host, int port);
 
     [LoggerMessage(
         EventId = 1301,
@@ -32,6 +40,34 @@ public static partial class IngestionLogging
         this ILogger logger,
         InvalidProtocolBufferException ex
     );
+
+    [LoggerMessage(
+        EventId = 1303,
+        EventName = nameof(TopicSubscriptionConfigured),
+        Level = LogLevel.Debug,
+        Message = "Configured MQTT topic filter: {TopicFilter}"
+    )]
+    public static partial void TopicSubscriptionConfigured(this ILogger logger, string topicFilter);
+
+    [LoggerMessage(
+        EventId = 1304,
+        EventName = nameof(MessageReceived),
+        Level = LogLevel.Debug,
+        Message = "Received message on {Topic} ({PayloadLength} bytes)"
+    )]
+    public static partial void MessageReceived(
+        this ILogger logger,
+        string topic,
+        long payloadLength
+    );
+
+    [LoggerMessage(
+        EventId = 1305,
+        EventName = nameof(StoppingIntegrationService),
+        Level = LogLevel.Debug,
+        Message = "Stopping Chirpstack MQTT integration background service"
+    )]
+    public static partial void StoppingIntegrationService(this ILogger logger);
 
     [LoggerMessage(
         EventId = 1401,
@@ -82,5 +118,17 @@ public static partial class IngestionLogging
     public static partial void PayloadProtobufSchemaMismatch(
         this ILogger logger,
         InvalidProtocolBufferException ex
+    );
+
+    [LoggerMessage(
+        EventId = 1406,
+        EventName = nameof(NoHandlerRegisteredForTopic),
+        Level = LogLevel.Warning,
+        Message = "No matching route registered for event '{EventName}' on topic {Topic}"
+    )]
+    public static partial void NoHandlerRegisteredForTopic(
+        this ILogger logger,
+        string eventName,
+        string topic
     );
 }

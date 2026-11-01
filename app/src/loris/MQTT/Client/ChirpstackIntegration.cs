@@ -96,13 +96,11 @@ public class ChirpstackIntegration(
 
             template = template.TrySetParameter(EVENT_PLACEHOLDER, eventName);
 
-            var topicFilter = template.BuildFilter();
+            var topicFilter = template.TopicFilter;
 
-            // TODO: DEBUG created topic subscription or sth like that
+            _logger.TopicSubscriptionConfigured(topicFilter);
 
-            subscribeOptionsBuilder = subscribeOptionsBuilder.WithTopicFilter(
-                template.BuildFilter()
-            );
+            subscribeOptionsBuilder = subscribeOptionsBuilder.WithTopicFilter(topicFilter);
         }
         return subscribeOptionsBuilder.Build();
     }
@@ -128,7 +126,7 @@ public class ChirpstackIntegration(
             {
                 if (_disconnectedCts.IsCancellationRequested)
                 {
-                    // TODO: INFO client is disconnected
+                    _logger.IntegrationDisconnected(_settings.Host, _settings.Port);
                 }
             }
             finally
@@ -156,8 +154,7 @@ public class ChirpstackIntegration(
             {
                 await _mqttClient.ConnectAsync(_mqttClientOptions, stoppingToken);
 
-                // TODO: INFO client is connected
-                _logger.LogInformation("Client is connected");
+                _logger.ClientConnected(_settings.Host, _settings.Port);
 
                 await _mqttClient.SubscribeAsync(_mqttClientSubscribeOptions, stoppingToken);
 
@@ -194,7 +191,7 @@ public class ChirpstackIntegration(
         var topic = message.ApplicationMessage.Topic;
         var mqttPayload = message.ApplicationMessage.Payload;
 
-        // TODO: DEBUG get message on topic with n bytes
+        _logger.MessageReceived(topic, mqttPayload.Length);
 
         // should always succeed
         string mqttJsonPayload;
@@ -218,13 +215,13 @@ public class ChirpstackIntegration(
         }
         else
         {
-            // TODO: WARNING received message on topic with no registered handler
+            _logger.NoHandlerRegisteredForTopic(eventSpan.ToString(), topic);
         }
     }
 
     public override Task StopAsync(CancellationToken cancellationToken)
     {
-        // TODO: DEBUG stop logging
+        _logger.StoppingIntegrationService();
 
         // release thread lock
         _threadInControl.Set();
