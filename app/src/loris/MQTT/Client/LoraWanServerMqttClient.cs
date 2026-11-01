@@ -7,6 +7,7 @@ using Loris.Messages;
 using Loris.Protocol;
 using Loris.Types;
 using MQTTnet;
+using MQTTnet.Extensions.TopicTemplate;
 //
 // ========
 // Aliasese
@@ -24,45 +25,15 @@ public class LoraWanServerMqttClient : BackgroundService
 
     private readonly ChannelWriter<IDeviceMessage> _deviceChannelWriter;
 
-    // TODO: use environmental variables
-    private readonly string _host = "192.168.10.111";
-    private readonly int _port = 1883;
-    private readonly int _reconectEverySecond = 5;
-    private readonly string _topic = "application/+/device/+/event/up";
+    private readonly string _host;
+
+    private readonly int _port;
+
+    private readonly int _reconnectInterval;
 
     private readonly IMqttClient _mqttClient;
     private readonly MqttClientOptions _mqttClientOptions;
     private readonly MqttClientSubscribeOptions _mqttClientSubscribeOptions;
-
-    public LoraWanServerMqttClient(
-        ClientSettings settings,
-        ILogger<LoraWanServerMqttClient> logger,
-        ChannelWriter<IDeviceMessage> deviceChannelWriter
-    )
-    {
-        _logger = logger;
-        _deviceChannelWriter = deviceChannelWriter;
-
-        var mqttFactory = new MqttClientFactory();
-
-        _mqttClient = mqttFactory.CreateMqttClient();
-
-        _mqttClientOptions = mqttFactory
-            .CreateClientOptionsBuilder()
-            .WithTcpServer(settings.Host, settings.Port)
-            .Build();
-
-        _mqttClientSubscribeOptions = mqttFactory
-            .CreateSubscribeOptionsBuilder()
-            .WithTopicFilter(t =>
-                t.WithTopic(
-                    settings.ApplicationId.HasValue
-                        ? $"application/{settings.ApplicationId.Value}/device/+/event/up"
-                        : $"application/+/device/+/event/up"
-                )
-            )
-            .Build();
-    }
 
     /// <summary>
     /// This field is responsible for thread synchronization signalling.<br/>
@@ -82,6 +53,42 @@ public class LoraWanServerMqttClient : BackgroundService
     /// </remarks>
     /// </summary>
     private CancellationTokenSource? _disconnectedCts;
+
+    private readonly string _topic = "application/+/device/+/event/up";
+
+
+    public LoraWanServerMqttClient(
+        ClientSettings settings,
+        ILogger<LoraWanServerMqttClient> logger,
+        ChannelWriter<IDeviceMessage> deviceChannelWriter
+    )
+    {
+        _logger = logger;
+        _deviceChannelWriter = deviceChannelWriter;
+
+        _host = settings.Host;
+        _port = settings.Port;
+        _reconnectInterval = settings.ReconnectInterval;
+
+        var mqttFactory = new MqttClientFactory();
+
+        _mqttClient = mqttFactory.CreateMqttClient();
+
+        _mqttClientOptions = mqttFactory
+            .CreateClientOptionsBuilder()
+            .WithTcpServer(_host, _port)
+            .Build();
+
+        _mqttClientSubscribeOptions = mqttFactory
+            .CreateSubscribeOptionsBuilder()
+            .WithTopicFilter(t =>
+                t.WithTopic(
+                    $"application/{{settings.ApplicationId.HasValue ? settings.ApplicationId.Value : "
+                        + "}}/device/+/event/up"
+                )
+            )
+            .Build();
+    }
 
     public override Task StartAsync(CancellationToken cancellationToken)
     {
@@ -150,7 +157,7 @@ public class LoraWanServerMqttClient : BackgroundService
         }
         finally
         {
-            await Task.Delay(_reconectEverySecond * 1000, stoppingToken);
+            await Task.Delay(_reconnectInterval * 1000, stoppingToken);
         }
     }
 

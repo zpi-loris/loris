@@ -39,18 +39,34 @@ public static class ConfigServiceCollectionExtensions
             ConfigurationManager configuration
         )
         {
-            var host = configuration.TryGetPropertyValue<string>("Host");
-            var port = configuration.TryGetPropertyValue<int>("Port", 1883);
-            var applicationId = configuration.TryGetPropertyValue<Guid?>("ApplicationId");
+            var host = configuration["Host"];
 
-            services.AddSingleton(
-                new ClientSettings
-                {
-                    Host = host,
-                    Port = port,
-                    ApplicationId = applicationId,
-                }
-            );
+            if (host == null)
+            {
+                throw new ArgumentNullException(
+                    paramName: host,
+                    message: "Chirpstack integration host environment variable is not set"
+                );
+            }
+
+            var settings = new ClientSettings { Host = host };
+
+            if (int.TryParse(configuration["Port"], out var port))
+            {
+                settings = settings with { Port = port };
+            }
+
+            if (Guid.TryParse(configuration["ApplicationId"], out var applicationId))
+            {
+                settings = settings with { ApplicationId = applicationId };
+            }
+
+            if (int.TryParse(configuration["ReconnectInterval"], out var reconnectInterval))
+            {
+                settings = settings with { ReconnectInterval = reconnectInterval };
+            }
+
+            services.AddSingleton(settings);
 
             return services;
         }
