@@ -1,39 +1,30 @@
 using System.Buffers;
+using System.Collections.Frozen;
 using System.Text;
-using System.Threading.Channels;
-using Google.Protobuf;
 using Loris.Logging;
-using Loris.Messages;
-using Loris.Protocol;
-using Loris.Types;
 using MQTTnet;
 using MQTTnet.Extensions.TopicTemplate;
-//
-// ========
-// Aliasese
-// ========
-//
-// It is by design to alias to not confuse our events
-// with chirpstack integration events
-using ChirpstackUplink = Chirpstack.Integration.UplinkEvent;
 
 namespace Loris.MQTT.Client;
 
-public class ChirpstackIntegration : BackgroundService
+public class ChirpstackIntegration(
+    ChirpstackIntegrationSettings settings,
+    IChirpstackIntegrationHandler handler,
+    ILogger<ChirpstackIntegration> logger
+) : BackgroundService
 {
-    private readonly ILogger<ChirpstackIntegration> _logger;
+    private readonly ILogger<ChirpstackIntegration> _logger = logger;
 
-    private readonly ChannelWriter<IDeviceMessage> _deviceChannelWriter;
+    private readonly ChirpstackIntegrationSettings _settings = settings;
 
-    private readonly string _host;
+    private readonly FrozenDictionary<
+        string,
+        Func<string, CancellationToken, Task>
+    > _subscribeContract = handler.CreateRoutingTable();
 
-    private readonly int _port;
-
-    private readonly int _reconnectInterval;
-
-    private readonly IMqttClient _mqttClient;
-    private readonly MqttClientOptions _mqttClientOptions;
-    private readonly MqttClientSubscribeOptions _mqttClientSubscribeOptions;
+    private IMqttClient? _mqttClient;
+    private MqttClientOptions? _mqttClientOptions;
+    private MqttClientSubscribeOptions? _mqttClientSubscribeOptions;
 
     /// <summary>
     /// This field is responsible for thread synchronization signalling.<br/>
@@ -55,57 +46,68 @@ public class ChirpstackIntegration : BackgroundService
     private CancellationTokenSource? _disconnectedCts;
 
     /// <summary>
-    /// Chirpstack uplink event mqtt topic.
+    /// Allows to filter only one application from chirpstack.
     /// </summary>
-    private readonly MqttTopicTemplate _uplinkTopic = new(
-        $"application/{{{APP_ID_PLACEHOLDER}}}/device/+/event/up"
-    );
-
     private static readonly string APP_ID_PLACEHOLDER = "applicationId";
 
-    public ChirpstackIntegration(
-        IntegrationSettings settings,
-        ILogger<ChirpstackIntegration> logger,
-        ChannelWriter<IDeviceMessage> deviceChannelWriter
-    )
+    /// <summary>
+    /// Event specifies the message type on MQTT
+    /// </summary>
+    private static readonly string EVENT_PLACEHOLDER = "event";
+
+    /// <summary>
+    /// Chirpstack MQTT message events topics
+    /// </summary>
+    private static readonly MqttTopicTemplate _topicTemplate = new(
+        $"application/{{{APP_ID_PLACEHOLDER}}}/device/+/event/{{{EVENT_PLACEHOLDER}}}"
+    );
+
+    public override Task StartAsync(CancellationToken cancellationToken)
     {
-        _logger = logger;
-        _deviceChannelWriter = deviceChannelWriter;
-
-        _host = settings.Host;
-        _port = settings.Port;
-        _reconnectInterval = settings.ReconnectInterval;
-
         var mqttFactory = new MqttClientFactory();
 
         _mqttClient = mqttFactory.CreateMqttClient();
 
         _mqttClientOptions = mqttFactory
             .CreateClientOptionsBuilder()
-            .WithTcpServer(_host, _port)
+            .WithTcpServer(_settings.Host, _settings.Port)
             .Build();
 
-        if (settings.ApplicationId is not null)
-        {
-            _uplinkTopic = _uplinkTopic.TrySetParameter(
-                APP_ID_PLACEHOLDER,
-                settings.ApplicationId.ToString()
-            );
-        }
+        _mqttClientSubscribeOptions = CreateSubscribeOptionsFromTemplate(mqttFactory);
 
-        _mqttClientSubscribeOptions = mqttFactory
-            .CreateSubscribeOptionsBuilder()
-            .WithTopicFilter(_uplinkTopic.BuildFilter())
-            .Build();
-    }
-
-    public override Task StartAsync(CancellationToken cancellationToken)
-    {
         _mqttClient.DisconnectedAsync += HandleDisconnected;
         _mqttClient.ApplicationMessageReceivedAsync += message =>
             HandleMessage(message, cancellationToken);
 
         return base.StartAsync(cancellationToken);
+    }
+
+    private MqttClientSubscribeOptions CreateSubscribeOptionsFromTemplate(
+        MqttClientFactory mqttFactory
+    )
+    {
+        MqttTopicTemplate template = _topicTemplate;
+
+        if (_settings.ApplicationId is Guid value)
+        {
+            template = _topicTemplate.TrySetParameter(APP_ID_PLACEHOLDER, value.ToString());
+        }
+
+        Console.WriteLine(template.TopicFilter);
+
+        var subscribeOptionsBuilder = mqttFactory.CreateSubscribeOptionsBuilder();
+
+        foreach (var (eventName, _) in _subscribeContract)
+        {
+            // TODO: rewrite after debug
+            var newTemplate = template.TrySetParameter(EVENT_PLACEHOLDER, eventName);
+            Console.WriteLine(newTemplate.TopicFilter);
+
+            subscribeOptionsBuilder = subscribeOptionsBuilder.WithTopicFilter(
+                template.TrySetParameter(EVENT_PLACEHOLDER, eventName).BuildFilter()
+            );
+        }
+        return subscribeOptionsBuilder.Build();
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -129,7 +131,7 @@ public class ChirpstackIntegration : BackgroundService
             {
                 if (_disconnectedCts.IsCancellationRequested == true)
                 {
-                    _logger.IntegrationDisconnected(_host, _port);
+                    _logger.IntegrationDisconnected(_settings.Host, _settings.Port);
                     continue;
                 }
                 else
@@ -146,7 +148,14 @@ public class ChirpstackIntegration : BackgroundService
 
     private async Task ConnectAndSubscribe(CancellationToken stoppingToken)
     {
-        _logger.ConnectingToBroker(_host, _port);
+        ArgumentNullException.ThrowIfNull(_mqttClient, "MqttClient");
+        ArgumentNullException.ThrowIfNull(_mqttClientOptions, "MqttClientOptions");
+        ArgumentNullException.ThrowIfNull(
+            _mqttClientSubscribeOptions,
+            "MqttClientSubscribeOptions"
+        );
+
+        _logger.ConnectingToBroker(_settings.Host, _settings.Port);
         try
         {
             if (!await _mqttClient.TryPingAsync(stoppingToken))
@@ -162,11 +171,11 @@ public class ChirpstackIntegration : BackgroundService
         }
         catch (MQTTnet.Exceptions.MqttCommunicationException)
         {
-            _logger.IntegrationUnreachable(_host, _port);
+            _logger.IntegrationUnreachable(_settings.Host, _settings.Port);
         }
         finally
         {
-            await Task.Delay(_reconnectInterval * 1000, stoppingToken);
+            await Task.Delay(_settings.ReconnectInterval * 1000, stoppingToken);
         }
     }
 
@@ -203,71 +212,12 @@ public class ChirpstackIntegration : BackgroundService
             return;
         }
 
-        // TODO: do some sort of topic routing
-
-        await HandleUplink(mqttJsonPayload, stoppingToken);
-
-        // if (topic == _topic)
-        // {
-        //     await HandleUplink(mqttJsonPayload, stoppingToken);
-        // }
-        // else if (topic == "someOtherTopic")
-        // {
-        //     Console.WriteLine("handling other payload");
-        // }
-    }
-
-    private async Task HandleUplink(string json, CancellationToken stoppingToken)
-    {
-        if (TryExtractUplinkMessage(json, out var message))
+        var eventSpan = GetLastTopicSegmentSpan(topic);
+        var lookup = _subscribeContract.GetAlternateLookup<ReadOnlySpan<char>>();
+        if (lookup.TryGetValue(eventSpan, out var handlerMethod))
         {
-            _logger.UplinkReceived(_uplinkTopic.TopicFilter, message.Payload);
-
-            await _deviceChannelWriter.WriteAsync(message, stoppingToken);
+            await handlerMethod(mqttJsonPayload, stoppingToken);
         }
-    }
-
-    private bool TryExtractUplinkMessage(string json, out UplinkMessage message)
-    {
-        message = default;
-
-        // Decode chirpstack uplink message from MQTT
-        ChirpstackUplink uplinkEvent;
-        try
-        {
-            uplinkEvent = ChirpstackUplink.Parser.ParseJson(json);
-        }
-        catch (InvalidJsonException ex)
-        {
-            _logger.PayloadJsonParsingFailed(ex, json.Length);
-            return false;
-        }
-        catch (InvalidProtocolBufferException ex)
-        {
-            _logger.PayloadProtobufSchemaMismatch(ex);
-            return false;
-        }
-
-        // Decode loris protocol uplink from MQTT message payload
-        Uplink uplink;
-        try
-        {
-            uplink = Uplink.Parser.ParseFrom(uplinkEvent.Data);
-        }
-        catch (InvalidProtocolBufferException ex)
-        {
-            _logger.UplinkProtobufSchemaMismatch(ex);
-            return false;
-        }
-
-        // Create Device Channel Uplink Message
-        message = new UplinkMessage
-        {
-            Payload = uplink,
-            DevEUI = DevEui.Parse(uplinkEvent.DeviceInfo.DevEui),
-            DateTime = uplinkEvent.Time.ToDateTime(),
-        };
-        return true;
     }
 
     public override Task StopAsync(CancellationToken cancellationToken)
@@ -281,6 +231,12 @@ public class ChirpstackIntegration : BackgroundService
     {
         base.Dispose();
         _threadInControl.Dispose();
-        _mqttClient.Dispose();
+        _mqttClient?.Dispose();
+    }
+
+    private static ReadOnlySpan<char> GetLastTopicSegmentSpan(ReadOnlySpan<char> topic)
+    {
+        int lastSlashIndex = topic.LastIndexOf('/');
+        return lastSlashIndex >= 0 ? topic[(lastSlashIndex + 1)..] : topic;
     }
 }

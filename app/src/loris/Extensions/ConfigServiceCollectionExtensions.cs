@@ -35,9 +35,7 @@ public static class ConfigServiceCollectionExtensions
             return services;
         }
 
-        public IServiceCollection AddChirpstackIntegrationSettings(
-            ConfigurationManager configuration
-        )
+        public IServiceCollection AddChirpstackIntegration(ConfigurationManager configuration)
         {
             var host = configuration["Host"];
 
@@ -49,7 +47,7 @@ public static class ConfigServiceCollectionExtensions
                 );
             }
 
-            var settings = new IntegrationSettings { Host = host };
+            var settings = new ChirpstackIntegrationSettings { Host = host };
 
             if (int.TryParse(configuration["Port"], out var port))
             {
@@ -67,6 +65,10 @@ public static class ConfigServiceCollectionExtensions
             }
 
             services.AddSingleton(settings);
+
+            services.AddSingleton<IChirpstackIntegrationHandler, ChirpstackIntegrationHandler>();
+
+            services.AddHostedService<ChirpstackIntegration>();
 
             return services;
         }

@@ -1,6 +1,6 @@
 namespace Loris.MQTT.Client;
 
-public record IntegrationSettings
+public record ChirpstackIntegrationSettings
 {
     public required string Host { get; init; }
     public int Port { get; init; } = 1883;
