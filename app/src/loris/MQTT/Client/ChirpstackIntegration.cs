@@ -19,9 +19,9 @@ using ChirpstackUplink = Chirpstack.Integration.UplinkEvent;
 
 namespace Loris.MQTT.Client;
 
-public class LoraWanServerMqttClient : BackgroundService
+public class ChirpstackIntegration : BackgroundService
 {
-    private readonly ILogger<LoraWanServerMqttClient> _logger;
+    private readonly ILogger<ChirpstackIntegration> _logger;
 
     private readonly ChannelWriter<IDeviceMessage> _deviceChannelWriter;
 
@@ -56,10 +56,9 @@ public class LoraWanServerMqttClient : BackgroundService
 
     private readonly string _topic = "application/+/device/+/event/up";
 
-
-    public LoraWanServerMqttClient(
-        ClientSettings settings,
-        ILogger<LoraWanServerMqttClient> logger,
+    public ChirpstackIntegration(
+        IntegrationSettings settings,
+        ILogger<ChirpstackIntegration> logger,
         ChannelWriter<IDeviceMessage> deviceChannelWriter
     )
     {

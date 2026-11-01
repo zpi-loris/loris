@@ -49,7 +49,7 @@ public static class ConfigServiceCollectionExtensions
                 );
             }
 
-            var settings = new ClientSettings { Host = host };
+            var settings = new IntegrationSettings { Host = host };
 
             if (int.TryParse(configuration["Port"], out var port))
             {

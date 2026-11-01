@@ -10,7 +10,7 @@ builder.Services.AddChannels();
 
 builder.Services.AddChirpstackIntegrationSettings(builder.Configuration);
 
-builder.Services.AddHostedService<LoraWanServerMqttClient>();
+builder.Services.AddHostedService<ChirpstackIntegration>();
 
 builder.Services.AddControllers();
 
