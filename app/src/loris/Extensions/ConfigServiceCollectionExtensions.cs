@@ -41,7 +41,9 @@ public static class ConfigServiceCollectionExtensions
         )
             where THandler : class, IChirpstackIntegrationHandler
         {
-            var host = configuration["Host"];
+            List<string> hierarchy = ["Chirpstack", "Integration"];
+
+            var host = configuration[string.Join(":", hierarchy.Append("Host"))];
 
             if (host == null)
             {
@@ -53,17 +55,32 @@ public static class ConfigServiceCollectionExtensions
 
             var settings = new ChirpstackIntegrationSettings { Host = host };
 
-            if (int.TryParse(configuration["Port"], out var port))
+            if (
+                int.TryParse(
+                    configuration[string.Join(":", hierarchy.Append("Port"))],
+                    out var port
+                )
+            )
             {
                 settings = settings with { Port = port };
             }
 
-            if (Guid.TryParse(configuration["ApplicationId"], out var applicationId))
+            if (
+                Guid.TryParse(
+                    configuration[string.Join(":", hierarchy.Append("ApplicationId"))],
+                    out var applicationId
+                )
+            )
             {
                 settings = settings with { ApplicationId = applicationId };
             }
 
-            if (int.TryParse(configuration["ReconnectInterval"], out var reconnectInterval))
+            if (
+                int.TryParse(
+                    configuration[string.Join(":", hierarchy.Append("ReconnectInterval"))],
+                    out var reconnectInterval
+                )
+            )
             {
                 settings = settings with { ReconnectInterval = reconnectInterval };
             }
