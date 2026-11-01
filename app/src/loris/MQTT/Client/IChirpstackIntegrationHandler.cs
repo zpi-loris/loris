@@ -11,6 +11,22 @@ namespace Loris.MQTT.Client
     {
         IReadOnlyList<Func<string, CancellationToken, Task>> Subscriptions { get; }
 
+        /// <summary>
+        /// <para>
+        /// Creates MQTT routing table
+        /// </para>
+        /// <para>
+        /// Maps MQTT event type to event handler. It is using Subscriptions<br/>
+        /// property populated with methods specified by the interface.<br/>
+        /// Each method being a dictionary key relates to the chirpstack integration event type.
+        /// </para>
+        /// </summary>
+        /// <returns>
+        /// It returns <b>lookup only</b> dictionary mapping
+        /// </returns>
+        /// <exception cref="InvalidOperationException">
+        /// Throws when the Subscriptions is empty
+        /// </exception>
         public sealed FrozenDictionary<
             string,
             Func<string, CancellationToken, Task>

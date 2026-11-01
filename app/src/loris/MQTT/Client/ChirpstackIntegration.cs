@@ -17,10 +17,8 @@ public class ChirpstackIntegration(
 
     private readonly ChirpstackIntegrationSettings _settings = settings;
 
-    private readonly FrozenDictionary<
-        string,
-        Func<string, CancellationToken, Task>
-    > _subscribeContract = handler.CreateRoutingTable();
+    private readonly FrozenDictionary<string, Func<string, CancellationToken, Task>> _routingTable =
+        handler.CreateRoutingTable();
 
     private IMqttClient? _mqttClient;
     private MqttClientOptions? _mqttClientOptions;
@@ -37,11 +35,11 @@ public class ChirpstackIntegration(
     private readonly ManualResetEvent _threadInControl = new(false);
 
     /// <summary>
-    /// Responsible for stopping subscribe and message handlers<br/>
+    /// Responsible for stopping active <b>subscribe</b><br/>
     /// after the client is disconnected<br/>
-    /// <remarks>
+    /// <para>
     /// <b>Note that this not stop the background service</b>
-    /// </remarks>
+    /// </para>
     /// </summary>
     private CancellationTokenSource? _disconnectedCts;
 
@@ -51,12 +49,12 @@ public class ChirpstackIntegration(
     private static readonly string APP_ID_PLACEHOLDER = "applicationId";
 
     /// <summary>
-    /// Event specifies the message type on MQTT
+    /// Allows to filter message type on MQTT chirpstack integration
     /// </summary>
     private static readonly string EVENT_PLACEHOLDER = "event";
 
     /// <summary>
-    /// Chirpstack MQTT message events topics
+    /// Chirpstack MQTT message topic template
     /// </summary>
     private static readonly MqttTopicTemplate _topicTemplate = new(
         $"application/{{{APP_ID_PLACEHOLDER}}}/device/+/event/{{{EVENT_PLACEHOLDER}}}"
@@ -86,25 +84,24 @@ public class ChirpstackIntegration(
         MqttClientFactory mqttFactory
     )
     {
-        MqttTopicTemplate template = _topicTemplate;
-
-        if (_settings.ApplicationId is Guid value)
-        {
-            template = _topicTemplate.TrySetParameter(APP_ID_PLACEHOLDER, value.ToString());
-        }
-
-        Console.WriteLine(template.TopicFilter);
-
         var subscribeOptionsBuilder = mqttFactory.CreateSubscribeOptionsBuilder();
 
-        foreach (var (eventName, _) in _subscribeContract)
+        MqttTopicTemplate template = _topicTemplate;
+        foreach (var (eventName, _) in _routingTable)
         {
-            // TODO: rewrite after debug
-            var newTemplate = template.TrySetParameter(EVENT_PLACEHOLDER, eventName);
-            Console.WriteLine(newTemplate.TopicFilter);
+            if (_settings.ApplicationId is Guid value)
+            {
+                template = template.TrySetParameter(APP_ID_PLACEHOLDER, value.ToString());
+            }
+
+            template = template.TrySetParameter(EVENT_PLACEHOLDER, eventName);
+
+            var topicFilter = template.BuildFilter();
+
+            // TODO: DEBUG created topic subscription or sth like that
 
             subscribeOptionsBuilder = subscribeOptionsBuilder.WithTopicFilter(
-                template.TrySetParameter(EVENT_PLACEHOLDER, eventName).BuildFilter()
+                template.BuildFilter()
             );
         }
         return subscribeOptionsBuilder.Build();
@@ -129,18 +126,14 @@ public class ChirpstackIntegration(
             }
             catch (OperationCanceledException)
             {
-                if (_disconnectedCts.IsCancellationRequested == true)
+                if (_disconnectedCts.IsCancellationRequested)
                 {
-                    _logger.IntegrationDisconnected(_settings.Host, _settings.Port);
-                    continue;
-                }
-                else
-                {
-                    throw;
+                    // TODO: INFO client is disconnected
                 }
             }
             finally
             {
+                // each iteration there is new token source created
                 _disconnectedCts.Dispose();
             }
         }
@@ -156,12 +149,14 @@ public class ChirpstackIntegration(
         );
 
         _logger.ConnectingToBroker(_settings.Host, _settings.Port);
+
         try
         {
             if (!await _mqttClient.TryPingAsync(stoppingToken))
             {
                 await _mqttClient.ConnectAsync(_mqttClientOptions, stoppingToken);
 
+                // TODO: INFO client is connected
                 _logger.LogInformation("Client is connected");
 
                 await _mqttClient.SubscribeAsync(_mqttClientSubscribeOptions, stoppingToken);
@@ -186,6 +181,7 @@ public class ChirpstackIntegration(
             // drop active subscribtion
             _disconnectedCts?.Cancel();
 
+            // resume thread
             _threadInControl.Set();
         }
     }
@@ -197,6 +193,8 @@ public class ChirpstackIntegration(
     {
         var topic = message.ApplicationMessage.Topic;
         var mqttPayload = message.ApplicationMessage.Payload;
+
+        // TODO: DEBUG get message on topic with n bytes
 
         // should always succeed
         string mqttJsonPayload;
@@ -213,15 +211,21 @@ public class ChirpstackIntegration(
         }
 
         var eventSpan = GetLastTopicSegmentSpan(topic);
-        var lookup = _subscribeContract.GetAlternateLookup<ReadOnlySpan<char>>();
+        var lookup = _routingTable.GetAlternateLookup<ReadOnlySpan<char>>();
         if (lookup.TryGetValue(eventSpan, out var handlerMethod))
         {
             await handlerMethod(mqttJsonPayload, stoppingToken);
+        }
+        else
+        {
+            // TODO: WARNING received message on topic with no registered handler
         }
     }
 
     public override Task StopAsync(CancellationToken cancellationToken)
     {
+        // TODO: DEBUG stop logging
+
         // release thread lock
         _threadInControl.Set();
         return base.StopAsync(cancellationToken);
