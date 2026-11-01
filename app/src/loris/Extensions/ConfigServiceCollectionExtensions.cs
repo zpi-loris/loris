@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Threading.Channels;
 using Loris.Messages;
 using Loris.MQTT.Client;
@@ -35,7 +36,10 @@ public static class ConfigServiceCollectionExtensions
             return services;
         }
 
-        public IServiceCollection AddChirpstackIntegration(ConfigurationManager configuration)
+        public IServiceCollection AddChirpstackIntegration<THandler>(
+            ConfigurationManager configuration
+        )
+            where THandler : class, IChirpstackIntegrationHandler
         {
             var host = configuration["Host"];
 
@@ -66,7 +70,7 @@ public static class ConfigServiceCollectionExtensions
 
             services.AddSingleton(settings);
 
-            services.AddSingleton<IChirpstackIntegrationHandler, ChirpstackIntegrationHandler>();
+            services.AddSingleton<IChirpstackIntegrationHandler, THandler>();
 
             services.AddHostedService<ChirpstackIntegration>();
 

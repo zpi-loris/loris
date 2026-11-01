@@ -8,7 +8,8 @@ var builder = WebApplication.CreateBuilder(args);
 // Configure channels for the ingestion subsystem
 builder.Services.AddChannels();
 
-builder.Services.AddChirpstackIntegration(builder.Configuration);
+// Add chirpstack integration background task with handler implementation
+builder.Services.AddChirpstackIntegration<ChirpstackIntegrationHandler>(builder.Configuration);
 
 builder.Services.AddControllers();
 
