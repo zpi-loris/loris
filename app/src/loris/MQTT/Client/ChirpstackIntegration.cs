@@ -54,7 +54,14 @@ public class ChirpstackIntegration : BackgroundService
     /// </summary>
     private CancellationTokenSource? _disconnectedCts;
 
-    private readonly string _topic = "application/+/device/+/event/up";
+    /// <summary>
+    /// Chirpstack uplink event mqtt topic.
+    /// </summary>
+    private readonly MqttTopicTemplate _uplinkTopic = new(
+        $"application/{{{APP_ID_PLACEHOLDER}}}/device/+/event/up"
+    );
+
+    private static readonly string APP_ID_PLACEHOLDER = "applicationId";
 
     public ChirpstackIntegration(
         IntegrationSettings settings,
@@ -78,14 +85,17 @@ public class ChirpstackIntegration : BackgroundService
             .WithTcpServer(_host, _port)
             .Build();
 
+        if (settings.ApplicationId is not null)
+        {
+            _uplinkTopic = _uplinkTopic.TrySetParameter(
+                APP_ID_PLACEHOLDER,
+                settings.ApplicationId.ToString()
+            );
+        }
+
         _mqttClientSubscribeOptions = mqttFactory
             .CreateSubscribeOptionsBuilder()
-            .WithTopicFilter(t =>
-                t.WithTopic(
-                    $"application/{{settings.ApplicationId.HasValue ? settings.ApplicationId.Value : "
-                        + "}}/device/+/event/up"
-                )
-            )
+            .WithTopicFilter(_uplinkTopic.BuildFilter())
             .Build();
     }
 
@@ -211,7 +221,7 @@ public class ChirpstackIntegration : BackgroundService
     {
         if (TryExtractUplinkMessage(json, out var message))
         {
-            _logger.UplinkReceived(_topic, message.Payload);
+            _logger.UplinkReceived(_uplinkTopic.TopicFilter, message.Payload);
 
             await _deviceChannelWriter.WriteAsync(message, stoppingToken);
         }
