@@ -1,5 +1,8 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Threading.Channels;
 using Loris.Messages;
+using Loris.MQTT.Client;
+using Namotion.Reflection;
 
 namespace Loris.Extensions;
 
@@ -17,18 +20,86 @@ public static class ConfigServiceCollectionExtensions
                 SingleReader = true,
             };
 
-            var chirpstackChannel = Channel.CreateBounded<IChirpstackMessage>(boundedOptions);
+            var deviceChannel = Channel.CreateBounded<IDeviceMessage>(boundedOptions);
             var dbWriteChannel = Channel.CreateBounded<IDbWriteMessage>(boundedOptions);
             var eventChannel = Channel.CreateBounded<IEventMessage>(boundedOptions);
 
-            services.AddSingleton(chirpstackChannel.Writer);
-            services.AddSingleton(chirpstackChannel.Reader);
+            services.AddSingleton(deviceChannel.Writer);
+            services.AddSingleton(deviceChannel.Reader);
 
             services.AddSingleton(dbWriteChannel.Writer);
             services.AddSingleton(dbWriteChannel.Reader);
 
             services.AddSingleton(eventChannel.Writer);
             services.AddSingleton(eventChannel.Reader);
+
+            return services;
+        }
+
+        public IServiceCollection AddChirpstackIntegration<THandler>(
+            ConfigurationManager configuration
+        )
+            where THandler : class, IChirpstackIntegrationHandler
+        {
+            List<string> hierarchy = ["Chirpstack", "Integration"];
+
+            var host = configuration[string.Join(":", hierarchy.Append("Host"))];
+
+            if (host == null)
+            {
+                throw new ArgumentNullException(
+                    paramName: host,
+                    message: "Chirpstack integration host environment variable is not set"
+                );
+            }
+
+            var settings = new ChirpstackIntegrationSettings { Host = host };
+
+            if (
+                int.TryParse(
+                    configuration[string.Join(":", hierarchy.Append("Port"))],
+                    out var port
+                )
+            )
+            {
+                settings = settings with { Port = port };
+            }
+
+            if (
+                Guid.TryParse(
+                    configuration[string.Join(":", hierarchy.Append("ApplicationId"))],
+                    out var applicationId
+                )
+            )
+            {
+                settings = settings with { ApplicationId = applicationId };
+            }
+
+            if (
+                int.TryParse(
+                    configuration[string.Join(":", hierarchy.Append("ReconnectInterval"))],
+                    out var reconnectInterval
+                )
+            )
+            {
+                settings = settings with { ReconnectInterval = reconnectInterval };
+            }
+
+            if (
+                int.TryParse(
+                    configuration[string.Join(":", hierarchy.Append("ConnectTimeout"))],
+                    out var connectTimeout
+                )
+            )
+            {
+                settings = settings with { ConnectTimeout = connectTimeout };
+            }
+
+            services.AddSingleton(settings);
+
+            services.AddSingleton<IChirpstackIntegrationHandler, THandler>();
+
+            services.AddHostedService<ChirpstackIntegration>();
 
             return services;
         }

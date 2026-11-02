@@ -9,4 +9,4 @@ namespace Loris.Messages;
 /// to be value types (such as readonly record structs)
 /// to reduce allocation overhead.
 /// </remarks>
-public interface IChirpstackMessage { }
+public interface IDeviceMessage { }

@@ -1,4 +1,5 @@
 using Loris.Extensions;
+using Loris.MQTT.Client;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -6,6 +7,9 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Configure channels for the ingestion subsystem
 builder.Services.AddChannels();
+
+// Add chirpstack integration background task with handler implementation
+builder.Services.AddChirpstackIntegration<ChirpstackIntegrationHandler>(builder.Configuration);
 
 builder.Services.AddControllers();
 

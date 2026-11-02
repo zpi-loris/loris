@@ -10,14 +10,14 @@ namespace Loris.Controllers;
 [ApiController]
 [Route("api/[controller]")]
 public class ExampleUplinkController(
-    ChannelReader<IChirpstackMessage> reader,
-    ChannelWriter<IChirpstackMessage> writer
+    ChannelReader<IDeviceMessage> reader,
+    ChannelWriter<IDeviceMessage> writer
 ) : ControllerBase
 {
     private readonly JsonParser _protoParser = JsonParser.Default;
     private readonly JsonFormatter _protoFormatter = JsonFormatter.Default;
-    private readonly ChannelReader<IChirpstackMessage> _reader = reader;
-    private readonly ChannelWriter<IChirpstackMessage> _writer = writer;
+    private readonly ChannelReader<IDeviceMessage> _reader = reader;
+    private readonly ChannelWriter<IDeviceMessage> _writer = writer;
 
     [HttpGet]
     public async Task<string?> GetLastPayload()
