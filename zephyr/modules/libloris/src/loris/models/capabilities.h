@@ -46,10 +46,11 @@ result_t capabilities_init(capabilities_t* out, const char* device_name,
  *
  * @return result_t enum
  */
-result_t add_sensor(capabilities_t* capabilities, const char* name,
-                    const char* description, value_type_t value_type,
-                    const char* unit, report_t (*report_func)(struct sensor*),
-                    int32_t interval_sec);
+result_t capabilities_add_sensor(capabilities_t* capabilities, const char* name,
+                                 const char* description,
+                                 value_type_t value_type, const char* unit,
+                                 report_t (*report_func)(struct sensor*),
+                                 int32_t interval_sec);
 
 /**
  * @brief Adds a function to the capabilities of the device
@@ -63,9 +64,10 @@ result_t add_sensor(capabilities_t* capabilities, const char* name,
  *
  * @return result_t enum
  */
-result_t add_function(capabilities_t* capabilities, char* name,
-                      char* description, func_arg_type_t func_arg_type,
-                      result_t (*call_function)(void*),
-                      int32_t wake_interval_sec);
+result_t capabilities_add_function(capabilities_t* capabilities, char* name,
+                                   char* description,
+                                   func_arg_type_t func_arg_type,
+                                   result_t (*call_function)(void*),
+                                   int32_t wake_interval_sec);
 
 #endif

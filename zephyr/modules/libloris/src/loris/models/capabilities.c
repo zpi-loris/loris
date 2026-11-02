@@ -33,10 +33,11 @@ result_t capabilities_init(capabilities_t* out, const char* device_name,
   return OK;
 }
 
-result_t add_sensor(capabilities_t* capabilities, const char* name,
-                    const char* description, value_type_t value_type,
-                    const char* unit, report_t (*report_func)(struct sensor*),
-                    int32_t interval_sec) {
+result_t capabilities_add_sensor(capabilities_t* capabilities, const char* name,
+                                 const char* description,
+                                 value_type_t value_type, const char* unit,
+                                 report_t (*report_func)(struct sensor*),
+                                 int32_t interval_sec) {
   if (capabilities == NULL) {
     return ERROR;
   }
@@ -75,9 +76,11 @@ result_t add_sensor(capabilities_t* capabilities, const char* name,
   return OK;
 }
 
-result_t add_function(capabilities_t* capabilities, char* name,
-                      char* description, func_arg_type_t func_arg_type,
-                      result_t (*call_func)(void*), int32_t wake_interval_sec) {
+result_t capabilities_add_function(capabilities_t* capabilities, char* name,
+                                   char* description,
+                                   func_arg_type_t func_arg_type,
+                                   result_t (*call_func)(void*),
+                                   int32_t wake_interval_sec) {
   if (capabilities == NULL) {
     return ERROR;
   }
