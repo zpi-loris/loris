@@ -25,16 +25,6 @@ public class ChirpstackIntegration(
     private MqttClientOptions? _mqttClientOptions;
     private MqttClientSubscribeOptions? _mqttClientSubscribeOptions;
 
-    // /// <summary>
-    // /// This field is responsible for thread synchronization signalling.<br/>
-    // /// The background service is calling the .WaitOne() method and one of two<br/>
-    // /// behaviours occur, based on the state of the event:<br/><br/>
-    // ///
-    // /// - signalled (.Set() or true) - thread is blocked<br/>
-    // /// - unsignalled (.Reset() or false) - thread is free<br/>
-    // /// </summary>
-    // private readonly ManualResetEvent _threadInControl = new(false);
-
     /// <summary>
     /// Responsible for stopping active <b>subscribe</b><br/>
     /// after the client is disconnected<br/>
@@ -85,8 +75,6 @@ public class ChirpstackIntegration(
     {
         while (!stoppingToken.IsCancellationRequested)
         {
-            // _threadInControl.Reset();
-
             _disconnectedCts = new CancellationTokenSource();
 
             using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(
@@ -117,15 +105,12 @@ public class ChirpstackIntegration(
     {
         _logger.StoppingIntegrationService();
 
-        // release thread lock
-        // _threadInControl.Set();
         return base.StopAsync(cancellationToken);
     }
 
     public override void Dispose()
     {
         base.Dispose();
-        // _threadInControl.Dispose();
         _mqttClient?.Dispose();
     }
 
@@ -176,8 +161,6 @@ public class ChirpstackIntegration(
                 await _mqttClient.SubscribeAsync(_mqttClientSubscribeOptions, stoppingToken);
 
                 await _mqttClient.WaitForDisconnectedAsync(stoppingToken);
-                // // connected, block thread
-                // _threadInControl.WaitOne();
             }
         }
         catch (MQTTnet.Exceptions.MqttCommunicationException)
@@ -196,9 +179,6 @@ public class ChirpstackIntegration(
         {
             // drop active subscribtion
             _disconnectedCts?.Cancel();
-
-            // // resume thread
-            // _threadInControl.Set();
         }
     }
 
