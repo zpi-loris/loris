@@ -67,12 +67,14 @@ function_t* get_func_at_idx(sys_slist_t* func_list, int idx) {
 ZTEST(capabilities, test_add_sensors_to_the_list) {
   capabilities_init(&cap, "capabilities_sensors", DEVICE_CLASS_A);
 
-  zassert_equal(add_sensor(&cap, "test_name 1", "Measures temperature",
-                           VALUE_TYPE_TEMPERATURE, "C", &report_func, 60),
-                OK);
-  zassert_equal(add_sensor(&cap, "test_name 2", "Measures temperature",
-                           VALUE_TYPE_TEMPERATURE, "F", &report_func, 30),
-                OK);
+  zassert_equal(
+      capabilities_add_sensor(&cap, "test_name 1", "Measures temperature",
+                              VALUE_TYPE_TEMPERATURE, "C", &report_func, 60),
+      OK);
+  zassert_equal(
+      capabilities_add_sensor(&cap, "test_name 2", "Measures temperature",
+                              VALUE_TYPE_TEMPERATURE, "F", &report_func, 30),
+      OK);
 
   sensor_t* fst_sensor = get_sensor_at_idx(&cap.sensors, 0);
   sensor_t* snd_sensor = get_sensor_at_idx(&cap.sensors, 1);
@@ -107,11 +109,12 @@ ZTEST(capabilities, test_check_read_function_from_capabilities) {
 }
 
 ZTEST(capabilities, test_add_functions_to_the_list) {
-  zassert_equal(add_function(&cap, "do_sth_1", "does sth 1", FUNC_ARG_TYPE_INT,
-                             &do_sth_int, 0),
+  zassert_equal(capabilities_add_function(&cap, "do_sth_1", "does sth 1",
+                                          FUNC_ARG_TYPE_INT, &do_sth_int, 0),
                 OK);
-  zassert_equal(add_function(&cap, "do_sth_2", "does sth 2",
-                             FUNC_ARG_TYPE_FLOAT, &do_sth_float, 3),
+  zassert_equal(capabilities_add_function(&cap, "do_sth_2", "does sth 2",
+                                          FUNC_ARG_TYPE_FLOAT, &do_sth_float,
+                                          3),
                 OK);
 
   function_t* int_func = get_func_at_idx(&cap.functions, 0);
