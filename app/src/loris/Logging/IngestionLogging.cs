@@ -69,14 +69,6 @@ public static partial class IngestionLogging
     public static partial void StoppingIntegrationService(this ILogger logger);
 
     [LoggerMessage(
-        EventId = 1401,
-        EventName = nameof(IntegrationUnreachable),
-        Level = LogLevel.Warning,
-        Message = "mqtt//{Host}:{Port} is unreachable"
-    )]
-    public static partial void IntegrationUnreachable(this ILogger logger, string host, int port);
-
-    [LoggerMessage(
         EventId = 1402,
         EventName = nameof(IntegrationDisconnected),
         Level = LogLevel.Warning,
@@ -142,4 +134,20 @@ public static partial class IngestionLogging
         Exception ex,
         string devEui
     );
+
+    [LoggerMessage(
+        EventId = 1501,
+        EventName = nameof(IntegrationTimeout),
+        Level = LogLevel.Error,
+        Message = "mqtt//{Host}:{Port} connection timeout"
+    )]
+    public static partial void IntegrationTimeout(this ILogger logger, string host, int port);
+
+    [LoggerMessage(
+        EventId = 1502,
+        EventName = nameof(IntegrationUnreachable),
+        Level = LogLevel.Error,
+        Message = "mqtt//{Host}:{Port} is unreachable"
+    )]
+    public static partial void IntegrationUnreachable(this ILogger logger, string host, int port);
 }

@@ -85,6 +85,16 @@ public static class ConfigServiceCollectionExtensions
                 settings = settings with { ReconnectInterval = reconnectInterval };
             }
 
+            if (
+                int.TryParse(
+                    configuration[string.Join(":", hierarchy.Append("ConnectTimeout"))],
+                    out var connectTimeout
+                )
+            )
+            {
+                settings = settings with { ConnectTimeout = connectTimeout };
+            }
+
             services.AddSingleton(settings);
 
             services.AddSingleton<IChirpstackIntegrationHandler, THandler>();

@@ -36,4 +36,18 @@ public record ChirpstackIntegrationSettings
     /// </para>
     /// </summary>
     public int ReconnectInterval { get; init; } = 5;
+
+    /// <summary>
+    /// <para>
+    /// Specifies time in seconds, after which the pending connect<br/>
+    /// is dropped.
+    /// </para>
+    /// <para>
+    /// It does not stop the service - it works with reconnect interval
+    /// </para>
+    /// <para>
+    /// <b>Default value is 5 seconds</b>
+    /// </para>
+    /// </summary>
+    public int ConnectTimeout { get; init; } = 5;
 }

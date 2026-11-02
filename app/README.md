@@ -54,6 +54,9 @@ variables defined for client configuration:
   - `Chirpstack__Integration__ReconnectInterval` - specifies the amount of
     time (in seconds) to wait before next reconnect attempt. - _**5s if
     ommited**_
+  - `Chirpstack__Integration__ConnectTimeout` - specifies the amount of
+    time (in seconds) for connect timeout. It does not stop the app and works
+    with ReconnectInterval - _**5s if ommited**_
 
 ## Running tests
 

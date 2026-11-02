@@ -68,14 +68,29 @@ public class ChirpstackIntegration(
 
         while (!stoppingToken.IsCancellationRequested)
         {
-            if (await TryConnectAndSubscribe(stoppingToken))
+            try
             {
-                await _mqttClient.WaitForDisconnectedAsync(stoppingToken);
+                using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+                using var linked = CancellationTokenSource.CreateLinkedTokenSource(
+                    stoppingToken,
+                    timeout.Token
+                );
 
-                _logger.IntegrationDisconnected(_settings.Host, _settings.Port);
+                if (await TryConnectAndSubscribe(linked.Token))
+                {
+                    await _mqttClient.WaitForDisconnectedAsync(stoppingToken);
+
+                    _logger.IntegrationDisconnected(_settings.Host, _settings.Port);
+                }
             }
-
-            await Task.Delay(_settings.ReconnectInterval * 1000, stoppingToken);
+            catch (OperationCanceledException) when (!stoppingToken.IsCancellationRequested)
+            {
+                _logger.IntegrationTimeout(_settings.Host, _settings.Port);
+            }
+            finally
+            {
+                await Task.Delay(TimeSpan.FromSeconds(_settings.ReconnectInterval), stoppingToken);
+            }
         }
     }
 
@@ -106,6 +121,8 @@ public class ChirpstackIntegration(
 
     private async ValueTask<bool> TryConnectAndSubscribe(CancellationToken stoppingToken)
     {
+        stoppingToken.ThrowIfCancellationRequested();
+
         ArgumentNullException.ThrowIfNull(_mqttClient, "MqttClient");
         ArgumentNullException.ThrowIfNull(_mqttClientOptions, "MqttClientOptions");
         ArgumentNullException.ThrowIfNull(
