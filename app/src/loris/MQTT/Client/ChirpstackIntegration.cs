@@ -2,6 +2,7 @@ using System.Buffers;
 using System.Collections.Frozen;
 using System.Text;
 using Loris.Logging;
+using Loris.MQTT.Extensions;
 using MQTTnet;
 using MQTTnet.Extensions.TopicTemplate;
 
@@ -24,15 +25,15 @@ public class ChirpstackIntegration(
     private MqttClientOptions? _mqttClientOptions;
     private MqttClientSubscribeOptions? _mqttClientSubscribeOptions;
 
-    /// <summary>
-    /// This field is responsible for thread synchronization signalling.<br/>
-    /// The background service is calling the .WaitOne() method and one of two<br/>
-    /// behaviours occur, based on the state of the event:<br/><br/>
-    ///
-    /// - signalled (.Set() or true) - thread is blocked<br/>
-    /// - unsignalled (.Reset() or false) - thread is free<br/>
-    /// </summary>
-    private readonly ManualResetEvent _threadInControl = new(false);
+    // /// <summary>
+    // /// This field is responsible for thread synchronization signalling.<br/>
+    // /// The background service is calling the .WaitOne() method and one of two<br/>
+    // /// behaviours occur, based on the state of the event:<br/><br/>
+    // ///
+    // /// - signalled (.Set() or true) - thread is blocked<br/>
+    // /// - unsignalled (.Reset() or false) - thread is free<br/>
+    // /// </summary>
+    // private readonly ManualResetEvent _threadInControl = new(false);
 
     /// <summary>
     /// Responsible for stopping active <b>subscribe</b><br/>
@@ -80,36 +81,11 @@ public class ChirpstackIntegration(
         return base.StartAsync(cancellationToken);
     }
 
-    private MqttClientSubscribeOptions CreateSubscribeOptionsFromTemplate(
-        MqttClientFactory mqttFactory
-    )
-    {
-        var subscribeOptionsBuilder = mqttFactory.CreateSubscribeOptionsBuilder();
-
-        MqttTopicTemplate template = _topicTemplate;
-        foreach (var (eventName, _) in _routingTable)
-        {
-            if (_settings.ApplicationId is Guid value)
-            {
-                template = template.TrySetParameter(APP_ID_PLACEHOLDER, value.ToString());
-            }
-
-            template = template.TrySetParameter(EVENT_PLACEHOLDER, eventName);
-
-            var topicFilter = template.TopicFilter;
-
-            _logger.TopicSubscriptionConfigured(topicFilter);
-
-            subscribeOptionsBuilder = subscribeOptionsBuilder.WithTopicFilter(topicFilter);
-        }
-        return subscribeOptionsBuilder.Build();
-    }
-
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         while (!stoppingToken.IsCancellationRequested)
         {
-            _threadInControl.Reset();
+            // _threadInControl.Reset();
 
             _disconnectedCts = new CancellationTokenSource();
 
@@ -137,6 +113,47 @@ public class ChirpstackIntegration(
         }
     }
 
+    public override Task StopAsync(CancellationToken cancellationToken)
+    {
+        _logger.StoppingIntegrationService();
+
+        // release thread lock
+        // _threadInControl.Set();
+        return base.StopAsync(cancellationToken);
+    }
+
+    public override void Dispose()
+    {
+        base.Dispose();
+        // _threadInControl.Dispose();
+        _mqttClient?.Dispose();
+    }
+
+    private MqttClientSubscribeOptions CreateSubscribeOptionsFromTemplate(
+        MqttClientFactory mqttFactory
+    )
+    {
+        var subscribeOptionsBuilder = mqttFactory.CreateSubscribeOptionsBuilder();
+
+        MqttTopicTemplate template = _topicTemplate;
+        foreach (var (eventName, _) in _routingTable)
+        {
+            if (_settings.ApplicationId is Guid value)
+            {
+                template = template.TrySetParameter(APP_ID_PLACEHOLDER, value.ToString());
+            }
+
+            template = template.TrySetParameter(EVENT_PLACEHOLDER, eventName);
+
+            var topicFilter = template.TopicFilter;
+
+            _logger.TopicSubscriptionConfigured(topicFilter);
+
+            subscribeOptionsBuilder = subscribeOptionsBuilder.WithTopicFilter(topicFilter);
+        }
+        return subscribeOptionsBuilder.Build();
+    }
+
     private async Task ConnectAndSubscribe(CancellationToken stoppingToken)
     {
         ArgumentNullException.ThrowIfNull(_mqttClient, "MqttClient");
@@ -158,7 +175,9 @@ public class ChirpstackIntegration(
 
                 await _mqttClient.SubscribeAsync(_mqttClientSubscribeOptions, stoppingToken);
 
-                _threadInControl.WaitOne();
+                await _mqttClient.WaitForDisconnectedAsync(stoppingToken);
+                // // connected, block thread
+                // _threadInControl.WaitOne();
             }
         }
         catch (MQTTnet.Exceptions.MqttCommunicationException)
@@ -178,8 +197,8 @@ public class ChirpstackIntegration(
             // drop active subscribtion
             _disconnectedCts?.Cancel();
 
-            // resume thread
-            _threadInControl.Set();
+            // // resume thread
+            // _threadInControl.Set();
         }
     }
 
@@ -217,22 +236,6 @@ public class ChirpstackIntegration(
         {
             _logger.NoHandlerRegisteredForTopic(eventSpan.ToString(), topic);
         }
-    }
-
-    public override Task StopAsync(CancellationToken cancellationToken)
-    {
-        _logger.StoppingIntegrationService();
-
-        // release thread lock
-        _threadInControl.Set();
-        return base.StopAsync(cancellationToken);
-    }
-
-    public override void Dispose()
-    {
-        base.Dispose();
-        _threadInControl.Dispose();
-        _mqttClient?.Dispose();
     }
 
     private static ReadOnlySpan<char> GetLastTopicSegmentSpan(ReadOnlySpan<char> topic)
