@@ -5,6 +5,7 @@ using Loris.Logging;
 using Loris.MQTT.Extensions;
 using MQTTnet;
 using MQTTnet.Extensions.TopicTemplate;
+using static Loris.MQTT.Utils;
 
 namespace Loris.MQTT.Client;
 
@@ -216,11 +217,5 @@ public class ChirpstackIntegration(
         {
             _logger.NoHandlerRegisteredForTopic(eventSpan.ToString(), topic);
         }
-    }
-
-    private static ReadOnlySpan<char> GetLastTopicSegmentSpan(ReadOnlySpan<char> topic)
-    {
-        int lastSlashIndex = topic.LastIndexOf('/');
-        return lastSlashIndex >= 0 ? topic[(lastSlashIndex + 1)..] : topic;
     }
 }
