@@ -27,15 +27,6 @@ public class ChirpstackIntegration(
     private MqttClientSubscribeOptions? _mqttClientSubscribeOptions;
 
     /// <summary>
-    /// Responsible for stopping active <b>subscribe</b><br/>
-    /// after the client is disconnected<br/>
-    /// <para>
-    /// <b>Note that this not stop the background service</b>
-    /// </para>
-    /// </summary>
-    private CancellationTokenSource? _disconnectedCts;
-
-    /// <summary>
     /// Allows to filter only one application from chirpstack.
     /// </summary>
     private static readonly string APP_ID_PLACEHOLDER = "applicationId";
@@ -65,7 +56,6 @@ public class ChirpstackIntegration(
 
         _mqttClientSubscribeOptions = CreateSubscribeOptionsFromTemplate(mqttFactory);
 
-        _mqttClient.DisconnectedAsync += HandleDisconnected;
         _mqttClient.ApplicationMessageReceivedAsync += message =>
             HandleMessage(message, cancellationToken);
 
@@ -74,45 +64,19 @@ public class ChirpstackIntegration(
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
+        ArgumentNullException.ThrowIfNull(_mqttClient, "MqttClient");
+
         while (!stoppingToken.IsCancellationRequested)
         {
-            _disconnectedCts = new CancellationTokenSource();
+            if (await TryConnectAndSubscribe(stoppingToken))
+            {
+                await _mqttClient.WaitForDisconnectedAsync(stoppingToken);
 
-            using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(
-                _disconnectedCts.Token,
-                stoppingToken
-            );
+                _logger.IntegrationDisconnected(_settings.Host, _settings.Port);
+            }
 
-            try
-            {
-                await ConnectAndSubscribe(linkedCts.Token);
-            }
-            catch (OperationCanceledException)
-            {
-                if (_disconnectedCts.IsCancellationRequested)
-                {
-                    _logger.IntegrationDisconnected(_settings.Host, _settings.Port);
-                }
-            }
-            finally
-            {
-                // each iteration there is new token source created
-                _disconnectedCts.Dispose();
-            }
+            await Task.Delay(_settings.ReconnectInterval * 1000, stoppingToken);
         }
-    }
-
-    public override Task StopAsync(CancellationToken cancellationToken)
-    {
-        _logger.StoppingIntegrationService();
-
-        return base.StopAsync(cancellationToken);
-    }
-
-    public override void Dispose()
-    {
-        base.Dispose();
-        _mqttClient?.Dispose();
     }
 
     private MqttClientSubscribeOptions CreateSubscribeOptionsFromTemplate(
@@ -140,7 +104,7 @@ public class ChirpstackIntegration(
         return subscribeOptionsBuilder.Build();
     }
 
-    private async Task ConnectAndSubscribe(CancellationToken stoppingToken)
+    private async ValueTask<bool> TryConnectAndSubscribe(CancellationToken stoppingToken)
     {
         ArgumentNullException.ThrowIfNull(_mqttClient, "MqttClient");
         ArgumentNullException.ThrowIfNull(_mqttClientOptions, "MqttClientOptions");
@@ -160,27 +124,16 @@ public class ChirpstackIntegration(
                 _logger.ClientConnected(_settings.Host, _settings.Port);
 
                 await _mqttClient.SubscribeAsync(_mqttClientSubscribeOptions, stoppingToken);
-
-                await _mqttClient.WaitForDisconnectedAsync(stoppingToken);
             }
         }
         catch (MQTTnet.Exceptions.MqttCommunicationException)
         {
             _logger.IntegrationUnreachable(_settings.Host, _settings.Port);
-        }
-        finally
-        {
-            await Task.Delay(_settings.ReconnectInterval * 1000, stoppingToken);
-        }
-    }
 
-    private async Task HandleDisconnected(MqttClientDisconnectedEventArgs details)
-    {
-        if (details.ClientWasConnected)
-        {
-            // drop active subscribtion
-            _disconnectedCts?.Cancel();
+            return false;
         }
+
+        return true;
     }
 
     private async Task HandleMessage(
