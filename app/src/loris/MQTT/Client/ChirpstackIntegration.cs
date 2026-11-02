@@ -70,7 +70,9 @@ public class ChirpstackIntegration(
         {
             try
             {
-                using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+                using var timeout = new CancellationTokenSource(
+                    TimeSpan.FromSeconds(_settings.ConnectTimeout)
+                );
                 using var linked = CancellationTokenSource.CreateLinkedTokenSource(
                     stoppingToken,
                     timeout.Token
