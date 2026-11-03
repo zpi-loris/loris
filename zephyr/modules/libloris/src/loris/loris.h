@@ -1,10 +1,10 @@
+#include "loris/models/capabilities.h"
+
 #ifndef LIBLORIS_H
 #define LIBLORIS_H
 
-#include <stdio.h>
-
 #define LORIS_USERNAME "gateway"
 
-void say_hello(char* name);
+result_t loris_main_loop(capabilities_t* capabilties);
 
 #endif
