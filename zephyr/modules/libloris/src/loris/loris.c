@@ -1,6 +1,8 @@
 #include "loris.h"
 #include "loris/codec.h"
+#include "loris/models/call.h"
 #include "loris/models/capabilities.h"
+#include "loris/models/downlink.h"
 #include "loris/models/report.h"
 #include "loris/models/sensor.h"
 #include "loris/models/uplink.h"
@@ -89,9 +91,35 @@ static result_t sensors_thread(capabilities_t* capabilities) {
   return OK;
 }
 
-static result_t functions_thread(capabilities_t* capabilities) {
+char uplink_q_buf[10 * sizeof(uplink_t)];
+char downlink_q_buf[10 * sizeof(downlink_t)];
+struct k_msgq downlink_q;
+
+static result_t downlink_thread(capabilities_t* capabilities) {
   if (capabilities == NULL) {
     return ERROR;
+  }
+
+  k_msgq_init(&downlink_q, downlink_q_buf, sizeof(downlink_t), 10);
+  downlink_t downlink_msg;
+  while (1) {
+    /* get a data item
+     * NOTE: this is a thread blocking call, meaning if no msg in queue wait
+     * thread
+     * */
+    k_msgq_get(&downlink_q, &downlink_msg, K_FOREVER);
+
+    /* process data item */
+    if (downlink_msg.payload_type == DOWNLINK_PAYLOAD_TYPE_CALL) {
+      function_t* func;
+      SYS_SLIST_FOR_EACH_CONTAINER(&capabilities->functions, func, node) {
+        if (func->id == downlink_msg.payload.call.function_id) {
+          func->call_function(&downlink_msg.payload.call.value);
+        }
+      }
+    } else if (downlink_msg.payload_type == DOWNLINK_PAYLOAD_TYPE_PING) {
+      // do sth
+    }
   }
   return OK;
 }
@@ -103,8 +131,5 @@ result_t loris_main_loop(capabilities_t* capabilties) {
   }
 
   // TODO: make it a thread
-  if (capabilties->functions.head != NULL) {
-    functions_thread(capabilties);
-  }
   return OK;
 }
