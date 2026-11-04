@@ -1,8 +1,7 @@
 using Loris.Events;
 using Loris.Messages;
-using Microsoft.EntityFrameworkCore;
 
-namespace Loris.Automations.Triggers;
+namespace Loris.Automations.Triggers.Sensor;
 
 public abstract class BaseSensorTrigger : ITrigger
 {
