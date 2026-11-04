@@ -11,3 +11,8 @@ config LORIS_TEST
   help
     When 'y' compiles additional helper functions not needed in production,
     e.g. uplink DECODING and downlink ENCODING.
+
+config LORIS_RECONNECT_INTERVAL
+  int "Defines how often will the device try establish a connection with the server. Unit: Seconds" 
+  default 60
+
