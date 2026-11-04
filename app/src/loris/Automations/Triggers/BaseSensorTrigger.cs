@@ -1,13 +1,9 @@
-using System.Text.Json.Serialization;
 using Loris.Events;
 using Loris.Messages;
 using Microsoft.EntityFrameworkCore;
 
 namespace Loris.Automations.Triggers;
 
-[JsonPolymorphic(TypeDiscriminatorPropertyName = "$type")]
-[JsonDerivedType(typeof(SensorChangedTrigger), typeDiscriminator: "sensor-changed")]
-[JsonDerivedType(typeof(SensorCrossedTrigger), typeDiscriminator: "sensor-crossed")]
 public abstract class BaseSensorTrigger : ITrigger
 {
     public required string DeviceName { get; set; }
