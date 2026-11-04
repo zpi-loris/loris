@@ -1,8 +1,9 @@
+using System.Text.Json.Serialization;
 using Microsoft.EntityFrameworkCore;
 
 namespace Loris.Automations;
 
 public interface IAutomationBlock
 {
-    public bool Validate(DbContext context);
+    public Task ValidateAsync(IServiceProvider sp, CancellationToken ct);
 }

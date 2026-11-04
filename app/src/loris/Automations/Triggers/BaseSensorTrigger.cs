@@ -1,14 +1,26 @@
+using System.Text.Json.Serialization;
+using Loris.Events;
 using Loris.Messages;
 using Microsoft.EntityFrameworkCore;
 
 namespace Loris.Automations.Triggers;
 
-public abstract class BaseSensorTrigger : IAutomationBlock
+[JsonPolymorphic(TypeDiscriminatorPropertyName = "$type")]
+[JsonDerivedType(typeof(SensorChangedTrigger), typeDiscriminator: "sensor-changed")]
+[JsonDerivedType(typeof(SensorCrossedTrigger), typeDiscriminator: "sensor-crossed")]
+public abstract class BaseSensorTrigger : ITrigger
 {
     public required string DeviceName { get; set; }
+
     public required string SensorName { get; set; }
 
-    public abstract bool Validate(DbContext context);
+    public (IEvent Event, Func<IEventMessage, bool> Filter) CompileTrigger()
+    {
+        throw new NotImplementedException();
+    }
 
-    public abstract Func<IEventMessage, bool> CreateTriggerFilter();
+    public Task ValidateAsync(IServiceProvider sp, CancellationToken ct)
+    {
+        throw new NotImplementedException();
+    }
 }

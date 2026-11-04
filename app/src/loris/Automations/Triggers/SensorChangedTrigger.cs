@@ -11,11 +11,11 @@ public class SensorChangedTrigger : BaseSensorTrigger
 
     public override Func<IEventMessage, bool> CreateTriggerFilter()
     {
-        throw new NotImplementedException();
+        return (_) => true;
     }
 
     public override bool Validate(DbContext context)
     {
-        throw new NotImplementedException();
+        return true;
     }
 }
