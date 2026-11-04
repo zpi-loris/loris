@@ -4,7 +4,7 @@ using Loris.Types;
 
 namespace Loris.Automations.Conditions;
 
-public interface ICondition : IAutomationBlock
+public interface IConditionService
 {
-    public Func<ReadOnlyDictionary<DevEui, Report>, bool> CompileCondition();
+    public Func<ReadOnlyDictionary<DevEui, Report>, bool> CompileCondition(IConditionDto dto);
 }

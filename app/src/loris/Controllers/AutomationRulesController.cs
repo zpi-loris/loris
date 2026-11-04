@@ -1,8 +1,15 @@
+using System.Collections.ObjectModel;
 using Loris.Automations;
+using Loris.Automations.Actions;
 using Loris.Automations.Actions.Test;
+using Loris.Automations.Conditions;
 using Loris.Automations.Conditions.Test;
 using Loris.Automations.Triggers;
 using Loris.Automations.Triggers.Test;
+using Loris.Events;
+using Loris.Messages;
+using Loris.Protocol;
+using Loris.Types;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -10,8 +17,10 @@ namespace Loris.Controllers;
 
 [Route("api/[controller]")]
 [ApiController]
-public class AutomationRulesController : ControllerBase
+public class AutomationRulesController(IServiceProvider provider) : ControllerBase
 {
+    private readonly IServiceProvider _provider = provider;
+
     // // GET: api/<AutomationRulesController>
     // [HttpGet]
     // public IEnumerable<string> Get()
@@ -52,28 +61,40 @@ public class AutomationRulesController : ControllerBase
         //   - function id for each device
         //
         // gather all of these in some sort of dictionary structure
+
+        IEvent? anEvent = default;
+        Func<IEventMessage, bool>? filter = default;
+        Func<ReadOnlyDictionary<DevEui, Report>, bool>? condition = default;
+        Action? action = default;
         foreach (var rule in rules)
         {
             foreach (var trigger in rule.Triggers)
             {
-                if (trigger is TestTriggerDto value)
-                {
-                    Console.WriteLine(value);
-                }
+                var triggerService = _provider.GetKeyedService<ITriggerService>(trigger.ServiceKey);
+                (anEvent, filter) = triggerService!.CompileTrigger(trigger);
             }
-            foreach (var condition in rule.Conditions)
+            foreach (var conditionRule in rule.Conditions)
             {
-                if (condition is TestConditionDto value)
-                {
-                    Console.WriteLine(value);
-                }
+                var conditionService = _provider.GetKeyedService<IConditionService>(
+                    conditionRule.ServiceKey
+                );
+                condition = conditionService!.CompileCondition(conditionRule);
             }
-            foreach (var action in rule.Actions)
+            foreach (var actionRule in rule.Actions)
             {
-                if (action is TestActionDto value)
-                {
-                    Console.WriteLine(value);
-                }
+                var actionService = _provider.GetKeyedService<IActionService>(
+                    actionRule.ServiceKey
+                );
+                action = actionService!.CompileAction(actionRule);
+            }
+        }
+
+        if (filter?.Invoke(TestEventMessage.Default) ?? false)
+        {
+            ReadOnlyDictionary<DevEui, Report> dict = new Dictionary<DevEui, Report>().AsReadOnly();
+            if (condition?.Invoke(dict) ?? false)
+            {
+                action?.Invoke();
             }
         }
     }

@@ -3,7 +3,7 @@ using Loris.Messages;
 
 namespace Loris.Automations.Triggers.Sensor;
 
-public abstract class BaseSensorTrigger : ITrigger
+public abstract class BaseSensorTrigger
 {
     public required string DeviceName { get; set; }
 
