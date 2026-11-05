@@ -61,8 +61,10 @@ int main(void) {
       if (adc_raw_to_millivolts_dt(&adc_channel, &val_mv) == 0) {
         printk("Raw reading: %d, voltage: %d mV\n", sample_buffer[0], val_mv);
       } else {
-        printk("Raw reading: %d; reference not convertible to mV\n",
-               sample_buffer[0]);
+        printk(
+            "Raw reading: %d; reference not convertible to mV\n",
+            sample_buffer[0]
+        );
       }
     }
 
