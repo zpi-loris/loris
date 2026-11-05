@@ -8,37 +8,18 @@
 
 PB_BIND(PROTOCOL_V1_SENSOR, protocol_v1_sensor_t, AUTO)
 
-
 PB_BIND(PROTOCOL_V1_FUNCTION, protocol_v1_function_t, AUTO)
-
 
 PB_BIND(PROTOCOL_V1_CAPABILITIES, protocol_v1_capabilities_t, AUTO)
 
-
 PB_BIND(PROTOCOL_V1_REPORT, protocol_v1_report_t, AUTO)
-
 
 PB_BIND(PROTOCOL_V1_CALL, protocol_v1_call_t, AUTO)
 
-
 PB_BIND(PROTOCOL_V1_UP_PING, protocol_v1_up_ping_t, AUTO)
-
 
 PB_BIND(PROTOCOL_V1_DOWN_PING, protocol_v1_down_ping_t, AUTO)
 
-
 PB_BIND(PROTOCOL_V1_DOWNLINK, protocol_v1_downlink_t, AUTO)
 
-
 PB_BIND(PROTOCOL_V1_UPLINK, protocol_v1_uplink_t, AUTO)
-
-
-
-
-
-
-
-
-
-
-

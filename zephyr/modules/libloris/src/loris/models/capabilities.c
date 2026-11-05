@@ -11,8 +11,11 @@ static int32_t func_id = 0;
 static sensor_t sensor_buffer[CONFIG_LORIS_SENSORS_AMOUNT];
 static function_t func_buffer[CONFIG_LORIS_FUNCS_AMOUNT];
 
-result_t capabilities_init(capabilities_t* out, const char* device_name,
-                           device_class_t device_class) {
+result_t capabilities_init(
+    capabilities_t* out,
+    const char* device_name,
+    device_class_t device_class
+) {
   if (out == NULL) {
     return ERROR;
   }
@@ -22,10 +25,12 @@ result_t capabilities_init(capabilities_t* out, const char* device_name,
     return ERROR;
   }
 
-  *out = (capabilities_t){.device_name = device_name_str,
-                          .device_class = device_class,
-                          .functions = {},
-                          .sensors = {}};
+  *out = (capabilities_t){
+      .device_name = device_name_str,
+      .device_class = device_class,
+      .functions = {},
+      .sensors = {}
+  };
 
   sys_slist_init(&out->sensors);
   sys_slist_init(&out->functions);
@@ -33,10 +38,15 @@ result_t capabilities_init(capabilities_t* out, const char* device_name,
   return OK;
 }
 
-result_t add_sensor(capabilities_t* capabilities, const char* name,
-                    const char* description, value_type_t value_type,
-                    const char* unit, report_t (*report_func)(struct sensor*),
-                    int32_t interval_sec) {
+result_t add_sensor(
+    capabilities_t* capabilities,
+    const char* name,
+    const char* description,
+    value_type_t value_type,
+    const char* unit,
+    report_t (*report_func)(struct sensor*),
+    int32_t interval_sec
+) {
   if (capabilities == NULL) {
     return ERROR;
   }
@@ -59,15 +69,17 @@ result_t add_sensor(capabilities_t* capabilities, const char* name,
     has_unit = true;
   }
 
-  sensor_buffer[sensor_id] = (sensor_t){.id = sensor_id,
-                                        .name = s_name,
-                                        .description = s_desc,
-                                        .value_type = value_type,
-                                        .has_unit = has_unit,
-                                        .unit = s_unit,
-                                        .read_func = report_func,
-                                        .wake_interval_sec = interval_sec,
-                                        .node = {.next = NULL}};
+  sensor_buffer[sensor_id] = (sensor_t){
+      .id = sensor_id,
+      .name = s_name,
+      .description = s_desc,
+      .value_type = value_type,
+      .has_unit = has_unit,
+      .unit = s_unit,
+      .read_func = report_func,
+      .wake_interval_sec = interval_sec,
+      .node = {.next = NULL}
+  };
 
   sys_slist_append(&capabilities->sensors, &sensor_buffer[sensor_id].node);
 
@@ -75,9 +87,14 @@ result_t add_sensor(capabilities_t* capabilities, const char* name,
   return OK;
 }
 
-result_t add_function(capabilities_t* capabilities, char* name,
-                      char* description, func_arg_type_t func_arg_type,
-                      result_t (*call_func)(void*), int32_t wake_interval_sec) {
+result_t add_function(
+    capabilities_t* capabilities,
+    char* name,
+    char* description,
+    func_arg_type_t func_arg_type,
+    result_t (*call_func)(void*),
+    int32_t wake_interval_sec
+) {
   if (capabilities == NULL) {
     return ERROR;
   }
@@ -92,13 +109,15 @@ result_t add_function(capabilities_t* capabilities, char* name,
     return ERROR;
   }
 
-  func_buffer[func_id] = (function_t){.id = sensor_id,
-                                      .name = s_name,
-                                      .description = s_desc,
-                                      .arg_type = func_arg_type,
-                                      .call_function = call_func,
-                                      .wake_interval_sec = wake_interval_sec,
-                                      .node = {.next = NULL}};
+  func_buffer[func_id] = (function_t){
+      .id = sensor_id,
+      .name = s_name,
+      .description = s_desc,
+      .arg_type = func_arg_type,
+      .call_function = call_func,
+      .wake_interval_sec = wake_interval_sec,
+      .node = {.next = NULL}
+  };
 
   sys_slist_append(&capabilities->functions, &func_buffer[func_id].node);
 
