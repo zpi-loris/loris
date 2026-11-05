@@ -1,3 +1,4 @@
+using System.Collections.ObjectModel;
 using Loris.Events;
 using Loris.Messages;
 
@@ -5,7 +6,10 @@ namespace Loris.Automations.Triggers.Test;
 
 public class TestTriggerService : ITriggerService
 {
-    public (IEvent Event, Func<IEventMessage, bool> Filter) CompileTrigger(ITriggerDto dto)
+    public (IEvent Event, Func<IEventMessage, bool> Filter) CompileTrigger(
+        ITriggerDto dto,
+        ReadOnlyDictionary<string, object> lookup
+    )
     {
         if (dto is TestTriggerDto value)
         {
@@ -13,5 +17,11 @@ public class TestTriggerService : ITriggerService
         }
         else
             throw new ArgumentException($"value is not TestTriggerDto: {dto}");
+    }
+
+    public bool TryValidate(ITriggerDto dto, out ReadOnlyDictionary<string, object> lookup)
+    {
+        lookup = new Dictionary<string, object>().AsReadOnly();
+        return true;
     }
 }
