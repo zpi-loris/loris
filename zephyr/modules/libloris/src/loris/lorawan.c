@@ -3,8 +3,9 @@
 #include <zephyr/lorawan/lorawan.h>
 
 #include "loris/lorawan.h"
+#include "loris/nvs.h"
 
-LOG_MODULE_REGISTER(loris_lw);
+LOG_MODULE_REGISTER(loris_lw, LOG_LEVEL_DBG);
 
 static lr_lw_result_t join(
     const struct lorawan_join_config* cfg,
@@ -43,27 +44,69 @@ static lr_lw_result_t join(
   return LR_LW_OK;
 }
 
-static uint16_t get_last_used_devnonce() {
-  // TODO: ===
-  return 0;
+static bool get_last_used_devnonce(uint16_t* out) {
+  LOG_DBG("Getting last used devnonce");
+  if (lr_nvs_init() != LR_NVS_OK) {
+    LOG_WRN("NVS init failed");
+    return false;
+  }
+
+  lr_nvs_result_t ret =
+      lr_nvs_read(LR_NVS_ID_LW_LAST_USED_DEVNONCE, out, sizeof(uint16_t), NULL);
+
+  if (ret == LR_NVS_ERR_NO_VALUE) { // first time reading devnonce
+    *out = 0;
+    return true;
+  }
+
+  if (ret != LR_NVS_OK) {
+    LOG_WRN("NVS read devnonce failed");
+    return false;
+  }
+
+  return true;
 }
 
-static void save_last_used_devnonce(uint16_t devnonce) {
-  // TODO: ===
+static bool save_last_used_devnonce(uint16_t devnonce) {
+  LOG_DBG("Saving last used devnonce: %u", devnonce);
+  if (lr_nvs_init() != LR_NVS_OK) {
+    LOG_WRN("NVS init failed");
+    return false;
+  }
+
+  lr_nvs_result_t ret = lr_nvs_write(
+      LR_NVS_ID_LW_LAST_USED_DEVNONCE,
+      &devnonce,
+      sizeof(devnonce),
+      NULL
+  );
+
+  if (ret != LR_NVS_OK) {
+    LOG_WRN("NVS write devnonce failed");
+    return false;
+  }
+
+  return true;
 }
 
 lr_lw_result_t lr_lw_join_otaa(
     const lr_lw_join_otaa_config_t* cfg,
     enum lorawan_region region
 ) {
-  uint16_t dev_nonce = get_last_used_devnonce();
-  save_last_used_devnonce(++dev_nonce);
+  LOG_DBG("Joining LoRaWAN using OTAA");
+
+  uint16_t devnonce;
+  get_last_used_devnonce(&devnonce);
+  LOG_DBG("Retrieved last used devnonce=%u", devnonce);
+
+  save_last_used_devnonce(++devnonce);
+  LOG_DBG("Saved last used devnonce=%u", devnonce);
 
   struct lorawan_join_otaa otaa_cfg = {
       .join_eui = cfg->join_eui,
       .nwk_key = cfg->nwk_key,
       .app_key = cfg->app_key,
-      .dev_nonce = dev_nonce,
+      .dev_nonce = devnonce,
   };
 
   struct lorawan_join_config join_cfg = {
@@ -79,6 +122,8 @@ lr_lw_result_t lr_lw_join_abp(
     const lr_lw_join_abp_config_t* cfg,
     enum lorawan_region region
 ) {
+  LOG_DBG("Joining LoRaWAN using ABP");
+
   struct lorawan_join_abp abp_cfg = {
       .dev_addr = cfg->dev_addr,
       .app_skey = cfg->app_skey,
@@ -104,7 +149,7 @@ lr_lw_result_t lr_lw_send(
   LOG_DBG("Sending data");
   int ret = lorawan_send(port, data, size, type);
 
-  if (ret == -EAGAIN) {
+  if (ret == -EAGAIN || ret == -ECONNREFUSED) {
     LOG_WRN("Send failed, LoRaWAN duty cycle exceeded");
     return LR_LW_ERR_DUTY_CYCLE_EXCEEDED;
   };
@@ -123,13 +168,21 @@ void lr_lw_request_link_check(bool force_now) {
   lorawan_request_link_check(force_now);
 }
 
-/* TODO: docs!!!
- *
- * Registers given callback to listen on ANY port
- */
-void lr_lw_register_downlink_callback(struct lorawan_downlink_cb* cb) {
+void lr_lw_register_downlink_callback(
+    struct lorawan_downlink_cb* dummy,
+    void (*cb)(
+        uint8_t port,
+        uint8_t flags,
+        int16_t rssi,
+        int8_t snr,
+        uint8_t len,
+        const uint8_t* data
+    )
+) {
+  dummy->port = LW_RECV_PORT_ANY;
+  dummy->cb = cb;
   LOG_INF("Registering a new downlink callback");
-  lorawan_register_downlink_callback(cb);
+  lorawan_register_downlink_callback(dummy);
 }
 
 void lr_lw_register_battery_lvl_callback(uint8_t (*cb)(void)) {
@@ -147,4 +200,28 @@ void lr_lw_link_check_ans_callback(
 ) {
   LOG_INF("Registering a new link check answer callback");
   lorawan_register_link_check_ans_callback(cb);
+}
+
+void lr_lw_set_adr_mode(bool enabled) {
+  LOG_INF("Setting ADR to: %s", enabled ? "enabled" : "disabled");
+  lorawan_enable_adr(enabled);
+}
+
+lr_lw_result_t lr_lw_set_datarate(enum lorawan_datarate dr) {
+  LOG_INF("Setting datarate to: %i", dr);
+  int ret = lorawan_set_datarate(dr);
+
+  if (ret == -EINVAL) {
+    LOG_WRN("Setting datarate failed"
+            " - invalid datarate for the region or ADR enabled");
+    return LR_LW_INVALID_DATARATE_OR_ADR_ENABLED;
+  }
+
+  if (ret < 0) {
+    LOG_WRN("Setting datarate failed: rc=%d", ret);
+    return LR_LW_ERR_UNKNOWN;
+  }
+
+  LOG_INF("Set datarate");
+  return LR_LW_OK;
 }

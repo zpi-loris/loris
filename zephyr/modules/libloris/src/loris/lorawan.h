@@ -10,15 +10,21 @@
 typedef enum lr_lw_result {
   LR_LW_OK = 0,
 
+  LR_LW_ERR_UNKNOWN,
+
   // join related
-  LR_LW_ERR_DEV_NOT_READY = 1,
-  LR_LW_ERR_START_FAILED = 2,
-  LR_LW_ERR_JOIN_FAILED = 3,
-  LR_LW_ERR_SET_REGION_FAILED = 4,
+  LR_LW_ERR_DEV_NOT_READY,
+  LR_LW_ERR_START_FAILED,
+  LR_LW_ERR_JOIN_FAILED,
+  LR_LW_ERR_SET_REGION_FAILED,
+  LR_LW_ERR_DEVNONCE,
 
   // send related
-  LR_LW_ERR_SEND_FAILED = 5,
-  LR_LW_ERR_DUTY_CYCLE_EXCEEDED = 6,
+  LR_LW_ERR_SEND_FAILED,
+  LR_LW_ERR_DUTY_CYCLE_EXCEEDED,
+
+  // datarate related
+  LR_LW_INVALID_DATARATE_OR_ADR_ENABLED
 } lr_lw_result_t;
 
 typedef struct lr_lw_config {
@@ -57,11 +63,31 @@ lr_lw_result_t lr_lw_send(
 );
 void lr_lw_request_link_check(bool force_now);
 
-void lr_lw_register_downlink_callback(struct lorawan_downlink_cb* cb);
+/* TODO: docs!!
+ *
+ * 'dummy' callback struct is needed to ensure proper pointer lifetime while
+ * avoiding dynamic memory allocation. It's contents are overwritten inside the
+ * function.
+ *
+ * Register a callback to listen on ANY port
+ */
+void lr_lw_register_downlink_callback(
+    struct lorawan_downlink_cb* dummy,
+    void (*cb)(
+        uint8_t port,
+        uint8_t flags,
+        int16_t rssi,
+        int8_t snr,
+        uint8_t len,
+        const uint8_t* data
+    )
+);
 void lr_lw_register_battery_lvl_callback(uint8_t (*cb)(void));
 void lr_lw_register_dr_changed_callback(void (*cb)(enum lorawan_datarate dr));
 void lr_lw_link_check_ans_callback(
     void (*cb)(uint8_t demod_margin, uint8_t nb_gateways)
 );
 
+void lr_lw_set_adr_mode(bool enabled);
+lr_lw_result_t lr_lw_set_datarate(enum lorawan_datarate dr);
 #endif

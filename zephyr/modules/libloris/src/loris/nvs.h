@@ -18,7 +18,7 @@ typedef enum lr_nvs_result {
 typedef enum lr_nvs_id {
   LR_NVS_ID_MIN_SENTINEL = 0,
 
-  LR_NVS_ID_LW_DEV_NONCE,
+  LR_NVS_ID_LW_LAST_USED_DEVNONCE,
 
   LR_NVS_ID_MAX_SENTINEL,
 } lr_nvs_id_t;
