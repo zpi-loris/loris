@@ -6,7 +6,7 @@
 
 LOG_MODULE_REGISTER(loris_lw);
 
-static loris_lw_result_t join(
+static lr_lw_result_t join(
     const struct lorawan_join_config* cfg,
     enum lorawan_region region
 ) {
@@ -18,29 +18,29 @@ static loris_lw_result_t join(
 
   if (!device_is_ready(lora_dev)) {
     LOG_WRN("Device '%s' not ready", lora_dev->name);
-    return LORIS_LW_ERR_DEV_NOT_READY;
+    return LR_LW_ERR_DEV_NOT_READY;
   }
 
   int ret = lorawan_set_region(region);
   if (lorawan_set_region(region) < 0) {
     LOG_WRN("Couldn't set LoRaWAN region: %d", ret);
-    return LORIS_LW_ERR_SET_REGION_FAILED;
+    return LR_LW_ERR_SET_REGION_FAILED;
   }
 
   ret = lorawan_start();
   if (ret < 0) {
     LOG_WRN("Error starting LoRaWAN stack: %d", ret);
-    return LORIS_LW_ERR_START_FAILED;
+    return LR_LW_ERR_START_FAILED;
   }
 
   ret = lorawan_join(cfg);
   if (ret < 0) {
     LOG_WRN("Joining failed: %d", ret);
-    return LORIS_LW_ERR_JOIN_FAILED;
+    return LR_LW_ERR_JOIN_FAILED;
   }
 
   LOG_INF("Successfuly joined LoRaWAN network");
-  return LORIS_LW_OK;
+  return LR_LW_OK;
 }
 
 static uint16_t get_last_used_devnonce() {
@@ -52,8 +52,8 @@ static void save_last_used_devnonce(uint16_t devnonce) {
   // TODO: ===
 }
 
-loris_lw_result_t loris_lw_join_otaa(
-    const loris_lw_join_otaa_config_t* cfg,
+lr_lw_result_t lr_lw_join_otaa(
+    const lr_lw_join_otaa_config_t* cfg,
     enum lorawan_region region
 ) {
   uint16_t dev_nonce = get_last_used_devnonce();
@@ -75,8 +75,8 @@ loris_lw_result_t loris_lw_join_otaa(
   return join(&join_cfg, region);
 }
 
-loris_lw_result_t loris_lw_join_abp(
-    const loris_lw_join_abp_config_t* cfg,
+lr_lw_result_t lr_lw_join_abp(
+    const lr_lw_join_abp_config_t* cfg,
     enum lorawan_region region
 ) {
   struct lorawan_join_abp abp_cfg = {
@@ -95,7 +95,7 @@ loris_lw_result_t loris_lw_join_abp(
   return join(&join_cfg, region);
 }
 
-loris_lw_result_t loris_lw_send(
+lr_lw_result_t lr_lw_send(
     uint8_t port,
     uint8_t* data,
     size_t size,
@@ -106,19 +106,19 @@ loris_lw_result_t loris_lw_send(
 
   if (ret == -EAGAIN) {
     LOG_WRN("Send failed, LoRaWAN duty cycle exceeded");
-    return LORIS_LW_ERR_DUTY_CYCLE_EXCEEDED;
+    return LR_LW_ERR_DUTY_CYCLE_EXCEEDED;
   };
 
   if (ret < 0) {
     LOG_WRN("Send failed: %d", ret);
-    return LORIS_LW_ERR_SEND_FAILED;
+    return LR_LW_ERR_SEND_FAILED;
   }
 
   LOG_DBG("Sent data");
-  return LORIS_LW_OK;
+  return LR_LW_OK;
 }
 
-void loris_lw_request_link_check(bool force_now) {
+void lr_lw_request_link_check(bool force_now) {
   LOG_INF("Requesting link check with force_now=%b", force_now);
   lorawan_request_link_check(force_now);
 }
@@ -127,24 +127,22 @@ void loris_lw_request_link_check(bool force_now) {
  *
  * Registers given callback to listen on ANY port
  */
-void loris_lw_register_downlink_callback(struct lorawan_downlink_cb* cb) {
+void lr_lw_register_downlink_callback(struct lorawan_downlink_cb* cb) {
   LOG_INF("Registering a new downlink callback");
   lorawan_register_downlink_callback(cb);
 }
 
-void loris_lw_register_battery_lvl_callback(uint8_t (*cb)(void)) {
+void lr_lw_register_battery_lvl_callback(uint8_t (*cb)(void)) {
   LOG_INF("Registering a new battery level callback");
   lorawan_register_battery_level_callback(cb);
 }
 
-void loris_lw_register_dr_changed_callback(
-    void (*cb)(enum lorawan_datarate dr)
-) {
+void lr_lw_register_dr_changed_callback(void (*cb)(enum lorawan_datarate dr)) {
   LOG_INF("Registering a new datarate changed callback");
   lorawan_register_dr_changed_callback(cb);
 }
 
-void loris_lw_link_check_ans_callback(
+void lr_lw_link_check_ans_callback(
     void (*cb)(uint8_t demod_margin, uint8_t nb_gateways)
 ) {
   LOG_INF("Registering a new link check answer callback");
