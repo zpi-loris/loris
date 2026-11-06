@@ -1,10 +1,18 @@
 using System.Text.Json.Serialization;
-using Loris.Automations.Conditions.Test;
+using Loris.Automations.Conditions.TestInvalid;
+using Loris.Automations.Conditions.TestValid;
 
 namespace Loris.Automations.Conditions;
 
 [JsonPolymorphic(TypeDiscriminatorPropertyName = "$type")]
-[JsonDerivedType(typeof(TestConditionDto), typeDiscriminator: TestConditionDto.Discriminator)]
+[JsonDerivedType(
+    typeof(TestValidConditionDto),
+    typeDiscriminator: TestValidConditionDto.Discriminator
+)]
+[JsonDerivedType(
+    typeof(TestInvalidConditionDto),
+    typeDiscriminator: TestInvalidConditionDto.Discriminator
+)]
 public interface IConditionDto
 {
     [JsonIgnore]

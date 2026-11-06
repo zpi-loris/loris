@@ -4,7 +4,7 @@ using Loris.Automations.Conditions;
 namespace Loris.Automations.Actions;
 
 public abstract class ActionCompilerBase<TDto> : IActionCompiler
-    where TDto : IConditionDto
+    where TDto : IActionDto
 {
     public Action Compile(IActionDto dto, ReadOnlyDictionary<string, object> lookup)
     {
