@@ -18,18 +18,19 @@ typedef enum str_src_type {
 } str_src_type_t;
 
 typedef struct str {
-  const char *ptr;
+  const char* ptr;
 
   /*
    * length without the null terminator '\0' -- only the payload,
    * e.g. 'hello' -> len=5
-  */
+   */
   size_t len;
 
   str_src_type_t src_type;
 } str_t;
 
-#define LORIS_STR_NONE ((str_t){ .ptr = NULL, .len = 0, .src_type = STR_SRC_NONE})
+#define LORIS_STR_NONE                                                         \
+  ((str_t){.ptr = NULL, .len = 0, .src_type = STR_SRC_NONE})
 
 void str_free(str_t* str);
 
@@ -37,11 +38,11 @@ result_t str_from_static(str_t* out, const char* cstr);
 result_t str_borrow_cstr(str_t* out, const char* cstr);
 result_t str_borrow(str_t* out, const str_t* src);
 
-result_t str_alloc_dynamic(str_t* out, const char *cstr);
+result_t str_alloc_dynamic(str_t* out, const char* cstr);
 
-// allocate the string using a slab if its length < STR_SLAB_BLOCK_SIZE, dynamically
-// otherwise
-result_t str_alloc_smart(str_t* out, const char *cstr);
+// allocate the string using a slab if its length < STR_SLAB_BLOCK_SIZE,
+// dynamically otherwise
+result_t str_alloc_smart(str_t* out, const char* cstr);
 
 // allocate an empty buff of length+1 bytes (to account for the null
 // terminator) on the slab if possible, dynamically otherwise. Writes the null
@@ -59,6 +60,5 @@ result_t str_move(str_t* dst, str_t* src);
 
 // number of currently free blocks in the string slab
 size_t str_slab_num_free(void);
-
 
 #endif

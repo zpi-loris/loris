@@ -15,305 +15,354 @@
 
 /* Enum definitions */
 typedef enum protocol_v1_value_type {
-    /* General */
-    PROTOCOL_V1_VALUE_TYPE_VALUE_TYPE_UNSPECIFIED = 0,
-    PROTOCOL_V1_VALUE_TYPE_VALUE_TYPE_NUMERIC = 1,
-    PROTOCOL_V1_VALUE_TYPE_VALUE_TYPE_TEXT = 2,
-    PROTOCOL_V1_VALUE_TYPE_VALUE_TYPE_BOOL = 3,
-    /* Common */
-    PROTOCOL_V1_VALUE_TYPE_VALUE_TYPE_TEMPERATURE = 4,
-    PROTOCOL_V1_VALUE_TYPE_VALUE_TYPE_PRESSURE = 5,
-    PROTOCOL_V1_VALUE_TYPE_VALUE_TYPE_FREQUENCY = 6,
-    PROTOCOL_V1_VALUE_TYPE_VALUE_TYPE_MOISTURE = 7,
-    PROTOCOL_V1_VALUE_TYPE_VALUE_TYPE_UPTIME = 8,
-    PROTOCOL_V1_VALUE_TYPE_VALUE_TYPE_AREA = 9,
-    PROTOCOL_V1_VALUE_TYPE_VALUE_TYPE_DISTANCE = 10,
-    PROTOCOL_V1_VALUE_TYPE_VALUE_TYPE_DURATION = 11,
-    PROTOCOL_V1_VALUE_TYPE_VALUE_TYPE_ILLUMINANCE = 12,
-    PROTOCOL_V1_VALUE_TYPE_VALUE_TYPE_WATER = 13,
-    PROTOCOL_V1_VALUE_TYPE_VALUE_TYPE_WEIGHT = 14,
-    /* Air index */
-    PROTOCOL_V1_VALUE_TYPE_VALUE_TYPE_AQI = 15,
-    PROTOCOL_V1_VALUE_TYPE_VALUE_TYPE_CO2 = 16,
-    PROTOCOL_V1_VALUE_TYPE_VALUE_TYPE_PM1 = 17,
-    PROTOCOL_V1_VALUE_TYPE_VALUE_TYPE_PM25 = 18,
-    PROTOCOL_V1_VALUE_TYPE_VALUE_TYPE_PM4 = 19,
-    PROTOCOL_V1_VALUE_TYPE_VALUE_TYPE_PM10 = 20,
-    PROTOCOL_V1_VALUE_TYPE_VALUE_TYPE_HUMIDITY = 21,
-    /* Wind */
-    PROTOCOL_V1_VALUE_TYPE_VALUE_TYPE_WIND_SPEED = 22,
-    /* Electricity */
-    PROTOCOL_V1_VALUE_TYPE_VALUE_TYPE_BATTERY = 23,
-    PROTOCOL_V1_VALUE_TYPE_VALUE_TYPE_ENERGY = 24,
-    PROTOCOL_V1_VALUE_TYPE_VALUE_TYPE_VOLTAGE = 25,
-    PROTOCOL_V1_VALUE_TYPE_VALUE_TYPE_CURRENT = 26,
-    /* Transmission */
-    PROTOCOL_V1_VALUE_TYPE_VALUE_TYPE_DATA_RATE = 27,
-    PROTOCOL_V1_VALUE_TYPE_VALUE_TYPE_DATA_SIZE = 28,
-    PROTOCOL_V1_VALUE_TYPE_VALUE_TYPE_SIGNAL_STRENGTH = 29,
-    /* Earth */
-    PROTOCOL_V1_VALUE_TYPE_VALUE_TYPE_PH = 30,
-    PROTOCOL_V1_VALUE_TYPE_VALUE_TYPE_POTASSIUM = 31,
-    PROTOCOL_V1_VALUE_TYPE_VALUE_TYPE_PHOSPHORUS = 32,
-    PROTOCOL_V1_VALUE_TYPE_VALUE_TYPE_NITROGEN = 33
+  /* General */
+  PROTOCOL_V1_VALUE_TYPE_VALUE_TYPE_UNSPECIFIED = 0,
+  PROTOCOL_V1_VALUE_TYPE_VALUE_TYPE_NUMERIC = 1,
+  PROTOCOL_V1_VALUE_TYPE_VALUE_TYPE_TEXT = 2,
+  PROTOCOL_V1_VALUE_TYPE_VALUE_TYPE_BOOL = 3,
+  /* Common */
+  PROTOCOL_V1_VALUE_TYPE_VALUE_TYPE_TEMPERATURE = 4,
+  PROTOCOL_V1_VALUE_TYPE_VALUE_TYPE_PRESSURE = 5,
+  PROTOCOL_V1_VALUE_TYPE_VALUE_TYPE_FREQUENCY = 6,
+  PROTOCOL_V1_VALUE_TYPE_VALUE_TYPE_MOISTURE = 7,
+  PROTOCOL_V1_VALUE_TYPE_VALUE_TYPE_UPTIME = 8,
+  PROTOCOL_V1_VALUE_TYPE_VALUE_TYPE_AREA = 9,
+  PROTOCOL_V1_VALUE_TYPE_VALUE_TYPE_DISTANCE = 10,
+  PROTOCOL_V1_VALUE_TYPE_VALUE_TYPE_DURATION = 11,
+  PROTOCOL_V1_VALUE_TYPE_VALUE_TYPE_ILLUMINANCE = 12,
+  PROTOCOL_V1_VALUE_TYPE_VALUE_TYPE_WATER = 13,
+  PROTOCOL_V1_VALUE_TYPE_VALUE_TYPE_WEIGHT = 14,
+  /* Air index */
+  PROTOCOL_V1_VALUE_TYPE_VALUE_TYPE_AQI = 15,
+  PROTOCOL_V1_VALUE_TYPE_VALUE_TYPE_CO2 = 16,
+  PROTOCOL_V1_VALUE_TYPE_VALUE_TYPE_PM1 = 17,
+  PROTOCOL_V1_VALUE_TYPE_VALUE_TYPE_PM25 = 18,
+  PROTOCOL_V1_VALUE_TYPE_VALUE_TYPE_PM4 = 19,
+  PROTOCOL_V1_VALUE_TYPE_VALUE_TYPE_PM10 = 20,
+  PROTOCOL_V1_VALUE_TYPE_VALUE_TYPE_HUMIDITY = 21,
+  /* Wind */
+  PROTOCOL_V1_VALUE_TYPE_VALUE_TYPE_WIND_SPEED = 22,
+  /* Electricity */
+  PROTOCOL_V1_VALUE_TYPE_VALUE_TYPE_BATTERY = 23,
+  PROTOCOL_V1_VALUE_TYPE_VALUE_TYPE_ENERGY = 24,
+  PROTOCOL_V1_VALUE_TYPE_VALUE_TYPE_VOLTAGE = 25,
+  PROTOCOL_V1_VALUE_TYPE_VALUE_TYPE_CURRENT = 26,
+  /* Transmission */
+  PROTOCOL_V1_VALUE_TYPE_VALUE_TYPE_DATA_RATE = 27,
+  PROTOCOL_V1_VALUE_TYPE_VALUE_TYPE_DATA_SIZE = 28,
+  PROTOCOL_V1_VALUE_TYPE_VALUE_TYPE_SIGNAL_STRENGTH = 29,
+  /* Earth */
+  PROTOCOL_V1_VALUE_TYPE_VALUE_TYPE_PH = 30,
+  PROTOCOL_V1_VALUE_TYPE_VALUE_TYPE_POTASSIUM = 31,
+  PROTOCOL_V1_VALUE_TYPE_VALUE_TYPE_PHOSPHORUS = 32,
+  PROTOCOL_V1_VALUE_TYPE_VALUE_TYPE_NITROGEN = 33
 } protocol_v1_value_type_t;
 
 typedef enum protocol_v1_func_arg_type {
-    PROTOCOL_V1_FUNC_ARG_TYPE_FUNC_ARG_TYPE_UNSPECIFIED = 0,
-    PROTOCOL_V1_FUNC_ARG_TYPE_FUNC_ARG_TYPE_VOID = 1,
-    PROTOCOL_V1_FUNC_ARG_TYPE_FUNC_ARG_TYPE_INT = 2,
-    PROTOCOL_V1_FUNC_ARG_TYPE_FUNC_ARG_TYPE_FLOAT = 3,
-    PROTOCOL_V1_FUNC_ARG_TYPE_FUNC_ARG_TYPE_STRING = 4,
-    PROTOCOL_V1_FUNC_ARG_TYPE_FUNC_ARG_TYPE_BOOL = 5
+  PROTOCOL_V1_FUNC_ARG_TYPE_FUNC_ARG_TYPE_UNSPECIFIED = 0,
+  PROTOCOL_V1_FUNC_ARG_TYPE_FUNC_ARG_TYPE_VOID = 1,
+  PROTOCOL_V1_FUNC_ARG_TYPE_FUNC_ARG_TYPE_INT = 2,
+  PROTOCOL_V1_FUNC_ARG_TYPE_FUNC_ARG_TYPE_FLOAT = 3,
+  PROTOCOL_V1_FUNC_ARG_TYPE_FUNC_ARG_TYPE_STRING = 4,
+  PROTOCOL_V1_FUNC_ARG_TYPE_FUNC_ARG_TYPE_BOOL = 5
 } protocol_v1_func_arg_type_t;
 
 typedef enum protocol_v1_up_ping_type {
-    PROTOCOL_V1_UP_PING_TYPE_UP_PING_TYPE_UNSPECIFIED = 0,
-    PROTOCOL_V1_UP_PING_TYPE_UP_PING_TYPE_HELLO = 1
+  PROTOCOL_V1_UP_PING_TYPE_UP_PING_TYPE_UNSPECIFIED = 0,
+  PROTOCOL_V1_UP_PING_TYPE_UP_PING_TYPE_HELLO = 1
 } protocol_v1_up_ping_type_t;
 
 typedef enum protocol_v1_down_ping_type {
-    PROTOCOL_V1_DOWN_PING_TYPE_DOWN_PING_TYPE_UNSPECIFIED = 0,
-    PROTOCOL_V1_DOWN_PING_TYPE_DOWN_PING_TYPE_HELLO = 1,
-    PROTOCOL_V1_DOWN_PING_TYPE_DOWN_PING_TYPE_DISCONNECT = 2
+  PROTOCOL_V1_DOWN_PING_TYPE_DOWN_PING_TYPE_UNSPECIFIED = 0,
+  PROTOCOL_V1_DOWN_PING_TYPE_DOWN_PING_TYPE_HELLO = 1,
+  PROTOCOL_V1_DOWN_PING_TYPE_DOWN_PING_TYPE_DISCONNECT = 2
 } protocol_v1_down_ping_type_t;
 
 /* Struct definitions */
 typedef struct protocol_v1_sensor {
-    int32_t id;
-    str_t name;
-    str_t description;
-    protocol_v1_value_type_t value_type;
-    str_t unit;
+  int32_t id;
+  str_t name;
+  str_t description;
+  protocol_v1_value_type_t value_type;
+  str_t unit;
 } protocol_v1_sensor_t;
 
 typedef struct protocol_v1_function {
-    int32_t id;
-    str_t name;
-    str_t description;
-    protocol_v1_func_arg_type_t arg_type;
+  int32_t id;
+  str_t name;
+  str_t description;
+  protocol_v1_func_arg_type_t arg_type;
 } protocol_v1_function_t;
 
 typedef struct protocol_v1_capabilities {
-    str_t device_name;
-    sys_slist_t sensors;
-    sys_slist_t functions;
+  str_t device_name;
+  sys_slist_t sensors;
+  sys_slist_t functions;
 } protocol_v1_capabilities_t;
 
 typedef struct protocol_v1_report {
-    int32_t sensor_id;
-    pb_size_t which_value;
-    union {
-        int32_t int_val;
-        float float_val;
-        str_t str_val;
-        bool bool_val;
-    } value;
+  int32_t sensor_id;
+  pb_size_t which_value;
+  union {
+    int32_t int_val;
+    float float_val;
+    str_t str_val;
+    bool bool_val;
+  } value;
 } protocol_v1_report_t;
 
 typedef struct protocol_v1_call {
-    int32_t function_id;
-    pb_size_t which_value;
-    union {
-        int32_t int_val;
-        str_t str_val;
-        bool bool_val;
-        float float_val;
-    } value;
-    bool has_wake_after_secs;
-    int32_t wake_after_secs;
+  int32_t function_id;
+  pb_size_t which_value;
+  union {
+    int32_t int_val;
+    str_t str_val;
+    bool bool_val;
+    float float_val;
+  } value;
+  bool has_wake_after_secs;
+  int32_t wake_after_secs;
 } protocol_v1_call_t;
 
 typedef struct protocol_v1_up_ping {
-    protocol_v1_up_ping_type_t type;
+  protocol_v1_up_ping_type_t type;
 } protocol_v1_up_ping_t;
 
 typedef struct protocol_v1_down_ping {
-    protocol_v1_down_ping_type_t type;
+  protocol_v1_down_ping_type_t type;
 } protocol_v1_down_ping_t;
 
 typedef struct protocol_v1_downlink {
-    pb_size_t which_payload;
-    union {
-        protocol_v1_call_t call;
-        protocol_v1_down_ping_t ping;
-    } payload;
+  pb_size_t which_payload;
+  union {
+    protocol_v1_call_t call;
+    protocol_v1_down_ping_t ping;
+  } payload;
 } protocol_v1_downlink_t;
 
 typedef struct protocol_v1_uplink {
-    pb_size_t which_payload;
-    union {
-        protocol_v1_report_t report;
-        protocol_v1_capabilities_t capabilities;
-        protocol_v1_up_ping_t ping;
-    } payload;
+  pb_size_t which_payload;
+  union {
+    protocol_v1_report_t report;
+    protocol_v1_capabilities_t capabilities;
+    protocol_v1_up_ping_t ping;
+  } payload;
 } protocol_v1_uplink_t;
-
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 /* Helper constants for enums */
-#define _PROTOCOL_V1_VALUE_TYPE_MIN PROTOCOL_V1_VALUE_TYPE_VALUE_TYPE_UNSPECIFIED
+#define _PROTOCOL_V1_VALUE_TYPE_MIN                                            \
+  PROTOCOL_V1_VALUE_TYPE_VALUE_TYPE_UNSPECIFIED
 #define _PROTOCOL_V1_VALUE_TYPE_MAX PROTOCOL_V1_VALUE_TYPE_VALUE_TYPE_NITROGEN
-#define _PROTOCOL_V1_VALUE_TYPE_ARRAYSIZE ((protocol_v1_value_type_t)(PROTOCOL_V1_VALUE_TYPE_VALUE_TYPE_NITROGEN+1))
+#define _PROTOCOL_V1_VALUE_TYPE_ARRAYSIZE                                      \
+  ((protocol_v1_value_type_t)(PROTOCOL_V1_VALUE_TYPE_VALUE_TYPE_NITROGEN + 1))
 
-#define _PROTOCOL_V1_FUNC_ARG_TYPE_MIN PROTOCOL_V1_FUNC_ARG_TYPE_FUNC_ARG_TYPE_UNSPECIFIED
-#define _PROTOCOL_V1_FUNC_ARG_TYPE_MAX PROTOCOL_V1_FUNC_ARG_TYPE_FUNC_ARG_TYPE_BOOL
-#define _PROTOCOL_V1_FUNC_ARG_TYPE_ARRAYSIZE ((protocol_v1_func_arg_type_t)(PROTOCOL_V1_FUNC_ARG_TYPE_FUNC_ARG_TYPE_BOOL+1))
+#define _PROTOCOL_V1_FUNC_ARG_TYPE_MIN                                         \
+  PROTOCOL_V1_FUNC_ARG_TYPE_FUNC_ARG_TYPE_UNSPECIFIED
+#define _PROTOCOL_V1_FUNC_ARG_TYPE_MAX                                         \
+  PROTOCOL_V1_FUNC_ARG_TYPE_FUNC_ARG_TYPE_BOOL
+#define _PROTOCOL_V1_FUNC_ARG_TYPE_ARRAYSIZE                                    \
+  ((protocol_v1_func_arg_type_t)(PROTOCOL_V1_FUNC_ARG_TYPE_FUNC_ARG_TYPE_BOOL + \
+                                 1))
 
-#define _PROTOCOL_V1_UP_PING_TYPE_MIN PROTOCOL_V1_UP_PING_TYPE_UP_PING_TYPE_UNSPECIFIED
-#define _PROTOCOL_V1_UP_PING_TYPE_MAX PROTOCOL_V1_UP_PING_TYPE_UP_PING_TYPE_HELLO
-#define _PROTOCOL_V1_UP_PING_TYPE_ARRAYSIZE ((protocol_v1_up_ping_type_t)(PROTOCOL_V1_UP_PING_TYPE_UP_PING_TYPE_HELLO+1))
+#define _PROTOCOL_V1_UP_PING_TYPE_MIN                                          \
+  PROTOCOL_V1_UP_PING_TYPE_UP_PING_TYPE_UNSPECIFIED
+#define _PROTOCOL_V1_UP_PING_TYPE_MAX                                          \
+  PROTOCOL_V1_UP_PING_TYPE_UP_PING_TYPE_HELLO
+#define _PROTOCOL_V1_UP_PING_TYPE_ARRAYSIZE                                    \
+  ((protocol_v1_up_ping_type_t)(PROTOCOL_V1_UP_PING_TYPE_UP_PING_TYPE_HELLO +  \
+                                1))
 
-#define _PROTOCOL_V1_DOWN_PING_TYPE_MIN PROTOCOL_V1_DOWN_PING_TYPE_DOWN_PING_TYPE_UNSPECIFIED
-#define _PROTOCOL_V1_DOWN_PING_TYPE_MAX PROTOCOL_V1_DOWN_PING_TYPE_DOWN_PING_TYPE_DISCONNECT
-#define _PROTOCOL_V1_DOWN_PING_TYPE_ARRAYSIZE ((protocol_v1_down_ping_type_t)(PROTOCOL_V1_DOWN_PING_TYPE_DOWN_PING_TYPE_DISCONNECT+1))
+#define _PROTOCOL_V1_DOWN_PING_TYPE_MIN                                        \
+  PROTOCOL_V1_DOWN_PING_TYPE_DOWN_PING_TYPE_UNSPECIFIED
+#define _PROTOCOL_V1_DOWN_PING_TYPE_MAX                                        \
+  PROTOCOL_V1_DOWN_PING_TYPE_DOWN_PING_TYPE_DISCONNECT
+#define _PROTOCOL_V1_DOWN_PING_TYPE_ARRAYSIZE                                            \
+  ((protocol_v1_down_ping_type_t)(PROTOCOL_V1_DOWN_PING_TYPE_DOWN_PING_TYPE_DISCONNECT + \
+                                  1))
 
 #define protocol_v1_sensor_t_value_type_ENUMTYPE protocol_v1_value_type_t
 
 #define protocol_v1_function_t_arg_type_ENUMTYPE protocol_v1_func_arg_type_t
 
-
-
-
 #define protocol_v1_up_ping_t_type_ENUMTYPE protocol_v1_up_ping_type_t
 
 #define protocol_v1_down_ping_t_type_ENUMTYPE protocol_v1_down_ping_type_t
 
-
-
-
 /* Initializer values for message structs */
-#define PROTOCOL_V1_SENSOR_INIT_DEFAULT          {0, {0}, {0}, _PROTOCOL_V1_VALUE_TYPE_MIN, {0}}
-#define PROTOCOL_V1_FUNCTION_INIT_DEFAULT        {0, {0}, {0}, _PROTOCOL_V1_FUNC_ARG_TYPE_MIN}
-#define PROTOCOL_V1_CAPABILITIES_INIT_DEFAULT    {{0}, {0}, {0}}
-#define PROTOCOL_V1_REPORT_INIT_DEFAULT          {0, 0, {0}}
-#define PROTOCOL_V1_CALL_INIT_DEFAULT            {0, 0, {0}, false, 0}
-#define PROTOCOL_V1_UP_PING_INIT_DEFAULT         {_PROTOCOL_V1_UP_PING_TYPE_MIN}
-#define PROTOCOL_V1_DOWN_PING_INIT_DEFAULT       {_PROTOCOL_V1_DOWN_PING_TYPE_MIN}
-#define PROTOCOL_V1_DOWNLINK_INIT_DEFAULT        {0, {PROTOCOL_V1_CALL_INIT_DEFAULT}}
-#define PROTOCOL_V1_UPLINK_INIT_DEFAULT          {0, {PROTOCOL_V1_REPORT_INIT_DEFAULT}}
-#define PROTOCOL_V1_SENSOR_INIT_ZERO             {0, {0}, {0}, _PROTOCOL_V1_VALUE_TYPE_MIN, {0}}
-#define PROTOCOL_V1_FUNCTION_INIT_ZERO           {0, {0}, {0}, _PROTOCOL_V1_FUNC_ARG_TYPE_MIN}
-#define PROTOCOL_V1_CAPABILITIES_INIT_ZERO       {{0}, {0}, {0}}
-#define PROTOCOL_V1_REPORT_INIT_ZERO             {0, 0, {0}}
-#define PROTOCOL_V1_CALL_INIT_ZERO               {0, 0, {0}, false, 0}
-#define PROTOCOL_V1_UP_PING_INIT_ZERO            {_PROTOCOL_V1_UP_PING_TYPE_MIN}
-#define PROTOCOL_V1_DOWN_PING_INIT_ZERO          {_PROTOCOL_V1_DOWN_PING_TYPE_MIN}
-#define PROTOCOL_V1_DOWNLINK_INIT_ZERO           {0, {PROTOCOL_V1_CALL_INIT_ZERO}}
-#define PROTOCOL_V1_UPLINK_INIT_ZERO             {0, {PROTOCOL_V1_REPORT_INIT_ZERO}}
+#define PROTOCOL_V1_SENSOR_INIT_DEFAULT                                        \
+  {0, {0}, {0}, _PROTOCOL_V1_VALUE_TYPE_MIN, {0}}
+#define PROTOCOL_V1_FUNCTION_INIT_DEFAULT                                      \
+  {0, {0}, {0}, _PROTOCOL_V1_FUNC_ARG_TYPE_MIN}
+#define PROTOCOL_V1_CAPABILITIES_INIT_DEFAULT {{0}, {0}, {0}}
+#define PROTOCOL_V1_REPORT_INIT_DEFAULT {0, 0, {0}}
+#define PROTOCOL_V1_CALL_INIT_DEFAULT {0, 0, {0}, false, 0}
+#define PROTOCOL_V1_UP_PING_INIT_DEFAULT {_PROTOCOL_V1_UP_PING_TYPE_MIN}
+#define PROTOCOL_V1_DOWN_PING_INIT_DEFAULT {_PROTOCOL_V1_DOWN_PING_TYPE_MIN}
+#define PROTOCOL_V1_DOWNLINK_INIT_DEFAULT                                      \
+  {                                                                            \
+    0, { PROTOCOL_V1_CALL_INIT_DEFAULT }                                       \
+  }
+#define PROTOCOL_V1_UPLINK_INIT_DEFAULT                                        \
+  {                                                                            \
+    0, { PROTOCOL_V1_REPORT_INIT_DEFAULT }                                     \
+  }
+#define PROTOCOL_V1_SENSOR_INIT_ZERO                                           \
+  {0, {0}, {0}, _PROTOCOL_V1_VALUE_TYPE_MIN, {0}}
+#define PROTOCOL_V1_FUNCTION_INIT_ZERO                                         \
+  {0, {0}, {0}, _PROTOCOL_V1_FUNC_ARG_TYPE_MIN}
+#define PROTOCOL_V1_CAPABILITIES_INIT_ZERO {{0}, {0}, {0}}
+#define PROTOCOL_V1_REPORT_INIT_ZERO {0, 0, {0}}
+#define PROTOCOL_V1_CALL_INIT_ZERO {0, 0, {0}, false, 0}
+#define PROTOCOL_V1_UP_PING_INIT_ZERO {_PROTOCOL_V1_UP_PING_TYPE_MIN}
+#define PROTOCOL_V1_DOWN_PING_INIT_ZERO {_PROTOCOL_V1_DOWN_PING_TYPE_MIN}
+#define PROTOCOL_V1_DOWNLINK_INIT_ZERO                                         \
+  {                                                                            \
+    0, { PROTOCOL_V1_CALL_INIT_ZERO }                                          \
+  }
+#define PROTOCOL_V1_UPLINK_INIT_ZERO                                           \
+  {                                                                            \
+    0, { PROTOCOL_V1_REPORT_INIT_ZERO }                                        \
+  }
 
 /* Field tags (for use in manual encoding/decoding) */
-#define PROTOCOL_V1_SENSOR_ID_TAG                1
-#define PROTOCOL_V1_SENSOR_NAME_TAG              2
-#define PROTOCOL_V1_SENSOR_DESCRIPTION_TAG       3
-#define PROTOCOL_V1_SENSOR_VALUE_TYPE_TAG        4
-#define PROTOCOL_V1_SENSOR_UNIT_TAG              5
-#define PROTOCOL_V1_FUNCTION_ID_TAG              1
-#define PROTOCOL_V1_FUNCTION_NAME_TAG            2
-#define PROTOCOL_V1_FUNCTION_DESCRIPTION_TAG     3
-#define PROTOCOL_V1_FUNCTION_ARG_TYPE_TAG        4
+#define PROTOCOL_V1_SENSOR_ID_TAG 1
+#define PROTOCOL_V1_SENSOR_NAME_TAG 2
+#define PROTOCOL_V1_SENSOR_DESCRIPTION_TAG 3
+#define PROTOCOL_V1_SENSOR_VALUE_TYPE_TAG 4
+#define PROTOCOL_V1_SENSOR_UNIT_TAG 5
+#define PROTOCOL_V1_FUNCTION_ID_TAG 1
+#define PROTOCOL_V1_FUNCTION_NAME_TAG 2
+#define PROTOCOL_V1_FUNCTION_DESCRIPTION_TAG 3
+#define PROTOCOL_V1_FUNCTION_ARG_TYPE_TAG 4
 #define PROTOCOL_V1_CAPABILITIES_DEVICE_NAME_TAG 1
-#define PROTOCOL_V1_CAPABILITIES_SENSORS_TAG     2
-#define PROTOCOL_V1_CAPABILITIES_FUNCTIONS_TAG   3
-#define PROTOCOL_V1_REPORT_SENSOR_ID_TAG         1
-#define PROTOCOL_V1_REPORT_INT_VAL_TAG           2
-#define PROTOCOL_V1_REPORT_FLOAT_VAL_TAG         3
-#define PROTOCOL_V1_REPORT_STR_VAL_TAG           4
-#define PROTOCOL_V1_REPORT_BOOL_VAL_TAG          5
-#define PROTOCOL_V1_CALL_FUNCTION_ID_TAG         1
-#define PROTOCOL_V1_CALL_INT_VAL_TAG             2
-#define PROTOCOL_V1_CALL_STR_VAL_TAG             3
-#define PROTOCOL_V1_CALL_BOOL_VAL_TAG            4
-#define PROTOCOL_V1_CALL_FLOAT_VAL_TAG           5
-#define PROTOCOL_V1_CALL_WAKE_AFTER_SECS_TAG     6
-#define PROTOCOL_V1_UP_PING_TYPE_TAG             1
-#define PROTOCOL_V1_DOWN_PING_TYPE_TAG           1
-#define PROTOCOL_V1_DOWNLINK_CALL_TAG            1
-#define PROTOCOL_V1_DOWNLINK_PING_TAG            2
-#define PROTOCOL_V1_UPLINK_REPORT_TAG            1
-#define PROTOCOL_V1_UPLINK_CAPABILITIES_TAG      2
-#define PROTOCOL_V1_UPLINK_PING_TAG              3
+#define PROTOCOL_V1_CAPABILITIES_SENSORS_TAG 2
+#define PROTOCOL_V1_CAPABILITIES_FUNCTIONS_TAG 3
+#define PROTOCOL_V1_REPORT_SENSOR_ID_TAG 1
+#define PROTOCOL_V1_REPORT_INT_VAL_TAG 2
+#define PROTOCOL_V1_REPORT_FLOAT_VAL_TAG 3
+#define PROTOCOL_V1_REPORT_STR_VAL_TAG 4
+#define PROTOCOL_V1_REPORT_BOOL_VAL_TAG 5
+#define PROTOCOL_V1_CALL_FUNCTION_ID_TAG 1
+#define PROTOCOL_V1_CALL_INT_VAL_TAG 2
+#define PROTOCOL_V1_CALL_STR_VAL_TAG 3
+#define PROTOCOL_V1_CALL_BOOL_VAL_TAG 4
+#define PROTOCOL_V1_CALL_FLOAT_VAL_TAG 5
+#define PROTOCOL_V1_CALL_WAKE_AFTER_SECS_TAG 6
+#define PROTOCOL_V1_UP_PING_TYPE_TAG 1
+#define PROTOCOL_V1_DOWN_PING_TYPE_TAG 1
+#define PROTOCOL_V1_DOWNLINK_CALL_TAG 1
+#define PROTOCOL_V1_DOWNLINK_PING_TAG 2
+#define PROTOCOL_V1_UPLINK_REPORT_TAG 1
+#define PROTOCOL_V1_UPLINK_CAPABILITIES_TAG 2
+#define PROTOCOL_V1_UPLINK_PING_TAG 3
 
 /* Struct field encoding specification for nanopb */
-#define PROTOCOL_V1_SENSOR_FIELDLIST(X, a) \
-X(a, STATIC,   SINGULAR, INT32,    id,                1) \
-X(a, CALLBACK, SINGULAR, STRING,   name,              2) \
-X(a, CALLBACK, SINGULAR, STRING,   description,       3) \
-X(a, STATIC,   SINGULAR, UENUM,    value_type,        4) \
-X(a, CALLBACK, OPTIONAL, STRING,   unit,              5)
-extern bool protocol_v1_Sensor_callback(pb_istream_t *istream, pb_ostream_t *ostream, const pb_field_t *field);
+#define PROTOCOL_V1_SENSOR_FIELDLIST(X, a)                                     \
+  X(a, STATIC, SINGULAR, INT32, id, 1)                                         \
+  X(a, CALLBACK, SINGULAR, STRING, name, 2)                                    \
+  X(a, CALLBACK, SINGULAR, STRING, description, 3)                             \
+  X(a, STATIC, SINGULAR, UENUM, value_type, 4)                                 \
+  X(a, CALLBACK, OPTIONAL, STRING, unit, 5)
+extern bool protocol_v1_Sensor_callback(
+    pb_istream_t* istream,
+    pb_ostream_t* ostream,
+    const pb_field_t* field
+);
 #define PROTOCOL_V1_SENSOR_CALLBACK protocol_v1_Sensor_callback
 #define PROTOCOL_V1_SENSOR_DEFAULT NULL
 
-#define PROTOCOL_V1_FUNCTION_FIELDLIST(X, a) \
-X(a, STATIC,   SINGULAR, INT32,    id,                1) \
-X(a, CALLBACK, SINGULAR, STRING,   name,              2) \
-X(a, CALLBACK, SINGULAR, STRING,   description,       3) \
-X(a, STATIC,   SINGULAR, UENUM,    arg_type,          4)
-extern bool protocol_v1_Function_callback(pb_istream_t *istream, pb_ostream_t *ostream, const pb_field_t *field);
+#define PROTOCOL_V1_FUNCTION_FIELDLIST(X, a)                                   \
+  X(a, STATIC, SINGULAR, INT32, id, 1)                                         \
+  X(a, CALLBACK, SINGULAR, STRING, name, 2)                                    \
+  X(a, CALLBACK, SINGULAR, STRING, description, 3)                             \
+  X(a, STATIC, SINGULAR, UENUM, arg_type, 4)
+extern bool protocol_v1_Function_callback(
+    pb_istream_t* istream,
+    pb_ostream_t* ostream,
+    const pb_field_t* field
+);
 #define PROTOCOL_V1_FUNCTION_CALLBACK protocol_v1_Function_callback
 #define PROTOCOL_V1_FUNCTION_DEFAULT NULL
 
-#define PROTOCOL_V1_CAPABILITIES_FIELDLIST(X, a) \
-X(a, CALLBACK, SINGULAR, STRING,   device_name,       1) \
-X(a, CALLBACK, REPEATED, MESSAGE,  sensors,           2) \
-X(a, CALLBACK, REPEATED, MESSAGE,  functions,         3)
-extern bool protocol_v1_Capabilities_callback(pb_istream_t *istream, pb_ostream_t *ostream, const pb_field_t *field);
+#define PROTOCOL_V1_CAPABILITIES_FIELDLIST(X, a)                               \
+  X(a, CALLBACK, SINGULAR, STRING, device_name, 1)                             \
+  X(a, CALLBACK, REPEATED, MESSAGE, sensors, 2)                                \
+  X(a, CALLBACK, REPEATED, MESSAGE, functions, 3)
+extern bool protocol_v1_Capabilities_callback(
+    pb_istream_t* istream,
+    pb_ostream_t* ostream,
+    const pb_field_t* field
+);
 #define PROTOCOL_V1_CAPABILITIES_CALLBACK protocol_v1_Capabilities_callback
 #define PROTOCOL_V1_CAPABILITIES_DEFAULT NULL
 #define protocol_v1_capabilities_t_sensors_MSGTYPE protocol_v1_sensor_t
 #define protocol_v1_capabilities_t_functions_MSGTYPE protocol_v1_function_t
 
-#define PROTOCOL_V1_REPORT_FIELDLIST(X, a) \
-X(a, STATIC,   SINGULAR, INT32,    sensor_id,         1) \
-X(a, STATIC,   ONEOF,    INT32,    (value,int_val,value.int_val),   2) \
-X(a, STATIC,   ONEOF,    FLOAT,    (value,float_val,value.float_val),   3) \
-X(a, CALLBACK, ONEOF,    STRING,   (value,str_val,value.str_val),   4) \
-X(a, STATIC,   ONEOF,    BOOL,     (value,bool_val,value.bool_val),   5)
-extern bool protocol_v1_Report_callback(pb_istream_t *istream, pb_ostream_t *ostream, const pb_field_t *field);
+#define PROTOCOL_V1_REPORT_FIELDLIST(X, a)                                     \
+  X(a, STATIC, SINGULAR, INT32, sensor_id, 1)                                  \
+  X(a, STATIC, ONEOF, INT32, (value, int_val, value.int_val), 2)               \
+  X(a, STATIC, ONEOF, FLOAT, (value, float_val, value.float_val), 3)           \
+  X(a, CALLBACK, ONEOF, STRING, (value, str_val, value.str_val), 4)            \
+  X(a, STATIC, ONEOF, BOOL, (value, bool_val, value.bool_val), 5)
+extern bool protocol_v1_Report_callback(
+    pb_istream_t* istream,
+    pb_ostream_t* ostream,
+    const pb_field_t* field
+);
 #define PROTOCOL_V1_REPORT_CALLBACK protocol_v1_Report_callback
 #define PROTOCOL_V1_REPORT_DEFAULT NULL
 
-#define PROTOCOL_V1_CALL_FIELDLIST(X, a) \
-X(a, STATIC,   SINGULAR, INT32,    function_id,       1) \
-X(a, STATIC,   ONEOF,    INT32,    (value,int_val,value.int_val),   2) \
-X(a, CALLBACK, ONEOF,    STRING,   (value,str_val,value.str_val),   3) \
-X(a, STATIC,   ONEOF,    BOOL,     (value,bool_val,value.bool_val),   4) \
-X(a, STATIC,   ONEOF,    FLOAT,    (value,float_val,value.float_val),   5) \
-X(a, STATIC,   OPTIONAL, INT32,    wake_after_secs,   6)
-extern bool protocol_v1_Call_callback(pb_istream_t *istream, pb_ostream_t *ostream, const pb_field_t *field);
+#define PROTOCOL_V1_CALL_FIELDLIST(X, a)                                       \
+  X(a, STATIC, SINGULAR, INT32, function_id, 1)                                \
+  X(a, STATIC, ONEOF, INT32, (value, int_val, value.int_val), 2)               \
+  X(a, CALLBACK, ONEOF, STRING, (value, str_val, value.str_val), 3)            \
+  X(a, STATIC, ONEOF, BOOL, (value, bool_val, value.bool_val), 4)              \
+  X(a, STATIC, ONEOF, FLOAT, (value, float_val, value.float_val), 5)           \
+  X(a, STATIC, OPTIONAL, INT32, wake_after_secs, 6)
+extern bool protocol_v1_Call_callback(
+    pb_istream_t* istream,
+    pb_ostream_t* ostream,
+    const pb_field_t* field
+);
 #define PROTOCOL_V1_CALL_CALLBACK protocol_v1_Call_callback
 #define PROTOCOL_V1_CALL_DEFAULT NULL
 
-#define PROTOCOL_V1_UP_PING_FIELDLIST(X, a) \
-X(a, STATIC,   SINGULAR, UENUM,    type,              1)
+#define PROTOCOL_V1_UP_PING_FIELDLIST(X, a)                                    \
+  X(a, STATIC, SINGULAR, UENUM, type, 1)
 #define PROTOCOL_V1_UP_PING_CALLBACK NULL
 #define PROTOCOL_V1_UP_PING_DEFAULT NULL
 
-#define PROTOCOL_V1_DOWN_PING_FIELDLIST(X, a) \
-X(a, STATIC,   SINGULAR, UENUM,    type,              1)
+#define PROTOCOL_V1_DOWN_PING_FIELDLIST(X, a)                                  \
+  X(a, STATIC, SINGULAR, UENUM, type, 1)
 #define PROTOCOL_V1_DOWN_PING_CALLBACK NULL
 #define PROTOCOL_V1_DOWN_PING_DEFAULT NULL
 
-#define PROTOCOL_V1_DOWNLINK_FIELDLIST(X, a) \
-X(a, STATIC,   ONEOF,    MESSAGE,  (payload,call,payload.call),   1) \
-X(a, STATIC,   ONEOF,    MESSAGE,  (payload,ping,payload.ping),   2)
+#define PROTOCOL_V1_DOWNLINK_FIELDLIST(X, a)                                   \
+  X(a, STATIC, ONEOF, MESSAGE, (payload, call, payload.call), 1)               \
+  X(a, STATIC, ONEOF, MESSAGE, (payload, ping, payload.ping), 2)
 #define PROTOCOL_V1_DOWNLINK_CALLBACK NULL
 #define PROTOCOL_V1_DOWNLINK_DEFAULT NULL
 #define protocol_v1_downlink_t_payload_call_MSGTYPE protocol_v1_call_t
 #define protocol_v1_downlink_t_payload_ping_MSGTYPE protocol_v1_down_ping_t
 
-#define PROTOCOL_V1_UPLINK_FIELDLIST(X, a) \
-X(a, STATIC,   ONEOF,    MESSAGE,  (payload,report,payload.report),   1) \
-X(a, STATIC,   ONEOF,    MESSAGE,  (payload,capabilities,payload.capabilities),   2) \
-X(a, STATIC,   ONEOF,    MESSAGE,  (payload,ping,payload.ping),   3)
+#define PROTOCOL_V1_UPLINK_FIELDLIST(X, a)                                     \
+  X(a, STATIC, ONEOF, MESSAGE, (payload, report, payload.report), 1)           \
+  X(a,                                                                         \
+    STATIC,                                                                    \
+    ONEOF,                                                                     \
+    MESSAGE,                                                                   \
+    (payload, capabilities, payload.capabilities),                             \
+    2)                                                                         \
+  X(a, STATIC, ONEOF, MESSAGE, (payload, ping, payload.ping), 3)
 #define PROTOCOL_V1_UPLINK_CALLBACK NULL
 #define PROTOCOL_V1_UPLINK_DEFAULT NULL
 #define protocol_v1_uplink_t_payload_report_MSGTYPE protocol_v1_report_t
-#define protocol_v1_uplink_t_payload_capabilities_MSGTYPE protocol_v1_capabilities_t
+#define protocol_v1_uplink_t_payload_capabilities_MSGTYPE                      \
+  protocol_v1_capabilities_t
 #define protocol_v1_uplink_t_payload_ping_MSGTYPE protocol_v1_up_ping_t
 
 extern const pb_msgdesc_t protocol_v1_sensor_t_msg;
@@ -345,9 +394,9 @@ extern const pb_msgdesc_t protocol_v1_uplink_t_msg;
 /* protocol_v1_Call_size depends on runtime parameters */
 /* protocol_v1_Downlink_size depends on runtime parameters */
 /* protocol_v1_Uplink_size depends on runtime parameters */
-#define PROTOCOL_V1_DOWN_PING_SIZE               2
-#define PROTOCOL_V1_PROTOCOL_PB_H_MAX_SIZE       PROTOCOL_V1_UP_PING_SIZE
-#define PROTOCOL_V1_UP_PING_SIZE                 2
+#define PROTOCOL_V1_DOWN_PING_SIZE 2
+#define PROTOCOL_V1_PROTOCOL_PB_H_MAX_SIZE PROTOCOL_V1_UP_PING_SIZE
+#define PROTOCOL_V1_UP_PING_SIZE 2
 
 #ifdef __cplusplus
 } /* extern "C" */
