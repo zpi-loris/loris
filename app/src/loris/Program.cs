@@ -20,13 +20,15 @@ builder.Services.AddChirpstackIntegration<ChirpstackIntegrationHandler>(builder.
 builder.Services.AddControllers();
 
 // TODO: create extension method
-builder.Services.AddKeyedSingleton<ITriggerService, TestTriggerService>(
+builder.Services.AddKeyedSingleton<ITriggerService, TestTriggerCompiler>(
     TestTriggerDto.Discriminator
 );
-builder.Services.AddKeyedSingleton<IConditionService, TestConditionService>(
+builder.Services.AddKeyedSingleton<IConditionCompiler, TestConditionCompiler>(
     TestConditionDto.Discriminator
 );
-builder.Services.AddKeyedSingleton<IActionService, TestActionService>(TestActionDto.Discriminator);
+builder.Services.AddKeyedSingleton<IActionCompiler, TestActionCompiler>(
+    TestActionDto.Discriminator
+);
 
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
