@@ -7,7 +7,5 @@ namespace Loris.Data
     public class StateCache
     {
         private readonly Dictionary<DevEui, Report> state = [];
-
-        public ReadOnlyDictionary<DevEui, Report> ReadOnly => state.AsReadOnly();
     }
 }
