@@ -1,4 +1,4 @@
-namespace Loris.Types;
+namespace Loris.Automations;
 
 public sealed record LookupContext(IReadOnlyDictionary<string, object> Values)
 {

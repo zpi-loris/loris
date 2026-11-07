@@ -1,5 +1,3 @@
-using Loris.Types;
-
 namespace Loris.Automations.Actions;
 
 public abstract class ActionCompilerBase<TDto> : IActionCompiler

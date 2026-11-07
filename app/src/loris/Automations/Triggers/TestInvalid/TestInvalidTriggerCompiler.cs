@@ -1,7 +1,5 @@
-using System.Collections.ObjectModel;
 using Loris.Events;
 using Loris.Messages;
-using Loris.Types;
 
 namespace Loris.Automations.Triggers.TestInvalid;
 
