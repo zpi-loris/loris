@@ -1,4 +1,8 @@
-zephyr_include_directories(src)
+if(CONFIG_LORIS)
 
-file(GLOB_RECURSE SRC "src/*.c")
-zephyr_library_sources(${SRC})
+  zephyr_include_directories(src)
+
+  file(GLOB_RECURSE SRC "src/*.c")
+  zephyr_library_sources(${SRC})
+
+endif()

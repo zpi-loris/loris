@@ -1,3 +1,17 @@
+# TODO: find out how to specify LORAWAN_SYSTEM_MAX_RX_ERROR=100
+# when LORIS=y
+
+menuconfig LORIS
+  bool "Enable loris module"
+  depends on (LORA && LORAWAN && ZMS && FLASH && FLASH_MAP) || ZTEST
+  help
+    Enables the loris module.
+
+    NOTE: to ensure proper LoRaWAN stack functionality set
+    LORAWAN_SYSTEM_MAX_RX_ERROR to a reasonable value, e.g. 100.
+
+if LORIS
+
 config LORIS_SENSORS_AMOUNT
   int
   default 5
@@ -11,3 +25,5 @@ config LORIS_TEST
   help
     When 'y' compiles additional helper functions not needed in production,
     e.g. uplink DECODING and downlink ENCODING.
+
+endif

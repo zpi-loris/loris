@@ -145,12 +145,11 @@ ZTEST_INSTANTIATE_TEST_SUITE_P(
 );
 ZTEST_P(codec_downlink, test_encodes_and_decodes_downping) {
   down_ping_type_t type = ZTEST_GET_PARAM(down_ping_type_t);
-  downlink_t dl = {
-      .payload_type = DOWNLINK_PAYLOAD_TYPE_PING,
-      .payload.ping = {
-          .type = type,
-      }
-  };
+  downlink_t dl =
+      {.payload_type = DOWNLINK_PAYLOAD_TYPE_PING,
+       .payload.ping = {
+           .type = type,
+       }};
 
   char buf[1024];
   size_t bytes_written = 0;
@@ -446,18 +445,17 @@ ZTEST(codec_uplink, test_encodes_and_decodes_capabilities) {
       .wake_interval_sec = 10,
   };
 
-  uplink_t ul = {
-      .payload_type = UPLINK_PAYLOAD_TYPE_CAPABILITIES,
-      .payload.capabilities = {
-          .device_name =
-              {
-                  .ptr = "WeatherStation_01",
-                  .len = 17,
-                  .src_type = STR_SRC_STATIC,
-              },
-          .device_class = DEVICE_CLASS_A,
-      }
-  };
+  uplink_t ul =
+      {.payload_type = UPLINK_PAYLOAD_TYPE_CAPABILITIES,
+       .payload.capabilities = {
+           .device_name =
+               {
+                   .ptr = "WeatherStation_01",
+                   .len = 17,
+                   .src_type = STR_SRC_STATIC,
+               },
+           .device_class = DEVICE_CLASS_A,
+       }};
 
   sys_slist_init(&ul.payload.capabilities.sensors);
   sys_slist_append(&ul.payload.capabilities.sensors, &s1.node);
