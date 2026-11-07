@@ -1,4 +1,4 @@
-using Loris.Automations;
+using Loris.Automations.Models;
 
 namespace Loris.Services;
 

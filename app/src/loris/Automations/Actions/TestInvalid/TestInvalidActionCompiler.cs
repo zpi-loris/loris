@@ -8,13 +8,8 @@ public class TestInvalidActionCompiler : ActionCompilerBase<TestInvalidActionDto
     protected override Action Compile(TestInvalidActionDto dto, LookupContext? lookup) =>
         throw new ArgumentException("Testing exception");
 
-    protected override ValueTask<bool> TryValidateAsync(
+    protected override async Task<ValidationResult> ValidateAsync(
         TestInvalidActionDto dto,
-        out LookupContext? lookup,
         CancellationToken cancellationToken
-    )
-    {
-        lookup = default;
-        return ValueTask.FromResult(false);
-    }
+    ) => ValidationResult.Failure([new BlockError(dto.Name, "invalid")]);
 }

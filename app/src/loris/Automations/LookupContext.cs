@@ -9,4 +9,7 @@ public sealed record LookupContext(IReadOnlyDictionary<string, object> Values)
 
         return (T)val;
     }
+
+    public static LookupContext FromDict(Dictionary<string, object> valuePairs) =>
+        new(valuePairs.AsReadOnly());
 }

@@ -1,4 +1,3 @@
-using System.Collections.ObjectModel;
 using Loris.Events;
 using Loris.Messages;
 using Loris.Types;
@@ -12,13 +11,8 @@ public class TestValidTriggerCompiler : TriggerCompilerBase<TestValidTriggerDto>
         LookupContext? lookup
     ) => (TestEvent.Default, (_) => true);
 
-    protected override ValueTask<bool> TryValidateAsync(
+    protected override async Task<ValidationResult> ValidateAsync(
         TestValidTriggerDto dto,
-        out LookupContext? lookup,
         CancellationToken cancellationToken
-    )
-    {
-        lookup = default;
-        return ValueTask.FromResult(true);
-    }
+    ) => ValidationResult.Success();
 }

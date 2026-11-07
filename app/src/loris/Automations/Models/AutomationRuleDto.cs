@@ -2,7 +2,7 @@ using Loris.Automations.Actions;
 using Loris.Automations.Conditions;
 using Loris.Automations.Triggers;
 
-namespace Loris.Automations;
+namespace Loris.Automations.Models;
 
 public record AutomationRuleDto(
     Guid Id,

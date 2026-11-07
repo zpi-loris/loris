@@ -1,6 +1,7 @@
 using Loris.Automations;
 using Loris.Automations.Actions;
 using Loris.Automations.Conditions;
+using Loris.Automations.Models;
 using Loris.Automations.Triggers;
 using Loris.Data;
 using Loris.Events;

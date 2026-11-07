@@ -1,5 +1,4 @@
 using System.Collections.ObjectModel;
-using Loris.Automations.conditions;
 using Loris.Data;
 using Loris.Types;
 
@@ -12,13 +11,11 @@ public class TestInvalidConditionCompiler : ConditionCompilerBase<TestInvalidCon
         LookupContext? lookup
     ) => throw new ArgumentException("Testing exception");
 
-    protected override ValueTask<bool> TryValidateAsync(
+    protected override async Task<ValidationResult> ValidateAsync(
         TestInvalidConditionDto dto,
-        out LookupContext? lookup,
         CancellationToken cancellationToken
     )
     {
-        lookup = default;
-        return ValueTask.FromResult(false);
+        return ValidationResult.Failure([new(dto.Name, "invalid")]);
     }
 }

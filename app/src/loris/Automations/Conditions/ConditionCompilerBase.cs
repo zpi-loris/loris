@@ -1,8 +1,7 @@
-using Loris.Automations.Conditions;
 using Loris.Data;
 using Loris.Types;
 
-namespace Loris.Automations.conditions;
+namespace Loris.Automations.Conditions;
 
 public abstract class ConditionCompilerBase<TDto> : IConditionCompiler
     where TDto : IConditionDto
@@ -13,21 +12,19 @@ public abstract class ConditionCompilerBase<TDto> : IConditionCompiler
         return Compile(typedDto, lookup);
     }
 
-    public ValueTask<bool> TryValidateAsync(
+    public Task<ValidationResult> ValidateAsync(
         IConditionDto dto,
-        out LookupContext? lookup,
         CancellationToken cancellationToken = default
     )
     {
         var typedDto = EnsureTyped(dto, nameof(dto));
-        return TryValidateAsync(typedDto, out lookup, cancellationToken);
+        return ValidateAsync(typedDto, cancellationToken);
     }
 
     protected abstract Func<StateCache, bool> Compile(TDto dto, LookupContext? lookup);
 
-    protected abstract ValueTask<bool> TryValidateAsync(
+    protected abstract Task<ValidationResult> ValidateAsync(
         TDto dto,
-        out LookupContext? lookup,
         CancellationToken cancellationToken
     );
 

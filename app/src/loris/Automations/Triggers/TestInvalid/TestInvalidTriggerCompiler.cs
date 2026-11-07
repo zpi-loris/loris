@@ -12,13 +12,8 @@ public class TestInvalidTriggerCompiler : TriggerCompilerBase<TestInvalidTrigger
         LookupContext? lookup
     ) => throw new ArgumentException("Testing exception");
 
-    protected override ValueTask<bool> TryValidateAsync(
+    protected override async Task<ValidationResult> ValidateAsync(
         TestInvalidTriggerDto dto,
-        out LookupContext? lookup,
         CancellationToken cancellationToken
-    )
-    {
-        lookup = default;
-        return ValueTask.FromResult(false);
-    }
+    ) => ValidationResult.Failure([new(dto.Name, "Invalid")]);
 }

@@ -16,14 +16,13 @@ public abstract class TriggerCompilerBase<TDto> : ITriggerService
         return Compile(typedDto, lookup);
     }
 
-    public ValueTask<bool> TryValidateAsync(
+    public Task<ValidationResult> ValidateAsync(
         ITriggerDto dto,
-        out LookupContext? lookup,
         CancellationToken cancellationToken = default
     )
     {
         var typedDto = EnsureTyped(dto, nameof(dto));
-        return TryValidateAsync(typedDto, out lookup, cancellationToken);
+        return ValidateAsync(typedDto, cancellationToken);
     }
 
     protected abstract (IEvent Event, Func<IEventMessage, bool> Filter) Compile(
@@ -31,9 +30,8 @@ public abstract class TriggerCompilerBase<TDto> : ITriggerService
         LookupContext? lookup
     );
 
-    protected abstract ValueTask<bool> TryValidateAsync(
+    protected abstract Task<ValidationResult> ValidateAsync(
         TDto dto,
-        out LookupContext? lookup,
         CancellationToken cancellationToken
     );
 
