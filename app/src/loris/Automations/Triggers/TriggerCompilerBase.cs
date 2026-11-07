@@ -4,7 +4,7 @@ using Loris.Types;
 
 namespace Loris.Automations.Triggers;
 
-public abstract class TriggerCompilerBase<TDto> : ITriggerService
+public abstract class TriggerCompilerBase<TDto> : ITriggerCompiler
     where TDto : ITriggerDto
 {
     public (IEvent Event, Func<IEventMessage, bool> Filter) Compile(

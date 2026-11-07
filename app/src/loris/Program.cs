@@ -24,7 +24,7 @@ builder.Services.AddChirpstackIntegration<ChirpstackIntegrationHandler>(builder.
 builder.Services.AddControllers();
 
 // TODO: create extension method
-builder.Services.AddKeyedSingleton<ITriggerService, TestValidTriggerCompiler>(
+builder.Services.AddKeyedSingleton<ITriggerCompiler, TestValidTriggerCompiler>(
     TestValidTriggerDto.Discriminator
 );
 builder.Services.AddKeyedSingleton<IConditionCompiler, TestValidConditionCompiler>(
@@ -33,7 +33,7 @@ builder.Services.AddKeyedSingleton<IConditionCompiler, TestValidConditionCompile
 builder.Services.AddKeyedSingleton<IActionCompiler, TestValidActionCompiler>(
     TestValidActionDto.Discriminator
 );
-builder.Services.AddKeyedSingleton<ITriggerService, TestInvalidTriggerCompiler>(
+builder.Services.AddKeyedSingleton<ITriggerCompiler, TestInvalidTriggerCompiler>(
     TestInvalidTriggerDto.Discriminator
 );
 builder.Services.AddKeyedSingleton<IConditionCompiler, TestInvalidConditionCompiler>(

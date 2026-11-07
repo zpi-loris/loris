@@ -70,8 +70,7 @@ public sealed class AutomationService(ILogger<AutomationService> logger, IServic
         CancellationToken cancellationToken
     )
     {
-        var service = _provider.GetKeyedService<ITriggerService>(dto.ServiceKey);
-        // TODO: check if null supression is needed
+        var service = _provider.GetKeyedService<ITriggerCompiler>(dto.ServiceKey);
         return await Compile(dto, service!, cancellationToken);
     }
 
@@ -97,7 +96,8 @@ public sealed class AutomationService(ILogger<AutomationService> logger, IServic
         CancellationToken cancellationToken = default
     )
     {
-        throw new NotImplementedException();
+        var service = _provider.GetKeyedService<ITriggerCompiler>(dto.ServiceKey);
+        return await service!.ValidateAsync(dto, cancellationToken);
     }
 
     public Task ValidateAutomationsAsync(
