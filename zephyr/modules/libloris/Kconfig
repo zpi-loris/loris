@@ -3,7 +3,7 @@
 
 menuconfig LORIS
   bool "Enable loris module"
-  depends on LORA && LORAWAN && ZMS && FLASH && FLASH_MAP
+  depends on (LORA && LORAWAN && ZMS && FLASH && FLASH_MAP) || ZTEST
   help
     Enables the loris module.
 
