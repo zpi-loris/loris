@@ -30,13 +30,15 @@ static const bool val_bool = true;
 static const char val_str[] = "Zephyr NVS test string";
 static const int32_t val_i32 = -123456;
 
+// clang-format off
 static const nvs_type_param_t type_params[] = {
-    {.id = LR_NVS_ID_LW_DEV_NONCE, .data = &val_u32, .len = sizeof(val_u32)},
-    {.id = LR_NVS_ID_LW_DEV_NONCE, .data = &val_char, .len = sizeof(val_char)},
-    {.id = LR_NVS_ID_LW_DEV_NONCE, .data = &val_bool, .len = sizeof(val_bool)},
-    {.id = LR_NVS_ID_LW_DEV_NONCE, .data = val_str, .len = sizeof(val_str)},
-    {.id = LR_NVS_ID_LW_DEV_NONCE, .data = &val_i32, .len = sizeof(val_i32)},
+    {.id = LR_NVS_ID_LW_LAST_USED_DEVNONCE, .data = &val_u32, .len = sizeof(val_u32)},
+    {.id = LR_NVS_ID_LW_LAST_USED_DEVNONCE, .data = &val_char, .len = sizeof(val_char)},
+    {.id = LR_NVS_ID_LW_LAST_USED_DEVNONCE, .data = &val_bool, .len = sizeof(val_bool)},
+    {.id = LR_NVS_ID_LW_LAST_USED_DEVNONCE, .data = val_str, .len = sizeof(val_str)},
+    {.id = LR_NVS_ID_LW_LAST_USED_DEVNONCE, .data = &val_i32, .len = sizeof(val_i32)},
 };
+// clang-format on
 
 ZTEST_DEFINE_PARAM_VALUES_ARRAY(nvs_type_params, type_params);
 ZTEST_INSTANTIATE_TEST_SUITE_P(
@@ -70,8 +72,12 @@ ZTEST(lr_nvs, test_read_unwritten_id) {
   uint32_t buf = 0;
   size_t bytes_read = 0;
 
-  lr_nvs_result_t res =
-      lr_nvs_read(LR_NVS_ID_LW_DEV_NONCE, &buf, sizeof(buf), &bytes_read);
+  lr_nvs_result_t res = lr_nvs_read(
+      LR_NVS_ID_LW_LAST_USED_DEVNONCE,
+      &buf,
+      sizeof(buf),
+      &bytes_read
+  );
   zassert_equal(res, LR_NVS_ERR_NO_VALUE, "res = %d", res);
 }
 
@@ -124,11 +130,21 @@ ZTEST(lr_nvs, test_null_bytes_pointers) {
   uint32_t read_val = 0;
 
   zassert_equal(
-      lr_nvs_write(LR_NVS_ID_LW_DEV_NONCE, &write_val, sizeof(write_val), NULL),
+      lr_nvs_write(
+          LR_NVS_ID_LW_LAST_USED_DEVNONCE,
+          &write_val,
+          sizeof(write_val),
+          NULL
+      ),
       LR_NVS_OK
   );
   zassert_equal(
-      lr_nvs_read(LR_NVS_ID_LW_DEV_NONCE, &read_val, sizeof(read_val), NULL),
+      lr_nvs_read(
+          LR_NVS_ID_LW_LAST_USED_DEVNONCE,
+          &read_val,
+          sizeof(read_val),
+          NULL
+      ),
       LR_NVS_OK
   );
   zassert_equal(read_val, write_val);
@@ -140,11 +156,21 @@ ZTEST(lr_nvs, test_null_data_buffer) {
   size_t bytes_read = 0;
 
   zassert_equal(
-      lr_nvs_write(LR_NVS_ID_LW_DEV_NONCE, NULL, sizeof(val), &bytes_written),
+      lr_nvs_write(
+          LR_NVS_ID_LW_LAST_USED_DEVNONCE,
+          NULL,
+          sizeof(val),
+          &bytes_written
+      ),
       LR_NVS_ERR_INVALID_ARG
   );
   zassert_equal(
-      lr_nvs_read(LR_NVS_ID_LW_DEV_NONCE, NULL, sizeof(val), &bytes_read),
+      lr_nvs_read(
+          LR_NVS_ID_LW_LAST_USED_DEVNONCE,
+          NULL,
+          sizeof(val),
+          &bytes_read
+      ),
       LR_NVS_ERR_INVALID_ARG
   );
 }
@@ -155,12 +181,17 @@ ZTEST(lr_nvs, test_partial_read_truncation) {
   size_t bytes_read = 0;
 
   zassert_equal(
-      lr_nvs_write(LR_NVS_ID_LW_DEV_NONCE, &write_val, sizeof(write_val), NULL),
+      lr_nvs_write(
+          LR_NVS_ID_LW_LAST_USED_DEVNONCE,
+          &write_val,
+          sizeof(write_val),
+          NULL
+      ),
       LR_NVS_OK
   );
   zassert_equal(
       lr_nvs_read(
-          LR_NVS_ID_LW_DEV_NONCE,
+          LR_NVS_ID_LW_LAST_USED_DEVNONCE,
           &read_val,
           sizeof(read_val),
           &bytes_read
