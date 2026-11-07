@@ -11,17 +11,27 @@
 LOG_MODULE_REGISTER(codec);
 
 #ifdef CONFIG_LORIS_TEST
-bool pb_callback_decode_sensor_to_list(pb_istream_t *istream, const pb_field_t* field);
-bool pb_callback_decode_function_to_list(pb_istream_t *istream, const pb_field_t* field);
+bool pb_callback_decode_sensor_to_list(
+    pb_istream_t* istream,
+    const pb_field_t* field
+);
+bool pb_callback_decode_function_to_list(
+    pb_istream_t* istream,
+    const pb_field_t* field
+);
 #endif
 
-bool pb_callback_encode_str(pb_ostream_t* ostream, const pb_field_t *field, const str_t* str) {
+bool pb_callback_encode_str(
+    pb_ostream_t* ostream,
+    const pb_field_t* field,
+    const str_t* str
+) {
   if (ostream == NULL) {
     LOG_DBG("ostream is NULL\n");
     return false;
   }
 
-  if (str->ptr == NULL  && str->src_type == STR_SRC_NONE) { 
+  if (str->ptr == NULL && str->src_type == STR_SRC_NONE) {
     // its not set, just skip it
     return true;
   }
@@ -41,7 +51,7 @@ bool pb_callback_encode_str(pb_ostream_t* ostream, const pb_field_t *field, cons
   return pb_encode_string(ostream, (const uint8_t*)str->ptr, str->len);
 }
 
-bool pb_callback_decode_str(pb_istream_t* istream, const pb_field_t *field) {
+bool pb_callback_decode_str(pb_istream_t* istream, const pb_field_t* field) {
   if (istream == NULL) {
     LOG_DBG("istream is NULL\n");
     return false;
@@ -66,12 +76,16 @@ bool pb_callback_decode_str(pb_istream_t* istream, const pb_field_t *field) {
   return true;
 }
 
-bool pb_callback_codec_str(pb_istream_t *istream, pb_ostream_t *ostream, const pb_field_t *field) {
+bool pb_callback_codec_str(
+    pb_istream_t* istream,
+    pb_ostream_t* ostream,
+    const pb_field_t* field
+) {
   if (ostream) {
     LOG_DBG("running in ENCODING mode\n");
-    str_t* str = (str_t *)field->pData;
+    str_t* str = (str_t*)field->pData;
     return pb_callback_encode_str(ostream, field, str);
-  } 
+  }
 
   if (istream) {
     LOG_DBG("running in DECODING mode\n");
@@ -82,7 +96,10 @@ bool pb_callback_codec_str(pb_istream_t *istream, pb_ostream_t *ostream, const p
   return false;
 }
 
-bool pb_callback_encode_sensor_list(pb_ostream_t *ostream, const pb_field_t* field) {
+bool pb_callback_encode_sensor_list(
+    pb_ostream_t* ostream,
+    const pb_field_t* field
+) {
   LOG_DBG("Encoding sensors\n");
 
   sys_snode_t* node;
@@ -118,7 +135,10 @@ bool pb_callback_encode_sensor_list(pb_ostream_t *ostream, const pb_field_t* fie
   return true;
 }
 
-bool pb_callback_encode_function_list(pb_ostream_t *ostream, const pb_field_t* field) {
+bool pb_callback_encode_function_list(
+    pb_ostream_t* ostream,
+    const pb_field_t* field
+) {
   LOG_DBG("Encoding functions\n");
 
   sys_snode_t* node;
@@ -150,8 +170,11 @@ bool pb_callback_encode_function_list(pb_ostream_t *ostream, const pb_field_t* f
   return true;
 }
 
-
-bool protocol_v1_Sensor_callback(pb_istream_t *istream, pb_ostream_t *ostream, const pb_field_t *field) {
+bool protocol_v1_Sensor_callback(
+    pb_istream_t* istream,
+    pb_ostream_t* ostream,
+    const pb_field_t* field
+) {
   LOG_DBG("Sensor msg callback called\n");
   if (field->tag != PROTOCOL_V1_SENSOR_NAME_TAG &&
       field->tag != PROTOCOL_V1_SENSOR_DESCRIPTION_TAG &&
@@ -163,7 +186,11 @@ bool protocol_v1_Sensor_callback(pb_istream_t *istream, pb_ostream_t *ostream, c
   return pb_callback_codec_str(istream, ostream, field);
 }
 
-bool protocol_v1_Function_callback(pb_istream_t *istream, pb_ostream_t *ostream, const pb_field_t *field) {
+bool protocol_v1_Function_callback(
+    pb_istream_t* istream,
+    pb_ostream_t* ostream,
+    const pb_field_t* field
+) {
   LOG_DBG("Function msg callback called\n");
   if (field->tag != PROTOCOL_V1_FUNCTION_NAME_TAG &&
       field->tag != PROTOCOL_V1_FUNCTION_DESCRIPTION_TAG) {
@@ -174,18 +201,21 @@ bool protocol_v1_Function_callback(pb_istream_t *istream, pb_ostream_t *ostream,
   return pb_callback_codec_str(istream, ostream, field);
 }
 
-
-bool protocol_v1_Capabilities_callback(pb_istream_t *istream, pb_ostream_t *ostream, const pb_field_t *field) {
+bool protocol_v1_Capabilities_callback(
+    pb_istream_t* istream,
+    pb_ostream_t* ostream,
+    const pb_field_t* field
+) {
   LOG_DBG("Capabilities msg callback called\n");
   if (field->tag == PROTOCOL_V1_CAPABILITIES_SENSORS_TAG) {
     if (ostream) {
       return pb_callback_encode_sensor_list(ostream, field);
     }
-    #ifdef CONFIG_LORIS_TEST
+#ifdef CONFIG_LORIS_TEST
     else if (istream) {
       return pb_callback_decode_sensor_to_list(istream, field);
     }
-    #endif
+#endif
     else {
       LOG_WRN("ostream is NULL (and istream if testing)");
       return false;
@@ -196,11 +226,11 @@ bool protocol_v1_Capabilities_callback(pb_istream_t *istream, pb_ostream_t *ostr
     if (ostream) {
       return pb_callback_encode_function_list(ostream, field);
     }
-    #ifdef CONFIG_LORIS_TEST
+#ifdef CONFIG_LORIS_TEST
     else if (istream) {
       return pb_callback_decode_function_to_list(istream, field);
     }
-    #endif
+#endif
     else {
       LOG_WRN("ostream is NULL (and istream if testing)");
       return false;
@@ -211,11 +241,18 @@ bool protocol_v1_Capabilities_callback(pb_istream_t *istream, pb_ostream_t *ostr
     return pb_callback_codec_str(istream, ostream, field);
   }
 
-  LOG_WRN("Unknown or invalid (field with no callback) field tag: %i\n", field->tag);
+  LOG_WRN(
+      "Unknown or invalid (field with no callback) field tag: %i\n",
+      field->tag
+  );
   return false;
 }
 
-bool protocol_v1_Report_callback(pb_istream_t *istream, pb_ostream_t *ostream, const pb_field_t *field) {
+bool protocol_v1_Report_callback(
+    pb_istream_t* istream,
+    pb_ostream_t* ostream,
+    const pb_field_t* field
+) {
   LOG_DBG("Report msg callback called\n");
   if (field->tag != PROTOCOL_V1_REPORT_STR_VAL_TAG) {
     LOG_WRN("Unknown or invalid (field with no callback) field tag\n");
@@ -225,7 +262,11 @@ bool protocol_v1_Report_callback(pb_istream_t *istream, pb_ostream_t *ostream, c
   return pb_callback_codec_str(istream, ostream, field);
 }
 
-bool protocol_v1_Call_callback(pb_istream_t* istream, pb_ostream_t* ostream, const pb_field_t *field) {
+bool protocol_v1_Call_callback(
+    pb_istream_t* istream,
+    pb_ostream_t* ostream,
+    const pb_field_t* field
+) {
   LOG_DBG("Call msg callback called\n");
   if (field->tag != PROTOCOL_V1_CALL_STR_VAL_TAG) {
     LOG_WRN("Unknown or invalid (field with no callback) field tag\n");
@@ -234,7 +275,6 @@ bool protocol_v1_Call_callback(pb_istream_t* istream, pb_ostream_t* ostream, con
 
   return pb_callback_codec_str(istream, ostream, field);
 }
-
 
 result_t encode_uplink(
     char* out_buf,
@@ -247,41 +287,50 @@ result_t encode_uplink(
   pb_ostream_t ostream = pb_ostream_from_buffer(out_buf, out_buf_size);
   protocol_v1_uplink_t pb_ul = PROTOCOL_V1_UPLINK_INIT_ZERO;
 
-  pb_ul.which_payload = ul->payload_type; 
+  pb_ul.which_payload = ul->payload_type;
   switch (ul->payload_type) {
-    case UPLINK_PAYLOAD_TYPE_REPORT:
-      pb_ul.payload.report.sensor_id = ul->payload.report.sensor_id;
-      pb_ul.payload.report.which_value = ul->payload.report.which_value;
-      switch (ul->payload.report.which_value) {
-        case REPORT_VALUE_INT:
-          pb_ul.payload.report.value.int_val = ul->payload.report.value.int_val;
-          break;
-        case REPORT_VALUE_FLOAT:
-          pb_ul.payload.report.value.float_val = ul->payload.report.value.float_val;
-          break;
-        case REPORT_VALUE_STRING:
-          str_borrow(&pb_ul.payload.report.value.str_val, &ul->payload.report.value.str_val);
-          break;
-        case REPORT_VALUE_BOOL:
-          pb_ul.payload.report.value.bool_val = ul->payload.report.value.bool_val;
-          break;
-        default:
-          LOG_WRN("Invalid report value type: '%i'\n", ul->payload.report.which_value);
-          return ERROR;
-      }
+  case UPLINK_PAYLOAD_TYPE_REPORT:
+    pb_ul.payload.report.sensor_id = ul->payload.report.sensor_id;
+    pb_ul.payload.report.which_value = ul->payload.report.which_value;
+    switch (ul->payload.report.which_value) {
+    case REPORT_VALUE_INT:
+      pb_ul.payload.report.value.int_val = ul->payload.report.value.int_val;
       break;
-    case UPLINK_PAYLOAD_TYPE_CAPABILITIES:
-      str_borrow(&pb_ul.payload.capabilities.device_name, &ul->payload.capabilities.device_name);
-
-      pb_ul.payload.capabilities.sensors = ul->payload.capabilities.sensors;
-      pb_ul.payload.capabilities.functions = ul->payload.capabilities.functions;
+    case REPORT_VALUE_FLOAT:
+      pb_ul.payload.report.value.float_val = ul->payload.report.value.float_val;
       break;
-    case UPLINK_PAYLOAD_TYPE_PING:
-      pb_ul.payload.ping.type = (int)ul->payload.ping.type;
+    case REPORT_VALUE_STRING:
+      str_borrow(
+          &pb_ul.payload.report.value.str_val,
+          &ul->payload.report.value.str_val
+      );
+      break;
+    case REPORT_VALUE_BOOL:
+      pb_ul.payload.report.value.bool_val = ul->payload.report.value.bool_val;
       break;
     default:
-      LOG_WRN("Invalid uplink payload type: '%i'\n", ul->payload_type);
+      LOG_WRN(
+          "Invalid report value type: '%i'\n",
+          ul->payload.report.which_value
+      );
       return ERROR;
+    }
+    break;
+  case UPLINK_PAYLOAD_TYPE_CAPABILITIES:
+    str_borrow(
+        &pb_ul.payload.capabilities.device_name,
+        &ul->payload.capabilities.device_name
+    );
+
+    pb_ul.payload.capabilities.sensors = ul->payload.capabilities.sensors;
+    pb_ul.payload.capabilities.functions = ul->payload.capabilities.functions;
+    break;
+  case UPLINK_PAYLOAD_TYPE_PING:
+    pb_ul.payload.ping.type = (int)ul->payload.ping.type;
+    break;
+  default:
+    LOG_WRN("Invalid uplink payload type: '%i'\n", ul->payload_type);
+    return ERROR;
   }
 
   if (!pb_encode(&ostream, &protocol_v1_uplink_t_msg, &pb_ul)) {
@@ -298,53 +347,60 @@ result_t encode_uplink(
   return OK;
 }
 
-result_t decode_downlink(downlink_t *out, const char* buf_in, size_t buf_size) {
+result_t decode_downlink(downlink_t* out, const char* buf_in, size_t buf_size) {
   pb_istream_t istream = pb_istream_from_buffer(buf_in, buf_size);
 
   protocol_v1_downlink_t pb_dl = PROTOCOL_V1_DOWNLINK_INIT_ZERO;
 
-  if(!pb_decode(&istream, &protocol_v1_downlink_t_msg, &pb_dl)) {
+  if (!pb_decode(&istream, &protocol_v1_downlink_t_msg, &pb_dl)) {
     return ERROR;
   };
 
   out->payload_type = pb_dl.which_payload;
   switch (out->payload_type) {
-    case DOWNLINK_PAYLOAD_TYPE_CALL:
-      out->payload.call.function_id = pb_dl.payload.call.function_id;
-      out->payload.call.which_value = pb_dl.payload.call.which_value;
-      switch (out->payload.call.which_value) {
-        case CALL_VALUE_INT:
-          out->payload.call.value.int_val = pb_dl.payload.call.value.int_val;
-          break;
-        case CALL_VALUE_FLOAT:
-          out->payload.call.value.float_val = pb_dl.payload.call.value.float_val;
-          break;
-        case CALL_VALUE_STRING:
-          str_move(&out->payload.call.value.str_val, &pb_dl.payload.call.value.str_val);
-          break;
-        case CALL_VALUE_BOOL:
-          out->payload.call.value.bool_val = pb_dl.payload.call.value.bool_val;
-          break;
-        default:
-          LOG_WRN("Unknown or invalid call value type\n");
-          return ERROR;
-      }
-      out->payload.call.has_wake_after_secs = pb_dl.payload.call.has_wake_after_secs;
-      out->payload.call.wake_after_secs = pb_dl.payload.call.wake_after_secs;
+  case DOWNLINK_PAYLOAD_TYPE_CALL:
+    out->payload.call.function_id = pb_dl.payload.call.function_id;
+    out->payload.call.which_value = pb_dl.payload.call.which_value;
+    switch (out->payload.call.which_value) {
+    case CALL_VALUE_INT:
+      out->payload.call.value.int_val = pb_dl.payload.call.value.int_val;
       break;
-    case DOWNLINK_PAYLOAD_TYPE_PING:
-      out->payload.ping.type = (int)pb_dl.payload.ping.type;
+    case CALL_VALUE_FLOAT:
+      out->payload.call.value.float_val = pb_dl.payload.call.value.float_val;
+      break;
+    case CALL_VALUE_STRING:
+      str_move(
+          &out->payload.call.value.str_val,
+          &pb_dl.payload.call.value.str_val
+      );
+      break;
+    case CALL_VALUE_BOOL:
+      out->payload.call.value.bool_val = pb_dl.payload.call.value.bool_val;
       break;
     default:
-      LOG_WRN("Unknown or invalid downlink payload type\n");
+      LOG_WRN("Unknown or invalid call value type\n");
       return ERROR;
+    }
+    out->payload.call.has_wake_after_secs =
+        pb_dl.payload.call.has_wake_after_secs;
+    out->payload.call.wake_after_secs = pb_dl.payload.call.wake_after_secs;
+    break;
+  case DOWNLINK_PAYLOAD_TYPE_PING:
+    out->payload.ping.type = (int)pb_dl.payload.ping.type;
+    break;
+  default:
+    LOG_WRN("Unknown or invalid downlink payload type\n");
+    return ERROR;
   }
 
   return OK;
 }
 
 #ifdef CONFIG_LORIS_TEST
-bool pb_callback_decode_sensor_to_list(pb_istream_t *istream, const pb_field_t* field) {
+bool pb_callback_decode_sensor_to_list(
+    pb_istream_t* istream,
+    const pb_field_t* field
+) {
   LOG_DBG("Decoding sensor to list\n");
 
   sys_slist_t* list = (sys_slist_t*)field->pData;
@@ -357,7 +413,11 @@ bool pb_callback_decode_sensor_to_list(pb_istream_t *istream, const pb_field_t* 
     return false;
   }
 
-  LOG_DBG("Decoded sensor; id=%i, name='%s'\n", read_sensor.id, read_sensor.name.ptr);
+  LOG_DBG(
+      "Decoded sensor; id=%i, name='%s'\n",
+      read_sensor.id,
+      read_sensor.name.ptr
+  );
 
   sensor_t* s = k_calloc(1, sizeof(sensor_t));
   s->id = read_sensor.id;
@@ -377,7 +437,10 @@ bool pb_callback_decode_sensor_to_list(pb_istream_t *istream, const pb_field_t* 
   return true;
 }
 
-bool pb_callback_decode_function_to_list(pb_istream_t *istream, const pb_field_t* field) {
+bool pb_callback_decode_function_to_list(
+    pb_istream_t* istream,
+    const pb_field_t* field
+) {
   LOG_DBG("Decoding function to list\n");
 
   sys_slist_t* list = (sys_slist_t*)field->pData;
@@ -402,10 +465,10 @@ bool pb_callback_decode_function_to_list(pb_istream_t *istream, const pb_field_t
 }
 
 result_t encode_downlink(
-    char *out_buf,
+    char* out_buf,
     size_t out_buf_size,
-    const downlink_t *dl,
-    size_t *bytes_written
+    const downlink_t* dl,
+    size_t* bytes_written
 ) {
   LOG_DBG("Encoding downlink\n");
   pb_ostream_t ostream = pb_ostream_from_buffer(out_buf, out_buf_size);
@@ -416,23 +479,27 @@ result_t encode_downlink(
     pb_dl.payload.call.function_id = dl->payload.call.function_id;
     pb_dl.payload.call.which_value = dl->payload.call.which_value;
     switch (dl->payload.call.which_value) {
-      case CALL_VALUE_INT:
-        pb_dl.payload.call.value.int_val = dl->payload.call.value.int_val;
-        break;
-      case CALL_VALUE_FLOAT:
-        pb_dl.payload.call.value.float_val = dl->payload.call.value.float_val;
-        break;
-      case CALL_VALUE_STRING:
-        str_borrow(&pb_dl.payload.call.value.str_val, &dl->payload.call.value.str_val);
-        break;
-      case CALL_VALUE_BOOL:
-        pb_dl.payload.call.value.bool_val = dl->payload.call.value.bool_val;
-        break;
-      default:
-        LOG_WRN("Unknown or invalid call value type\n");
-        return ERROR;
+    case CALL_VALUE_INT:
+      pb_dl.payload.call.value.int_val = dl->payload.call.value.int_val;
+      break;
+    case CALL_VALUE_FLOAT:
+      pb_dl.payload.call.value.float_val = dl->payload.call.value.float_val;
+      break;
+    case CALL_VALUE_STRING:
+      str_borrow(
+          &pb_dl.payload.call.value.str_val,
+          &dl->payload.call.value.str_val
+      );
+      break;
+    case CALL_VALUE_BOOL:
+      pb_dl.payload.call.value.bool_val = dl->payload.call.value.bool_val;
+      break;
+    default:
+      LOG_WRN("Unknown or invalid call value type\n");
+      return ERROR;
     }
-    pb_dl.payload.call.has_wake_after_secs = dl->payload.call.has_wake_after_secs;
+    pb_dl.payload.call.has_wake_after_secs =
+        dl->payload.call.has_wake_after_secs;
     pb_dl.payload.call.wake_after_secs = dl->payload.call.wake_after_secs;
   } else if (dl->payload_type == DOWNLINK_PAYLOAD_TYPE_PING) {
     pb_dl.payload.ping.type = (int)dl->payload.ping.type;
@@ -455,7 +522,7 @@ result_t encode_downlink(
   return OK;
 }
 
-result_t decode_uplink(uplink_t *out, const char* buf_in, size_t buf_size) {
+result_t decode_uplink(uplink_t* out, const char* buf_in, size_t buf_size) {
   LOG_DBG("Decoding uplink\n");
   pb_istream_t istream = pb_istream_from_buffer(buf_in, buf_size);
 
@@ -467,41 +534,48 @@ result_t decode_uplink(uplink_t *out, const char* buf_in, size_t buf_size) {
 
   out->payload_type = pb_ul.which_payload;
   switch (out->payload_type) {
-    case UPLINK_PAYLOAD_TYPE_REPORT:
-      out->payload.report.sensor_id = pb_ul.payload.report.sensor_id;
-      out->payload.report.which_value = pb_ul.payload.report.which_value;
-      switch (out->payload.report.which_value) {
-        case REPORT_VALUE_INT:
-          out->payload.report.value.int_val = pb_ul.payload.report.value.int_val;
-          break;
-        case REPORT_VALUE_FLOAT:
-          out->payload.report.value.float_val = pb_ul.payload.report.value.float_val;
-          break;
-        case REPORT_VALUE_STRING:
-          str_move(&out->payload.report.value.str_val, &pb_ul.payload.report.value.str_val);
-          break;
-        case REPORT_VALUE_BOOL:
-          out->payload.report.value.bool_val = pb_ul.payload.report.value.bool_val;
-          break;
-        default:
-          LOG_WRN("Unknown or invalid report value type\n");
-          return ERROR;
-      }
+  case UPLINK_PAYLOAD_TYPE_REPORT:
+    out->payload.report.sensor_id = pb_ul.payload.report.sensor_id;
+    out->payload.report.which_value = pb_ul.payload.report.which_value;
+    switch (out->payload.report.which_value) {
+    case REPORT_VALUE_INT:
+      out->payload.report.value.int_val = pb_ul.payload.report.value.int_val;
       break;
-    case UPLINK_PAYLOAD_TYPE_CAPABILITIES:
-      str_move(&out->payload.capabilities.device_name, &pb_ul.payload.capabilities.device_name);
-      out->payload.capabilities.sensors = pb_ul.payload.capabilities.sensors;
-      out->payload.capabilities.functions = pb_ul.payload.capabilities.functions;
-
-      // initialize it for testing purposes
-      out->payload.capabilities.device_class = DEVICE_CLASS_A; 
+    case REPORT_VALUE_FLOAT:
+      out->payload.report.value.float_val =
+          pb_ul.payload.report.value.float_val;
       break;
-    case UPLINK_PAYLOAD_TYPE_PING:
-      out->payload.ping.type = (up_ping_type_t)pb_ul.payload.ping.type;
+    case REPORT_VALUE_STRING:
+      str_move(
+          &out->payload.report.value.str_val,
+          &pb_ul.payload.report.value.str_val
+      );
+      break;
+    case REPORT_VALUE_BOOL:
+      out->payload.report.value.bool_val = pb_ul.payload.report.value.bool_val;
       break;
     default:
-      LOG_WRN("Unknown or invalid uplink payload type\n");
+      LOG_WRN("Unknown or invalid report value type\n");
       return ERROR;
+    }
+    break;
+  case UPLINK_PAYLOAD_TYPE_CAPABILITIES:
+    str_move(
+        &out->payload.capabilities.device_name,
+        &pb_ul.payload.capabilities.device_name
+    );
+    out->payload.capabilities.sensors = pb_ul.payload.capabilities.sensors;
+    out->payload.capabilities.functions = pb_ul.payload.capabilities.functions;
+
+    // initialize it for testing purposes
+    out->payload.capabilities.device_class = DEVICE_CLASS_A;
+    break;
+  case UPLINK_PAYLOAD_TYPE_PING:
+    out->payload.ping.type = (up_ping_type_t)pb_ul.payload.ping.type;
+    break;
+  default:
+    LOG_WRN("Unknown or invalid uplink payload type\n");
+    return ERROR;
   }
 
   LOG_DBG("Correctly decoded\n");
@@ -510,33 +584,33 @@ result_t decode_uplink(uplink_t *out, const char* buf_in, size_t buf_size) {
 
 void uplink_free(uplink_t* ul) {
   switch (ul->payload_type) {
-    case UPLINK_PAYLOAD_TYPE_REPORT:
-      if (ul->payload.report.which_value == REPORT_VALUE_STRING) {
-        str_free(&ul->payload.report.value.str_val);
-      }
-      break;
-    case UPLINK_PAYLOAD_TYPE_CAPABILITIES: {
-      capabilities_t* c = &ul->payload.capabilities;
-      str_free(&c->device_name);
-
-      sys_snode_t* n;
-      while ((n = sys_slist_get(&c->sensors)) != NULL) {
-        sensor_t* s = CONTAINER_OF(n, sensor_t, node);
-        str_free(&s->name);
-        str_free(&s->description);
-        str_free(&s->unit);
-        k_free(s);
-      }
-      while ((n = sys_slist_get(&c->functions)) != NULL) {
-        function_t* f = CONTAINER_OF(n, function_t, node);
-        str_free(&f->name);
-        str_free(&f->description);
-        k_free(f);
-      }
-      break;
+  case UPLINK_PAYLOAD_TYPE_REPORT:
+    if (ul->payload.report.which_value == REPORT_VALUE_STRING) {
+      str_free(&ul->payload.report.value.str_val);
     }
-    default:
-      break;
+    break;
+  case UPLINK_PAYLOAD_TYPE_CAPABILITIES: {
+    capabilities_t* c = &ul->payload.capabilities;
+    str_free(&c->device_name);
+
+    sys_snode_t* n;
+    while ((n = sys_slist_get(&c->sensors)) != NULL) {
+      sensor_t* s = CONTAINER_OF(n, sensor_t, node);
+      str_free(&s->name);
+      str_free(&s->description);
+      str_free(&s->unit);
+      k_free(s);
+    }
+    while ((n = sys_slist_get(&c->functions)) != NULL) {
+      function_t* f = CONTAINER_OF(n, function_t, node);
+      str_free(&f->name);
+      str_free(&f->description);
+      k_free(f);
+    }
+    break;
+  }
+  default:
+    break;
   }
 }
 #endif

@@ -53,8 +53,13 @@ static int compare(const void* a, const void* b) {
   return st_a->timestamp - st_b->timestamp;
 }
 
-MIN_HEAP_DEFINE_STATIC(sensors_heap, HEAP_CAPACITY, sizeof(sensor_time_t),
-                       __alignof__(sensor_time_t), compare);
+MIN_HEAP_DEFINE_STATIC(
+    sensors_heap,
+    HEAP_CAPACITY,
+    sizeof(sensor_time_t),
+    __alignof__(sensor_time_t),
+    compare
+);
 
 extern void uplink_thread(void* capabilities, void* unused1, void* unused2) {
   /* 1. Check if the device is connected
@@ -71,7 +76,7 @@ extern void uplink_thread(void* capabilities, void* unused1, void* unused2) {
   sensor_t* sensor;
 
   SYS_SLIST_FOR_EACH_CONTAINER(&capabilities_ptr->sensors, sensor, node) {
-    sensor_time_t st = {sensor, 0};
+    sensor_time_t st = { sensor, 0 };
     min_heap_push(&sensors_heap, &st);
   }
 
@@ -87,41 +92,56 @@ extern void uplink_thread(void* capabilities, void* unused1, void* unused2) {
       report_t report = st.sensor->read_func(st.sensor);
       switch (report.which_value) {
       case REPORT_VALUE_INT:
-        LOG_INF("Report from sensor %d, reads: %d", st.sensor->id,
-                report.value.int_val);
+        LOG_INF(
+            "Report from sensor %d, reads: %d",
+            st.sensor->id,
+            report.value.int_val
+        );
         break;
       case REPORT_VALUE_BOOL:
-        LOG_INF("Report from sensor %d, reads: %d", st.sensor->id,
-                report.value.bool_val);
+        LOG_INF(
+            "Report from sensor %d, reads: %d",
+            st.sensor->id,
+            report.value.bool_val
+        );
         break;
       case REPORT_VALUE_FLOAT:
-        LOG_INF("Report from sensor %d, reads: %f", st.sensor->id,
-                (double)report.value.float_val);
+        LOG_INF(
+            "Report from sensor %d, reads: %f",
+            st.sensor->id,
+            (double)report.value.float_val
+        );
         break;
       case REPORT_VALUE_STRING:
-        LOG_INF("Report from sensor %d, reads: %s", st.sensor->id,
-                report.value.str_val.ptr);
+        LOG_INF(
+            "Report from sensor %d, reads: %s",
+            st.sensor->id,
+            report.value.str_val.ptr
+        );
         break;
       default:
         LOG_INF("Report from sensor %d, unspecified value", st.sensor->id);
         break;
       }
 
-      uplink_t report_uplink = {.payload.report = report,
-                                .payload_type = UPLINK_PAYLOAD_TYPE_REPORT};
+      uplink_t report_uplink = { .payload.report = report,
+                                 .payload_type = UPLINK_PAYLOAD_TYPE_REPORT };
 
       k_msgq_put(&uplink_q, &report_uplink, K_NO_WAIT);
 
       LOG_DBG("Going to sleep at: %d\n", (int)k_uptime_get());
-      k_msleep(((sensor_time_t*)min_heap_peek(&sensors_heap))->timestamp -
-               k_uptime_get());
+      k_msleep(
+          ((sensor_time_t*)min_heap_peek(&sensors_heap))->timestamp -
+          k_uptime_get()
+      );
     } else {
-      uplink_t capabilities_uplink = {.payload.capabilities = *capabilities_ptr,
-                                      .payload_type =
-                                          UPLINK_PAYLOAD_TYPE_CAPABILITIES};
+      uplink_t capabilities_uplink = { .payload.capabilities =
+                                           *capabilities_ptr,
+                                       .payload_type =
+                                           UPLINK_PAYLOAD_TYPE_CAPABILITIES };
 
       k_msgq_put(&uplink_q, &capabilities_uplink, K_NO_WAIT);
-      k_timeout_t timeout = {.ticks = CONFIG_LORIS_RECONNECT_INTERVAL};
+      k_timeout_t timeout = { .ticks = CONFIG_LORIS_RECONNECT_INTERVAL };
       k_sleep(timeout);
     }
   }
@@ -216,10 +236,14 @@ extern void downlink_communication_thread() {
 
 K_THREAD_STACK_DEFINE(uplink_stack_area, UPLINK_THREAD_SIZE);
 K_THREAD_STACK_DEFINE(downlink_stack_area, DOWNLINK_THREAD_SIZE);
-K_THREAD_STACK_DEFINE(uplink_communication_stack_area,
-                      UPLINK_COMMUNICATION_THREAD_SIZE);
-K_THREAD_STACK_DEFINE(downlink_communication_stack_area,
-                      DOWNLINK_COMMUNICATION_THREAD_SIZE);
+K_THREAD_STACK_DEFINE(
+    uplink_communication_stack_area,
+    UPLINK_COMMUNICATION_THREAD_SIZE
+);
+K_THREAD_STACK_DEFINE(
+    downlink_communication_stack_area,
+    DOWNLINK_COMMUNICATION_THREAD_SIZE
+);
 
 result_t loris_main_loop(capabilities_t* capabilities) {
   char downlink_q_buf[1024];
@@ -231,23 +255,55 @@ result_t loris_main_loop(capabilities_t* capabilities) {
   struct k_thread uplink_communication_tdata;
   struct k_thread downlink_communication_tdata;
 
-  k_tid_t uplink_tid =
-      k_thread_create(&uplink_tdata, uplink_stack_area,
-                      K_THREAD_STACK_SIZEOF(uplink_stack_area), uplink_thread,
-                      &capabilities, NULL, NULL, 3, 0, K_FOREVER);
+  k_tid_t uplink_tid = k_thread_create(
+      &uplink_tdata,
+      uplink_stack_area,
+      K_THREAD_STACK_SIZEOF(uplink_stack_area),
+      uplink_thread,
+      &capabilities,
+      NULL,
+      NULL,
+      3,
+      0,
+      K_FOREVER
+  );
   k_tid_t downlink_tid = k_thread_create(
-      &downlink_tdata, downlink_stack_area,
-      K_THREAD_STACK_SIZEOF(downlink_stack_area), downlink_thread,
-      &capabilities, NULL, NULL, 2, 0, K_FOREVER);
+      &downlink_tdata,
+      downlink_stack_area,
+      K_THREAD_STACK_SIZEOF(downlink_stack_area),
+      downlink_thread,
+      &capabilities,
+      NULL,
+      NULL,
+      2,
+      0,
+      K_FOREVER
+  );
   k_tid_t uplink_communication_tid = k_thread_create(
-      &uplink_communication_tdata, uplink_communication_stack_area,
+      &uplink_communication_tdata,
+      uplink_communication_stack_area,
       K_THREAD_STACK_SIZEOF(uplink_communication_stack_area),
-      uplink_communication_thread, NULL, NULL, NULL, 3, 0, K_FOREVER);
+      uplink_communication_thread,
+      NULL,
+      NULL,
+      NULL,
+      3,
+      0,
+      K_FOREVER
+  );
 
   k_tid_t downlink_communication_tid = k_thread_create(
-      &downlink_communication_tdata, downlink_communication_stack_area,
+      &downlink_communication_tdata,
+      downlink_communication_stack_area,
       K_THREAD_STACK_SIZEOF(downlink_communication_stack_area),
-      downlink_communication_thread, NULL, NULL, NULL, 2, 0, K_FOREVER);
+      downlink_communication_thread,
+      NULL,
+      NULL,
+      NULL,
+      2,
+      0,
+      K_FOREVER
+  );
 
   k_msgq_init(&downlink_q, downlink_q_buf, sizeof(downlink_t), 10);
   k_msgq_init(&uplink_q, uplink_q_buf, sizeof(uplink_t), 10);

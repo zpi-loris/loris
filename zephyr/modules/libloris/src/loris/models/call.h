@@ -5,8 +5,8 @@
 #include <stdbool.h>
 #include <zephyr/sys/slist.h>
 
-#include "loris/str.h"
 #include "loris/protobuf/protocol.pb.h"
+#include "loris/str.h"
 
 // clang-format off
 typedef enum call_value_type {

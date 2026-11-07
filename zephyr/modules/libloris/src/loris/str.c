@@ -1,6 +1,6 @@
-#include <zephyr/kernel.h>
-#include <string.h>
 #include <stdio.h>
+#include <string.h>
+#include <zephyr/kernel.h>
 
 #include "loris/result.h"
 #include "loris/str.h"
@@ -13,9 +13,9 @@ void str_free(str_t* str) {
   }
 
   if (str->src_type == STR_SRC_DYNAMIC) {
-    k_free((void *)str->ptr);
+    k_free((void*)str->ptr);
   } else if (str->src_type == STR_SRC_SLAB) {
-    k_mem_slab_free(&str_slab, (void *)(str->ptr));
+    k_mem_slab_free(&str_slab, (void*)(str->ptr));
   }
 
   *str = LORIS_STR_NONE;
@@ -28,31 +28,28 @@ result_t str_from_static(str_t* out, const char* cstr) {
 
   str_free(out);
 
-  *out = (str_t){ 
-    .ptr = (char*)cstr,
-    .len = strlen(cstr),
-    .src_type = STR_SRC_STATIC
+  *out = (str_t){
+      .ptr = (char*)cstr,
+      .len = strlen(cstr),
+      .src_type = STR_SRC_STATIC
   };
   return OK;
 }
 
-result_t str_borrow_cstr(str_t *out, const char *cstr) {
+result_t str_borrow_cstr(str_t* out, const char* cstr) {
   if (out == NULL || cstr == NULL) {
     return ERROR;
   }
 
   str_free(out);
 
-  *out = (str_t){
-    .ptr = cstr,
-    .len = strlen(cstr),
-    .src_type = STR_SRC_BORROWED
-  };
+  *out =
+      (str_t){.ptr = cstr, .len = strlen(cstr), .src_type = STR_SRC_BORROWED};
 
   return OK;
 }
 
-result_t str_borrow(str_t *out, const str_t *src) {
+result_t str_borrow(str_t* out, const str_t* src) {
   if (out == NULL || src == NULL) {
     return ERROR;
   }
@@ -92,7 +89,7 @@ result_t str_alloc_slab(str_t* out, const char* cstr) {
   return OK;
 }
 
-result_t str_alloc_dynamic(str_t* out, const char *cstr) {
+result_t str_alloc_dynamic(str_t* out, const char* cstr) {
   if (out == NULL || cstr == NULL) {
     return ERROR;
   }
@@ -115,7 +112,7 @@ result_t str_alloc_dynamic(str_t* out, const char *cstr) {
   return OK;
 }
 
-result_t str_alloc_smart(str_t *out, const char *cstr) {
+result_t str_alloc_smart(str_t* out, const char* cstr) {
   if (out == NULL || cstr == NULL) {
     return ERROR;
   }
@@ -127,7 +124,7 @@ result_t str_alloc_smart(str_t *out, const char *cstr) {
 
   // NOTE: kinda tricky getting rid of the const qualifier
   // Might be good to rethink that
-  memcpy((char*)out->ptr, cstr, len); 
+  memcpy((char*)out->ptr, cstr, len);
   ((char*)out->ptr)[len] = '\0';
 
   return OK;
@@ -140,7 +137,8 @@ result_t str_alloc_smart_len(str_t* out, size_t len) {
 
   char* buf;
   str_src_type_t src_type;
-  if (len < STR_SLAB_BLOCK_SIZE && k_mem_slab_alloc(&str_slab, (void**)&buf, K_NO_WAIT) == 0) {
+  if (len < STR_SLAB_BLOCK_SIZE &&
+      k_mem_slab_alloc(&str_slab, (void**)&buf, K_NO_WAIT) == 0) {
     src_type = STR_SRC_SLAB;
   } else {
     buf = k_malloc(len + 1);
@@ -178,6 +176,4 @@ result_t str_move(str_t* dst, str_t* src) {
   return OK;
 }
 
-size_t str_slab_num_free(void) {
-  return k_mem_slab_num_free_get(&str_slab);
-}
+size_t str_slab_num_free(void) { return k_mem_slab_num_free_get(&str_slab); }
