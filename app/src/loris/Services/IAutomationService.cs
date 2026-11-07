@@ -9,12 +9,11 @@ public interface IAutomationService
         IReadOnlyList<AutomationDto> rules,
         CancellationToken cancellationToken = default
     );
-    public IReadOnlyList<Automation> CompileAutomations(
+    public Task<IReadOnlyList<AutomationError>> ApplyAsync(
         IReadOnlyList<AutomationDto> rules,
         CancellationToken cancellationToken = default
     );
-    public void ApplyAutomations(IReadOnlyList<Automation> automations);
-    public Task SaveAutomationRulesToDiskAsync(
+    public Task SaveToDiskAsync(
         IReadOnlyList<AutomationDto> rules,
         CancellationToken cancellationToken = default
     );

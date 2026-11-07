@@ -16,24 +16,61 @@ public sealed class AutomationService(ILogger<AutomationService> logger, IServic
     private readonly IServiceProvider _provider = provider;
     private readonly ILogger<AutomationService> _logger = logger;
 
-    public void ApplyAutomations(IReadOnlyList<Automation> automations)
-    {
-        throw new NotImplementedException();
-    }
-
     public async Task<IReadOnlyList<AutomationError>> ValidateAsync(
         IReadOnlyList<AutomationDto> rules,
         CancellationToken cancellationToken = default
     )
     {
-        var errors = new List<AutomationError>();
-
         var validationResults = await ValidateRulesAsync(rules, cancellationToken);
 
         return rules
             .Zip(validationResults)
             .SelectMany(pair => ExtractRuleErrors(pair.First, pair.Second))
             .ToList();
+    }
+
+    public async Task<IReadOnlyList<AutomationError>> ApplyAsync(
+        IReadOnlyList<AutomationDto> rules,
+        CancellationToken cancellationToken = default
+    )
+    {
+        var validationResults = await ValidateRulesAsync(rules, cancellationToken);
+        var errors = rules
+            .Zip(validationResults)
+            .SelectMany(pair => ExtractRuleErrors(pair.First, pair.Second))
+            .ToList();
+
+        if (errors.Count > 0)
+            return errors;
+
+        List<Automation> automations = [];
+        foreach (var (rule, validation) in rules.Zip(validationResults))
+        {
+            var triggers = rule
+                .Triggers.Zip(validation.Triggers)
+                .Select(pair => CompileTrigger(pair.First, pair.Second.Lookup));
+            var conditions = rule
+                .Conditions.Zip(validation.Conditions)
+                .Select(pair => CompileCondition(pair.First, pair.Second.Lookup))
+                .ToList();
+            var actions = rule
+                .Actions.Zip(validation.Actions)
+                .Select(pair => CompileAction(pair.First, pair.Second.Lookup))
+                .ToList();
+
+            automations.AddRange(
+                triggers.Select(trigger => new Automation(
+                    rule.Id,
+                    rule.Name,
+                    trigger.Event,
+                    trigger.Filter,
+                    conditions,
+                    actions
+                ))
+            );
+        }
+
+        return [];
     }
 
     private async Task<IEnumerable<AutomationValidationResult>> ValidateRulesAsync(
@@ -108,49 +145,7 @@ public sealed class AutomationService(ILogger<AutomationService> logger, IServic
         }
     }
 
-    public IReadOnlyList<Automation> CompileAutomations(
-        IReadOnlyList<AutomationDto> rules,
-        CancellationToken cancellationToken = default
-    )
-    {
-        var triggersTask = ProcessRulesAsync(
-            rules,
-            r => r.Triggers,
-            CompileTrigger,
-            cancellationToken
-        );
-        var conditionsTask = ProcessRulesAsync(
-            rules,
-            r => r.Conditions,
-            CompileCondition,
-            cancellationToken
-        );
-        var actionsTask = ProcessRulesAsync(
-            rules,
-            r => r.Actions,
-            CompileAction,
-            cancellationToken
-        );
-
-        var result = Task.WhenAll(triggersTask, conditionsTask, actionsTask);
-        try { }
-        catch
-        {
-            foreach (var exception in result.Exception!.InnerExceptions)
-            {
-                Console.WriteLine($"operation failed, {exception}");
-            }
-        }
-
-        // TODO: continue onward, gather errors, return them
-        // var triggers = await triggersTask;
-        // var conditions = await conditionsTask;
-        // var actions = await actionsTask;
-
-        throw new NotImplementedException("End of implementation");
-    }
-
-    public Task SaveAutomationRulesToDiskAsync(
+    public Task SaveToDiskAsync(
         IReadOnlyList<AutomationDto> rules,
         CancellationToken cancellationToken = default
     )
@@ -158,31 +153,34 @@ public sealed class AutomationService(ILogger<AutomationService> logger, IServic
         throw new NotImplementedException();
     }
 
-    private async Task<(IEvent Event, Func<IEventMessage, bool> Filter)> CompileTrigger(
+    // ========================================================================
+    // COMPILING SERVICE HELPERS
+    // ========================================================================
+
+    private (IEvent Event, Func<IEventMessage, bool> Filter) CompileTrigger(
         ITriggerDto dto,
-        CancellationToken cancellationToken
+        LookupContext? lookup
     )
     {
         var service = _provider.GetKeyedService<ITriggerCompiler>(dto.ServiceKey);
-        return await Compile(dto, service!, cancellationToken);
+        return service!.Compile(dto, lookup);
     }
 
-    private async Task<Func<StateCache, bool>> CompileCondition(
-        IConditionDto dto,
-        CancellationToken cancellationToken
-    )
+    private Func<StateCache, bool> CompileCondition(IConditionDto dto, LookupContext? lookup)
     {
         var service = _provider.GetKeyedService<IConditionCompiler>(dto.ServiceKey);
-        return await Compile(dto, service!, cancellationToken);
+        return service!.Compile(dto, lookup);
     }
 
-    private async Task<Action> CompileAction(IActionDto dto, CancellationToken cancellationToken)
+    private Action CompileAction(IActionDto dto, LookupContext? lookup)
     {
         var service = _provider.GetKeyedService<IActionCompiler>(dto.ServiceKey);
-        return await Compile(dto, service!, cancellationToken);
+        return service!.Compile(dto, lookup);
     }
 
-    // TODO: ===========================
+    // ========================================================================
+    // VALIDATION SERVICE HELPERS
+    // ========================================================================
 
     private async Task<ValidationResult> ValidateTrigger(
         ITriggerDto dto,
@@ -209,25 +207,6 @@ public sealed class AutomationService(ILogger<AutomationService> logger, IServic
     {
         var service = _provider.GetKeyedService<IActionCompiler>(dto.ServiceKey);
         return await service!.ValidateAsync(dto, cancellationToken);
-    }
-
-    // TODO: ===========================
-
-    private static async Task<TResult> Compile<TDto, TResult>(
-        TDto dto,
-        IAutomationBlockCompiler<TDto, TResult> service,
-        CancellationToken cancellationToken
-    )
-    {
-        throw new NotImplementedException();
-        // if (await service.TryValidateAsync(dto, out var lookup, cancellationToken))
-        // {
-        //     return service.Compile(dto, lookup);
-        // }
-        // else
-        // {
-        //     throw new ArgumentException("Nie udało się, lipa");
-        // }
     }
 
     private static async Task<List<List<TResult>>> ProcessRulesAsync<TItem, TResult>(
