@@ -1,0 +1,16 @@
+[package]
+name = "zpi_docs"
+version = "0.1.1"
+entrypoint = "template.typ"
+authors = ["Jan Kubów"]
+license = "MIT"
+description = "ZPI template"
+repository = "https://github.com/zpi-loris/loris"
+categories = ["paper"]
+disciplines = ["engineering", "computer-science"]
+exclude = []
+
+[template]
+path = "template"
+entrypoint = "main.typ"
+thumbnail = "example.png"
