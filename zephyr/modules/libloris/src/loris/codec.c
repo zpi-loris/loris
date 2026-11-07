@@ -58,7 +58,7 @@ bool pb_callback_decode_str(pb_istream_t* istream, const pb_field_t* field) {
   }
 
   size_t len = istream->bytes_left;
-  str_t s = {0};
+  str_t s = { 0 };
   if (str_alloc_smart_len(&s, len) != OK) {
     LOG_WRN("str_alloc_smart_len failed\n");
     return false;
@@ -283,6 +283,10 @@ result_t encode_uplink(
     size_t* bytes_written
 ) {
   LOG_DBG("Encoding uplink\n");
+  if (ul == NULL) {
+    LOG_WRN("uplink* src is NULL");
+    return ERROR;
+  }
 
   pb_ostream_t ostream = pb_ostream_from_buffer(out_buf, out_buf_size);
   protocol_v1_uplink_t pb_ul = PROTOCOL_V1_UPLINK_INIT_ZERO;
@@ -348,6 +352,12 @@ result_t encode_uplink(
 }
 
 result_t decode_downlink(downlink_t* out, const char* buf_in, size_t buf_size) {
+  LOG_DBG("Decoding downlink");
+  if (out == NULL) {
+    LOG_WRN("downlink* out is NULL");
+    return ERROR;
+  }
+
   pb_istream_t istream = pb_istream_from_buffer(buf_in, buf_size);
 
   protocol_v1_downlink_t pb_dl = PROTOCOL_V1_DOWNLINK_INIT_ZERO;
@@ -471,6 +481,11 @@ result_t encode_downlink(
     size_t* bytes_written
 ) {
   LOG_DBG("Encoding downlink\n");
+  if (dl == NULL) {
+    LOG_WRN("downlink* src is NULL");
+    return ERROR;
+  }
+
   pb_ostream_t ostream = pb_ostream_from_buffer(out_buf, out_buf_size);
 
   protocol_v1_downlink_t pb_dl = PROTOCOL_V1_DOWNLINK_INIT_ZERO;
@@ -524,6 +539,11 @@ result_t encode_downlink(
 
 result_t decode_uplink(uplink_t* out, const char* buf_in, size_t buf_size) {
   LOG_DBG("Decoding uplink\n");
+  if (out == NULL) {
+    LOG_WRN("uplink* out is NULL");
+    return ERROR;
+  }
+
   pb_istream_t istream = pb_istream_from_buffer(buf_in, buf_size);
 
   protocol_v1_uplink_t pb_ul = PROTOCOL_V1_UPLINK_INIT_ZERO;
@@ -583,6 +603,10 @@ result_t decode_uplink(uplink_t* out, const char* buf_in, size_t buf_size) {
 }
 
 void uplink_free(uplink_t* ul) {
+  if (ul == NULL) {
+    return;
+  }
+
   switch (ul->payload_type) {
   case UPLINK_PAYLOAD_TYPE_REPORT:
     if (ul->payload.report.which_value == REPORT_VALUE_STRING) {
