@@ -4,7 +4,7 @@ using Loris.Automations.Triggers;
 
 namespace Loris.Automations.Models;
 
-public record AutomationRuleDto(
+public record AutomationDto(
     Guid Id,
     string Name,
     IReadOnlyList<ITriggerDto> Triggers,

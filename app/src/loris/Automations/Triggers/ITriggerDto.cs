@@ -10,8 +10,4 @@ namespace Loris.Automations.Triggers;
     typeof(TestInvalidTriggerDto),
     typeDiscriminator: TestInvalidTriggerDto.Discriminator
 )]
-public interface ITriggerDto
-{
-    [JsonIgnore]
-    public string ServiceKey { get; }
-}
+public interface ITriggerDto : IAutomationBlock { }

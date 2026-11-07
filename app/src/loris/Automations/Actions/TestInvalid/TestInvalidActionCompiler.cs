@@ -11,5 +11,5 @@ public class TestInvalidActionCompiler : ActionCompilerBase<TestInvalidActionDto
     protected override async Task<ValidationResult> ValidateAsync(
         TestInvalidActionDto dto,
         CancellationToken cancellationToken
-    ) => ValidationResult.Failure([new BlockError(dto.Name, "invalid")]);
+    ) => ValidationResult.Failure([new BlockError(nameof(dto.Name), dto.Name, "invalid")]);
 }

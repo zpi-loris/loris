@@ -16,6 +16,6 @@ public class TestInvalidConditionCompiler : ConditionCompilerBase<TestInvalidCon
         CancellationToken cancellationToken
     )
     {
-        return ValidationResult.Failure([new(dto.Name, "invalid")]);
+        return ValidationResult.Failure([new(nameof(dto.Name), dto.Name, "invalid")]);
     }
 }

@@ -22,6 +22,7 @@ builder.Services.AddChannels();
 builder.Services.AddChirpstackIntegration<ChirpstackIntegrationHandler>(builder.Configuration);
 
 builder.Services.AddControllers();
+builder.Services.AddProblemDetails();
 
 // TODO: create extension method
 builder.Services.AddKeyedSingleton<ITriggerCompiler, TestValidTriggerCompiler>(
@@ -49,6 +50,9 @@ builder.Services.AddScoped<IAutomationService, AutomationService>();
 builder.Services.AddOpenApi();
 
 var app = builder.Build();
+
+// app.UseExceptionHandler();
+// app.UseStatusCodePages();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

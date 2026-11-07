@@ -15,5 +15,5 @@ public class TestInvalidTriggerCompiler : TriggerCompilerBase<TestInvalidTrigger
     protected override async Task<ValidationResult> ValidateAsync(
         TestInvalidTriggerDto dto,
         CancellationToken cancellationToken
-    ) => ValidationResult.Failure([new(dto.Name, "Invalid")]);
+    ) => ValidationResult.Failure([new(nameof(dto.Name), dto.Name, "Invalid")]);
 }

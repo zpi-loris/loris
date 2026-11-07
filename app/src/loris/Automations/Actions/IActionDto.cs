@@ -10,8 +10,4 @@ namespace Loris.Automations.Actions;
     typeof(TestInvalidActionDto),
     typeDiscriminator: TestInvalidActionDto.Discriminator
 )]
-public interface IActionDto
-{
-    [JsonIgnore]
-    public string ServiceKey { get; }
-}
+public interface IActionDto : IAutomationBlock { }

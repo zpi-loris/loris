@@ -10,6 +10,7 @@ using Loris.Protocol;
 using Loris.Services;
 using Loris.Types;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Loris.Controllers;
@@ -43,16 +44,44 @@ public class AutomationsController(
     // {
     //     return "value";
     // }
-    [HttpPost]
-    public async Task TestNoCancell([FromBody] IReadOnlyList<AutomationRuleDto> rules)
-    {
-        var automations = await _service.CompileAutomationsAsync(rules);
-    }
+    // // TODO: Test no cancell
+    // [HttpPost]
+    // public async Task TestNoCancell([FromBody] IReadOnlyList<AutomationDto> rules)
+    // {
+    //     var automations = await _service.CompileAutomationsAsync(rules);
+    // }
 
     [HttpPost]
-    public async Task Test([FromBody] IReadOnlyList<AutomationRuleDto> rules, CancellationToken ct)
+    public async Task<IActionResult> Test(
+        [FromBody] IReadOnlyList<AutomationDto> rules,
+        CancellationToken ct
+    )
     {
-        var automations = await _service.CompileAutomationsAsync(rules, ct);
+        var errors = await _service.ValidateAsync(rules, ct);
+        if (errors.Count > 0)
+        {
+            var groupedErrors = errors
+                .GroupBy(e => new { e.Id, e.Name })
+                .Select(g => new
+                {
+                    g.Key.Id,
+                    g.Key.Name,
+                    Errors = g.Select(v => new
+                    {
+                        v.Pointer,
+                        v.Value,
+                        v.Details,
+                    }),
+                });
+
+            return Problem(
+                statusCode: StatusCodes.Status422UnprocessableEntity,
+                type: "/errors/automation-validation-failed",
+                title: "One or more automation rules failed validation.",
+                extensions: new Dictionary<string, object?> { ["invalidRules"] = groupedErrors }
+            );
+        }
+        return Ok();
     }
 
     // // PUT api/<AutomationRulesController>/5

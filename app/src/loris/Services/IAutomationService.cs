@@ -1,20 +1,21 @@
+using Loris.Automations;
 using Loris.Automations.Models;
 
 namespace Loris.Services;
 
 public interface IAutomationService
 {
-    public Task ValidateAutomationsAsync(
-        IReadOnlyList<AutomationRuleDto> rules,
+    public Task<IReadOnlyList<AutomationError>> ValidateAsync(
+        IReadOnlyList<AutomationDto> rules,
         CancellationToken cancellationToken = default
     );
-    public Task<IReadOnlyList<Automation>> CompileAutomationsAsync(
-        IReadOnlyList<AutomationRuleDto> rules,
+    public IReadOnlyList<Automation> CompileAutomations(
+        IReadOnlyList<AutomationDto> rules,
         CancellationToken cancellationToken = default
     );
     public void ApplyAutomations(IReadOnlyList<Automation> automations);
     public Task SaveAutomationRulesToDiskAsync(
-        IReadOnlyList<AutomationRuleDto> rules,
+        IReadOnlyList<AutomationDto> rules,
         CancellationToken cancellationToken = default
     );
 }

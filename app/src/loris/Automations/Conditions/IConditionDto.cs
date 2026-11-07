@@ -13,8 +13,4 @@ namespace Loris.Automations.Conditions;
     typeof(TestInvalidConditionDto),
     typeDiscriminator: TestInvalidConditionDto.Discriminator
 )]
-public interface IConditionDto
-{
-    [JsonIgnore]
-    public string ServiceKey { get; }
-}
+public interface IConditionDto : IAutomationBlock { }
