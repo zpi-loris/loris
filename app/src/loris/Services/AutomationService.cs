@@ -10,9 +10,13 @@ using Loris.Types;
 
 namespace Loris.Services;
 
-public sealed class AutomationService(ILogger<AutomationService> logger, IServiceProvider provider)
-    : IAutomationService
+public sealed class AutomationService(
+    ILogger<AutomationService> logger,
+    IServiceProvider provider,
+    AutomationIndex index
+) : IAutomationService
 {
+    private readonly AutomationIndex _index = index;
     private readonly IServiceProvider _provider = provider;
     private readonly ILogger<AutomationService> _logger = logger;
 
@@ -69,6 +73,8 @@ public sealed class AutomationService(ILogger<AutomationService> logger, IServic
                 ))
             );
         }
+
+        _index.Update(automations.ToDictionary(v => v.Trigger));
 
         return [];
     }

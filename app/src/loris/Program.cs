@@ -7,6 +7,7 @@ using Loris.Automations.Conditions.TestValid;
 using Loris.Automations.Triggers;
 using Loris.Automations.Triggers.TestInvalid;
 using Loris.Automations.Triggers.TestValid;
+using Loris.Data;
 using Loris.Extensions;
 using Loris.MQTT.Client;
 using Loris.Services;
@@ -17,6 +18,8 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Configure channels for the ingestion subsystem
 builder.Services.AddChannels();
+
+builder.Services.AddSingleton<AutomationIndex>();
 
 // Add chirpstack integration background task with handler implementation
 builder.Services.AddChirpstackIntegration<ChirpstackIntegrationHandler>(builder.Configuration);
