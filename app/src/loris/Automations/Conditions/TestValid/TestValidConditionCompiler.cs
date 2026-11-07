@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using Loris.Automations.conditions;
 using Loris.Data;
+using Loris.Types;
 
 namespace Loris.Automations.Conditions.TestValid;
 
@@ -8,15 +9,16 @@ public class TestValidConditionCompiler : ConditionCompilerBase<TestValidConditi
 {
     protected override Func<StateCache, bool> Compile(
         TestValidConditionDto dto,
-        ReadOnlyDictionary<string, object> lookup
+        LookupContext? lookup
     ) => (_) => true;
 
     protected override ValueTask<bool> TryValidateAsync(
         TestValidConditionDto dto,
-        out ReadOnlyDictionary<string, object> lookup
+        out LookupContext? lookup,
+        CancellationToken cancellationToken
     )
     {
-        lookup = new Dictionary<string, object>().AsReadOnly();
+        lookup = default;
         return ValueTask.FromResult(true);
     }
 }

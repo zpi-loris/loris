@@ -1,6 +1,6 @@
-using System.Collections.ObjectModel;
 using Loris.Events;
 using Loris.Messages;
+using Loris.Types;
 
 namespace Loris.Automations.Triggers;
 
@@ -9,7 +9,7 @@ public abstract class TriggerCompilerBase<TDto> : ITriggerService
 {
     public (IEvent Event, Func<IEventMessage, bool> Filter) Compile(
         ITriggerDto dto,
-        ReadOnlyDictionary<string, object> lookup
+        LookupContext? lookup
     )
     {
         var typedDto = EnsureTyped(dto, nameof(dto));
@@ -18,21 +18,23 @@ public abstract class TriggerCompilerBase<TDto> : ITriggerService
 
     public ValueTask<bool> TryValidateAsync(
         ITriggerDto dto,
-        out ReadOnlyDictionary<string, object> lookup
+        out LookupContext? lookup,
+        CancellationToken cancellationToken = default
     )
     {
         var typedDto = EnsureTyped(dto, nameof(dto));
-        return TryValidateAsync(typedDto, out lookup);
+        return TryValidateAsync(typedDto, out lookup, cancellationToken);
     }
 
     protected abstract (IEvent Event, Func<IEventMessage, bool> Filter) Compile(
         TDto dto,
-        ReadOnlyDictionary<string, object> lookup
+        LookupContext? lookup
     );
 
     protected abstract ValueTask<bool> TryValidateAsync(
         TDto dto,
-        out ReadOnlyDictionary<string, object> lookup
+        out LookupContext? lookup,
+        CancellationToken cancellationToken
     );
 
     private static TDto EnsureTyped(ITriggerDto dto, string? paramName = null)

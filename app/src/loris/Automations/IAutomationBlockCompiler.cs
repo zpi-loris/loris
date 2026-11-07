@@ -1,13 +1,15 @@
 using System.Collections.ObjectModel;
+using Loris.Types;
 
 namespace Loris.Automations;
 
 public interface IAutomationBlockCompiler<TDto, TResult>
 {
-    public TResult Compile(TDto dto, ReadOnlyDictionary<string, object> lookup);
+    public TResult Compile(TDto dto, LookupContext? lookup);
 
     public ValueTask<bool> TryValidateAsync(
         TDto dto,
-        out ReadOnlyDictionary<string, object> lookup
+        out LookupContext? lookup,
+        CancellationToken cancellationToken = default
     );
 }

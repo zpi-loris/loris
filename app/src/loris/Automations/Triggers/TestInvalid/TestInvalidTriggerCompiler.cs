@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using Loris.Events;
 using Loris.Messages;
+using Loris.Types;
 
 namespace Loris.Automations.Triggers.TestInvalid;
 
@@ -8,15 +9,16 @@ public class TestInvalidTriggerCompiler : TriggerCompilerBase<TestInvalidTrigger
 {
     protected override (IEvent Event, Func<IEventMessage, bool> Filter) Compile(
         TestInvalidTriggerDto dto,
-        ReadOnlyDictionary<string, object> lookup
+        LookupContext? lookup
     ) => throw new ArgumentException("Testing exception");
 
     protected override ValueTask<bool> TryValidateAsync(
         TestInvalidTriggerDto dto,
-        out ReadOnlyDictionary<string, object> lookup
+        out LookupContext? lookup,
+        CancellationToken cancellationToken
     )
     {
-        lookup = new Dictionary<string, object>().AsReadOnly();
+        lookup = default;
         return ValueTask.FromResult(false);
     }
 }

@@ -1,12 +1,13 @@
 using System.Collections.ObjectModel;
 using Loris.Automations.Conditions;
+using Loris.Types;
 
 namespace Loris.Automations.Actions;
 
 public abstract class ActionCompilerBase<TDto> : IActionCompiler
     where TDto : IActionDto
 {
-    public Action Compile(IActionDto dto, ReadOnlyDictionary<string, object> lookup)
+    public Action Compile(IActionDto dto, LookupContext? lookup)
     {
         var typedDto = EnsureTyped(dto, nameof(dto));
         return Compile(typedDto, lookup);
@@ -14,18 +15,20 @@ public abstract class ActionCompilerBase<TDto> : IActionCompiler
 
     public ValueTask<bool> TryValidateAsync(
         IActionDto dto,
-        out ReadOnlyDictionary<string, object> lookup
+        out LookupContext? lookup,
+        CancellationToken cancellationToken = default
     )
     {
         var typedDto = EnsureTyped(dto, nameof(dto));
-        return TryValidateAsync(typedDto, out lookup);
+        return TryValidateAsync(typedDto, out lookup, cancellationToken);
     }
 
-    protected abstract Action Compile(TDto dto, ReadOnlyDictionary<string, object> lookup);
+    protected abstract Action Compile(TDto dto, LookupContext? lookup);
 
     protected abstract ValueTask<bool> TryValidateAsync(
         TDto dto,
-        out ReadOnlyDictionary<string, object> lookup
+        out LookupContext? lookup,
+        CancellationToken cancellationToken
     );
 
     private static TDto EnsureTyped(IActionDto dto, string? paramName = null)
