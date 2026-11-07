@@ -1,25 +1,9 @@
 using Loris.Automations;
-using Loris.Automations.Actions;
-using Loris.Automations.Conditions;
 using Loris.Automations.Models;
-using Loris.Automations.Triggers;
-using Loris.Data;
-using Loris.Events;
-using Loris.Messages;
-using Loris.Protocol;
 using Loris.Services;
-using Loris.Types;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Loris.Controllers;
-
-// TODO: consider adding a way for both controller and service to:
-// - validate pure syntax (at the handler method level it's already good)
-// - validate syntax with device/sensor/function reference BUT DON'T SAVE AND DON'T COMPILE
-// - validate all, compile and save
-// This way user can have more control from the cli
 
 [Route("api/[controller]/[action]")]
 [ApiController]
@@ -52,7 +36,7 @@ public class AutomationsController(
     // }
 
     [HttpPost]
-    public async Task<IActionResult> Test(
+    public async Task<IActionResult> Validate(
         [FromBody] IReadOnlyList<AutomationDto> rules,
         CancellationToken ct
     )
@@ -60,28 +44,47 @@ public class AutomationsController(
         var errors = await _service.ValidateAsync(rules, ct);
         if (errors.Count > 0)
         {
-            var groupedErrors = errors
-                .GroupBy(e => new { e.Id, e.Name })
-                .Select(g => new
-                {
-                    g.Key.Id,
-                    g.Key.Name,
-                    Errors = g.Select(v => new
-                    {
-                        v.Pointer,
-                        v.Value,
-                        v.Details,
-                    }),
-                });
-
-            return Problem(
-                statusCode: StatusCodes.Status422UnprocessableEntity,
-                type: "/errors/automation-validation-failed",
-                title: "One or more automation rules failed validation.",
-                extensions: new Dictionary<string, object?> { ["invalidRules"] = groupedErrors }
-            );
+            return ValidationProblem(errors);
         }
         return Ok();
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> Apply(
+        [FromBody] IReadOnlyList<AutomationDto> rules,
+        CancellationToken ct
+    )
+    {
+        var errors = await _service.ApplyAsync(rules, ct);
+        if (errors.Count > 0)
+        {
+            return ValidationProblem(errors);
+        }
+        return Ok();
+    }
+
+    private ObjectResult ValidationProblem(IReadOnlyList<AutomationError> errors)
+    {
+        var groupedErrors = errors
+            .GroupBy(e => new { e.Id, e.Name })
+            .Select(g => new
+            {
+                g.Key.Id,
+                g.Key.Name,
+                Errors = g.Select(v => new
+                {
+                    v.Pointer,
+                    v.Value,
+                    v.Details,
+                }),
+            });
+
+        return Problem(
+            statusCode: StatusCodes.Status422UnprocessableEntity,
+            type: "/errors/automation-validation-failed",
+            title: "One or more automation rules failed validation.",
+            extensions: new Dictionary<string, object?> { ["invalidRules"] = groupedErrors }
+        );
     }
 
     // // PUT api/<AutomationRulesController>/5
