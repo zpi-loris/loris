@@ -34,6 +34,15 @@ typedef struct downlink {
   } payload;
 } downlink_t;
 
+/**
+ * @brief Free resources dynamically allocated during downlink decoding.
+ *
+ * Releases internal dynamic memory (such as string call values) populated by
+ * decode_downlink(). Safe to call on any payload type, including unallocated
+ * payloads or NULL pointers.
+ *
+ * @param[in,out] dl Pointer to downlink structure to free. Can be NULL.
+ */
 void downlink_free(downlink_t* dl);
 
 #endif
