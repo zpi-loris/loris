@@ -1,3 +1,10 @@
+/*
+ * Copyright (c) 2026 Jan Kubów
+ * Copyright (c) 2026 Tomasz Gadziński
+ *
+ * SPDX-License-Identifier: MIT
+ */
+
 #ifndef LORIS_FUNCTION_H
 #define LORIS_FUNCTION_H
 

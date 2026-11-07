@@ -1,3 +1,9 @@
+/*
+ * Copyright (c) 2026 Jan Kubów
+ *
+ * SPDX-License-Identifier: MIT
+ */
+
 #include "capabilities.h"
 #include "../str.h"
 #include "loris/models/devclass.h"

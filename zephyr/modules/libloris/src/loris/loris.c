@@ -1,3 +1,9 @@
+/*
+ * Copyright (c) 2026 Jan Kubów
+ *
+ * SPDX-License-Identifier: MIT
+ */
+
 #include "loris.h"
 #include "loris/codec.h"
 #include "loris/models/call.h"
@@ -7,7 +13,6 @@
 #include "loris/models/sensor.h"
 #include "loris/models/uplink.h"
 #include "loris/result.h"
-#include "zephyr/sys/clock.h"
 
 #include <stdint.h>
 #include <zephyr/kernel.h>
@@ -179,7 +184,7 @@ extern void uplink_communication_thread() {
     char buf[1024];
     size_t bytes_written;
     encode_uplink(buf, sizeof(buf), &uplink, &bytes_written);
-    lora_data_t outgoing_data = {.data = buf, .data_size = bytes_written};
+    // lora_data_t outgoing_data = {.data = buf, .data_size = bytes_written};
     LOG_DBG("Sending uplink packet...");
   }
 }
