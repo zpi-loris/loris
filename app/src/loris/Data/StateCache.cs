@@ -1,11 +1,9 @@
-using System.Collections.ObjectModel;
 using Loris.Protocol;
 using Loris.Types;
 
-namespace Loris.Data
+namespace Loris.Data;
+
+public sealed class StateCache
 {
-    public class StateCache
-    {
-        private readonly Dictionary<DevEui, Report> state = [];
-    }
+    private readonly Dictionary<DevEui, Report> state = [];
 }
