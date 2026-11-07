@@ -74,7 +74,18 @@ public sealed class AutomationService(
             );
         }
 
-        _index.Update(automations.ToDictionary(v => v.Trigger));
+        Dictionary<IEvent, List<Automation>> index = [];
+        foreach (var val in automations)
+        {
+            List<Automation>? list;
+            if (!index.TryGetValue(val.Trigger, out list))
+            {
+                list = [];
+                index.Add(val.Trigger, list);
+            }
+            list.Add(val);
+        }
+        _index.Update(index);
 
         return [];
     }

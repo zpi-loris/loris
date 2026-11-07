@@ -7,19 +7,19 @@ namespace Loris.Data;
 
 public sealed class AutomationIndex
 {
-    private FrozenDictionary<IEvent, Automation> _index = FrozenDictionary<
+    private FrozenDictionary<IEvent, List<Automation>> _index = FrozenDictionary<
         IEvent,
-        Automation
+        List<Automation>
     >.Empty;
 
-    public bool TryGet(IEvent key, [MaybeNullWhen(false)] out Automation automation)
+    public bool TryGet(IEvent key, [MaybeNullWhen(false)] out IReadOnlyList<Automation> automations)
     {
-        var hit = _index.TryGetValue(key, out var val);
-        automation = val;
+        var hit = _index.TryGetValue(key, out List<Automation>? list);
+        automations = list;
         return hit;
     }
 
-    public void Update(Dictionary<IEvent, Automation> index)
+    public void Update(Dictionary<IEvent, List<Automation>> index)
     {
         _index = index.ToFrozenDictionary();
     }
