@@ -23,7 +23,7 @@ static lr_lw_result_t join(
   }
 
   int ret = lorawan_set_region(region);
-  if (lorawan_set_region(region) < 0) {
+  if (ret < 0) {
     LOG_WRN("Couldn't set LoRaWAN region: %d", ret);
     return LR_LW_ERR_SET_REGION_FAILED;
   }
@@ -195,7 +195,7 @@ void lr_lw_register_dr_changed_callback(void (*cb)(enum lorawan_datarate dr)) {
   lorawan_register_dr_changed_callback(cb);
 }
 
-void lr_lw_link_check_ans_callback(
+void lr_lw_register_link_check_ans_callback(
     void (*cb)(uint8_t demod_margin, uint8_t nb_gateways)
 ) {
   LOG_INF("Registering a new link check answer callback");

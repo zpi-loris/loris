@@ -243,7 +243,7 @@ void lr_lw_register_dr_changed_callback(void (*cb)(enum lorawan_datarate dr));
  * - nb_gateways:  Number of gateways the device is connected to (in simple
  * terms - see LoRaWAN specification for an in-depth explanation).
  */
-void lr_lw_link_check_ans_callback(
+void lr_lw_register_link_check_ans_callback(
     void (*cb)(uint8_t demod_margin, uint8_t nb_gateways)
 );
 
