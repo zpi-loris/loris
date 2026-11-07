@@ -9,6 +9,7 @@ using Loris.Automations.Triggers.TestInvalid;
 using Loris.Automations.Triggers.TestValid;
 using Loris.Extensions;
 using Loris.MQTT.Client;
+using Loris.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -41,6 +42,8 @@ builder.Services.AddKeyedSingleton<IConditionCompiler, TestInvalidConditionCompi
 builder.Services.AddKeyedSingleton<IActionCompiler, TestInvalidActionCompiler>(
     TestInvalidActionDto.Discriminator
 );
+
+builder.Services.AddScoped<IAutomationService, AutomationService>();
 
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
