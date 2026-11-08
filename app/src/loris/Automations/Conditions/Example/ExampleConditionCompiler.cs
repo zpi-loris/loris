@@ -1,16 +1,18 @@
 using Loris.Data;
 
-namespace Loris.Automations.Conditions.TestValid;
+namespace Loris.Automations.Conditions.Example;
 
-public class TestValidConditionCompiler : ConditionCompilerBase<TestValidConditionDto>
+public class TestValidConditionCompiler : ConditionCompilerBase<ExampleConditionDto>
 {
+    // see Triggers/Example for full example
     protected override Func<StateCache, bool> Compile(
-        TestValidConditionDto dto,
+        ExampleConditionDto dto,
         LookupContext? lookup
     ) => (_) => true;
 
+    // see Triggers/Example for full example
     protected override async Task<ValidationResult> ValidateAsync(
-        TestValidConditionDto dto,
+        ExampleConditionDto dto,
         CancellationToken cancellationToken
     )
     {

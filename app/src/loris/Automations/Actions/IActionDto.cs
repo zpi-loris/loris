@@ -1,13 +1,8 @@
 using System.Text.Json.Serialization;
-using Loris.Automations.Actions.TestInvalid;
-using Loris.Automations.Actions.TestValid;
+using Loris.Automations.Actions.Example;
 
 namespace Loris.Automations.Actions;
 
 [JsonPolymorphic(TypeDiscriminatorPropertyName = "$type")]
-[JsonDerivedType(typeof(TestValidActionDto), typeDiscriminator: TestValidActionDto.Discriminator)]
-[JsonDerivedType(
-    typeof(TestInvalidActionDto),
-    typeDiscriminator: TestInvalidActionDto.Discriminator
-)]
+[JsonDerivedType(typeof(ExampleActionDto), typeDiscriminator: ExampleActionDto.Discriminator)]
 public interface IActionDto : IAutomationBlock { }

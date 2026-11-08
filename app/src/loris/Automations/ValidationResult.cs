@@ -31,7 +31,8 @@ public readonly record struct ValidationResult
 
     public static ValidationResult Success() => new(default, true, default);
 
-    public static ValidationResult Success(LookupContext lookup) => new(lookup, true, default);
+    public static ValidationResult Success(Dictionary<string, object> lookup) =>
+        new(LookupContext.FromDict(lookup), true, default);
 
     public static ValidationResult Failure(IReadOnlyList<BlockError> errors) =>
         new(default, false, errors);

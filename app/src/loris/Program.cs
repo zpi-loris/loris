@@ -34,8 +34,8 @@ builder.Services.AddKeyedSingleton<ITriggerCompiler, TestValidTriggerCompiler>(
 builder.Services.AddKeyedSingleton<IConditionCompiler, TestValidConditionCompiler>(
     TestValidConditionDto.Discriminator
 );
-builder.Services.AddKeyedSingleton<IActionCompiler, TestValidActionCompiler>(
-    TestValidActionDto.Discriminator
+builder.Services.AddKeyedSingleton<IActionCompiler, ExampleActionCompiler>(
+    ExampleActionDto.Discriminator
 );
 builder.Services.AddKeyedSingleton<ITriggerCompiler, TestInvalidTriggerCompiler>(
     TestInvalidTriggerDto.Discriminator
