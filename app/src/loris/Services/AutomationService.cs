@@ -5,8 +5,8 @@ using Loris.Automations.Models;
 using Loris.Automations.Triggers;
 using Loris.Data;
 using Loris.Events;
+using Loris.Logging;
 using Loris.Messages;
-using Loris.Types;
 
 namespace Loris.Services;
 
@@ -27,10 +27,16 @@ public sealed class AutomationService(
     {
         var validationResults = await ValidateRulesAsync(rules, cancellationToken);
 
-        return rules
+        var errors = rules
             .Zip(validationResults)
             .SelectMany(pair => ExtractRuleErrors(pair.First, pair.Second))
             .ToList();
+
+        if (errors.Count == 0)
+        {
+            _logger.RulesValidationCompleted(rules.Count);
+        }
+        return errors;
     }
 
     public async Task<IReadOnlyList<AutomationError>> ApplyAsync(
@@ -52,14 +58,14 @@ public sealed class AutomationService(
         {
             var triggers = rule
                 .Triggers.Zip(validation.Triggers)
-                .Select(pair => CompileTrigger(pair.First, pair.Second.Lookup));
+                .Select(pair => CompileTrigger(rule, pair.First, pair.Second.Lookup));
             var conditions = rule
                 .Conditions.Zip(validation.Conditions)
-                .Select(pair => CompileCondition(pair.First, pair.Second.Lookup))
+                .Select(pair => CompileCondition(rule, pair.First, pair.Second.Lookup))
                 .ToList();
             var actions = rule
                 .Actions.Zip(validation.Actions)
-                .Select(pair => CompileAction(pair.First, pair.Second.Lookup))
+                .Select(pair => CompileAction(rule, pair.First, pair.Second.Lookup))
                 .ToList();
 
             automations.AddRange(
@@ -84,8 +90,12 @@ public sealed class AutomationService(
                 index.Add(val.Trigger, list);
             }
             list.Add(val);
+
+            _logger.TriggerIndexed(val.Name, val.Id, val.Trigger.GetType().Name);
         }
         _index.Update(index);
+
+        _logger.AutomationsApplied(rules.Count, automations.Count);
 
         return [];
     }
@@ -121,14 +131,28 @@ public sealed class AutomationService(
             .Select(v => new AutomationValidationResult(v.First, v.Second, v.Third));
     }
 
-    private static IEnumerable<AutomationError> ExtractRuleErrors(
+    private List<AutomationError> ExtractRuleErrors(
         AutomationDto rule,
         AutomationValidationResult results
     )
     {
-        return ExtractBlockErrors("triggers", rule, rule.Triggers, results.Triggers)
+        var ruleErrors = ExtractBlockErrors("triggers", rule, rule.Triggers, results.Triggers)
             .Concat(ExtractBlockErrors("conditions", rule, rule.Conditions, results.Conditions))
-            .Concat(ExtractBlockErrors("actions", rule, rule.Actions, results.Actions));
+            .Concat(ExtractBlockErrors("actions", rule, rule.Actions, results.Actions))
+            .ToList();
+
+        if (ruleErrors.Count > 0)
+        {
+            _logger.RuleValidationFailed(
+                rule.Name,
+                rule.Id,
+                ruleErrors.Count,
+                ruleErrors[0].Pointer,
+                ruleErrors[0].Details
+            );
+        }
+
+        return ruleErrors;
     }
 
     private static IEnumerable<AutomationError> ExtractBlockErrors<TBlock>(
@@ -175,24 +199,86 @@ public sealed class AutomationService(
     // ========================================================================
 
     private (IEvent Event, Func<IEventMessage, bool> Filter) CompileTrigger(
+        AutomationDto rule,
         ITriggerDto dto,
         LookupContext? lookup
     )
     {
+        _logger.CompilingBlock("Trigger", dto.ServiceKey, rule.Name, rule.Id);
+
         var service = _provider.GetKeyedService<ITriggerCompiler>(dto.ServiceKey);
-        return service!.Compile(dto, lookup);
+        if (service is null)
+        {
+            _logger.CompilerNotFound(nameof(ITriggerCompiler), dto.ServiceKey, rule.Name, rule.Id);
+            throw new InvalidOperationException(
+                $"No trigger compiler found for '{dto.ServiceKey}'"
+            );
+        }
+
+        try
+        {
+            return service.Compile(dto, lookup);
+        }
+        catch (Exception ex)
+        {
+            _logger.BlockCompilationFailed(ex, "Trigger", dto.ServiceKey, rule.Name, rule.Id);
+            throw;
+        }
     }
 
-    private Func<StateCache, bool> CompileCondition(IConditionDto dto, LookupContext? lookup)
+    private Func<StateCache, bool> CompileCondition(
+        AutomationDto rule,
+        IConditionDto dto,
+        LookupContext? lookup
+    )
     {
+        _logger.CompilingBlock("Condition", dto.ServiceKey, rule.Name, rule.Id);
+
         var service = _provider.GetKeyedService<IConditionCompiler>(dto.ServiceKey);
-        return service!.Compile(dto, lookup);
+        if (service is null)
+        {
+            _logger.CompilerNotFound(
+                nameof(IConditionCompiler),
+                dto.ServiceKey,
+                rule.Name,
+                rule.Id
+            );
+            throw new InvalidOperationException(
+                $"No condition compiler found for '{dto.ServiceKey}'"
+            );
+        }
+
+        try
+        {
+            return service.Compile(dto, lookup);
+        }
+        catch (Exception ex)
+        {
+            _logger.BlockCompilationFailed(ex, "Condition", dto.ServiceKey, rule.Name, rule.Id);
+            throw;
+        }
     }
 
-    private Action CompileAction(IActionDto dto, LookupContext? lookup)
+    private Action CompileAction(AutomationDto rule, IActionDto dto, LookupContext? lookup)
     {
+        _logger.CompilingBlock("Action", dto.ServiceKey, rule.Name, rule.Id);
+
         var service = _provider.GetKeyedService<IActionCompiler>(dto.ServiceKey);
-        return service!.Compile(dto, lookup);
+        if (service is null)
+        {
+            _logger.CompilerNotFound(nameof(IActionCompiler), dto.ServiceKey, rule.Name, rule.Id);
+            throw new InvalidOperationException($"No action compiler found for '{dto.ServiceKey}'");
+        }
+
+        try
+        {
+            return service.Compile(dto, lookup);
+        }
+        catch (Exception ex)
+        {
+            _logger.BlockCompilationFailed(ex, "Action", dto.ServiceKey, rule.Name, rule.Id);
+            throw;
+        }
     }
 
     // ========================================================================
@@ -200,36 +286,92 @@ public sealed class AutomationService(
     // ========================================================================
 
     private async Task<ValidationResult> ValidateTrigger(
+        AutomationDto rule,
         ITriggerDto dto,
         CancellationToken cancellationToken
     )
     {
+        _logger.ValidatingBlock("Trigger", dto.ServiceKey, rule.Name, rule.Id);
         var service = _provider.GetKeyedService<ITriggerCompiler>(dto.ServiceKey);
-        return await service!.ValidateAsync(dto, cancellationToken);
+        if (service is null)
+        {
+            _logger.CompilerNotFound(nameof(ITriggerCompiler), dto.ServiceKey, rule.Name, rule.Id);
+            throw new InvalidOperationException(
+                $"No trigger compiler found for '{dto.ServiceKey}'"
+            );
+        }
+        try
+        {
+            return await service.ValidateAsync(dto, cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            _logger.BlockValidationThrew(ex, dto.ServiceKey, rule.Name, rule.Id);
+            throw;
+        }
     }
 
     private async Task<ValidationResult> ValidateCondition(
+        AutomationDto rule,
         IConditionDto dto,
         CancellationToken cancellationToken
     )
     {
+        _logger.ValidatingBlock("Condition", dto.ServiceKey, rule.Name, rule.Id);
         var service = _provider.GetKeyedService<IConditionCompiler>(dto.ServiceKey);
-        return await service!.ValidateAsync(dto, cancellationToken);
+        if (service is null)
+        {
+            _logger.CompilerNotFound(
+                nameof(IConditionCompiler),
+                dto.ServiceKey,
+                rule.Name,
+                rule.Id
+            );
+            throw new InvalidOperationException(
+                $"No condition compiler found for '{dto.ServiceKey}'"
+            );
+        }
+        try
+        {
+            return await service.ValidateAsync(dto, cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            _logger.BlockValidationThrew(ex, dto.ServiceKey, rule.Name, rule.Id);
+            throw;
+        }
     }
 
     private async Task<ValidationResult> ValidateAction(
+        AutomationDto rule,
         IActionDto dto,
         CancellationToken cancellationToken
     )
     {
+        _logger.ValidatingBlock("Action", dto.ServiceKey, rule.Name, rule.Id);
         var service = _provider.GetKeyedService<IActionCompiler>(dto.ServiceKey);
-        return await service!.ValidateAsync(dto, cancellationToken);
+        if (service is null)
+        {
+            _logger.CompilerNotFound(nameof(IActionCompiler), dto.ServiceKey, rule.Name, rule.Id);
+            throw new InvalidOperationException(
+                $"No condition compiler found for '{dto.ServiceKey}'"
+            );
+        }
+        try
+        {
+            return await service.ValidateAsync(dto, cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            _logger.BlockValidationThrew(ex, dto.ServiceKey, rule.Name, rule.Id);
+            throw;
+        }
     }
 
     private static async Task<List<List<TResult>>> ProcessRulesAsync<TItem, TResult>(
         IEnumerable<AutomationDto> rules,
         Func<AutomationDto, IEnumerable<TItem>> blockSelector,
-        Func<TItem, CancellationToken, Task<TResult>> process,
+        Func<AutomationDto, TItem, CancellationToken, Task<TResult>> process,
         CancellationToken cancellationToken
     )
     {
@@ -241,7 +383,7 @@ public sealed class AutomationService(
             foreach (var block in blockSelector(rule))
             {
                 cancellationToken.ThrowIfCancellationRequested();
-                blockResults.Add(await process(block, cancellationToken));
+                blockResults.Add(await process(rule, block, cancellationToken));
             }
             results.Add(blockResults);
         }
