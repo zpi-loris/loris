@@ -1,12 +1,7 @@
+using Loris.Automations;
 using Loris.Automations.Actions;
-using Loris.Automations.Actions.TestInvalid;
-using Loris.Automations.Actions.TestValid;
 using Loris.Automations.Conditions;
-using Loris.Automations.Conditions.TestInvalid;
-using Loris.Automations.Conditions.TestValid;
 using Loris.Automations.Triggers;
-using Loris.Automations.Triggers.TestInvalid;
-using Loris.Automations.Triggers.TestValid;
 using Loris.Data;
 using Loris.Extensions;
 using Loris.MQTT.Client;
@@ -27,25 +22,27 @@ builder.Services.AddChirpstackIntegration<ChirpstackIntegrationHandler>(builder.
 builder.Services.AddControllers();
 builder.Services.AddProblemDetails();
 
+builder.Services.AddAutomationsCompilers();
+
 // TODO: create extension method
-builder.Services.AddKeyedSingleton<ITriggerCompiler, TestValidTriggerCompiler>(
-    TestValidTriggerDto.Discriminator
-);
-builder.Services.AddKeyedSingleton<IConditionCompiler, TestValidConditionCompiler>(
-    TestValidConditionDto.Discriminator
-);
-builder.Services.AddKeyedSingleton<IActionCompiler, ExampleActionCompiler>(
-    ExampleActionDto.Discriminator
-);
-builder.Services.AddKeyedSingleton<ITriggerCompiler, TestInvalidTriggerCompiler>(
-    TestInvalidTriggerDto.Discriminator
-);
-builder.Services.AddKeyedSingleton<IConditionCompiler, TestInvalidConditionCompiler>(
-    TestInvalidConditionDto.Discriminator
-);
-builder.Services.AddKeyedSingleton<IActionCompiler, TestInvalidActionCompiler>(
-    TestInvalidActionDto.Discriminator
-);
+// builder.Services.AddKeyedSingleton<ITriggerCompiler, TestValidTriggerCompiler>(
+//     TestValidTriggerDto.Discriminator
+// );
+// builder.Services.AddKeyedSingleton<IConditionCompiler, TestValidConditionCompiler>(
+//     TestValidConditionDto.Discriminator
+// );
+// builder.Services.AddKeyedSingleton<IActionCompiler, ExampleActionCompiler>(
+//     ExampleActionDto.Discriminator
+// );
+// builder.Services.AddKeyedSingleton<ITriggerCompiler, TestInvalidTriggerCompiler>(
+//     TestInvalidTriggerDto.Discriminator
+// );
+// builder.Services.AddKeyedSingleton<IConditionCompiler, TestInvalidConditionCompiler>(
+//     TestInvalidConditionDto.Discriminator
+// );
+// builder.Services.AddKeyedSingleton<IActionCompiler, TestInvalidActionCompiler>(
+//     TestInvalidActionDto.Discriminator
+// );
 
 builder.Services.AddScoped<IAutomationService, AutomationService>();
 
