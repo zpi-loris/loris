@@ -66,6 +66,13 @@ delegate. Actions can call other services that do some business logic, like:
 
 ### Overview
 
+> [!NOTE]
+>
+> Steps described below, are all necessary steps in order to successfuly add new
+> automation block implementaion. **There is no need to modify `Program.cs`**,
+> because the implementing classess are auto registered using scrutor and
+> assembly scanning
+
 To create new block (either Trigger, Condition or action) it is required to
 prepare 2 classes:
 
