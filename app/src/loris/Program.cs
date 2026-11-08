@@ -24,26 +24,6 @@ builder.Services.AddProblemDetails();
 
 builder.Services.AddAutomationsCompilers();
 
-// TODO: create extension method
-// builder.Services.AddKeyedSingleton<ITriggerCompiler, TestValidTriggerCompiler>(
-//     TestValidTriggerDto.Discriminator
-// );
-// builder.Services.AddKeyedSingleton<IConditionCompiler, TestValidConditionCompiler>(
-//     TestValidConditionDto.Discriminator
-// );
-// builder.Services.AddKeyedSingleton<IActionCompiler, ExampleActionCompiler>(
-//     ExampleActionDto.Discriminator
-// );
-// builder.Services.AddKeyedSingleton<ITriggerCompiler, TestInvalidTriggerCompiler>(
-//     TestInvalidTriggerDto.Discriminator
-// );
-// builder.Services.AddKeyedSingleton<IConditionCompiler, TestInvalidConditionCompiler>(
-//     TestInvalidConditionDto.Discriminator
-// );
-// builder.Services.AddKeyedSingleton<IActionCompiler, TestInvalidActionCompiler>(
-//     TestInvalidActionDto.Discriminator
-// );
-
 builder.Services.AddScoped<IAutomationService, AutomationService>();
 
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
