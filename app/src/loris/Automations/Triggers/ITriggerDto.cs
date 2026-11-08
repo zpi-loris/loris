@@ -1,13 +1,8 @@
 using System.Text.Json.Serialization;
-using Loris.Automations.Triggers.TestInvalid;
-using Loris.Automations.Triggers.TestValid;
+using Loris.Automations.Triggers.Example;
 
 namespace Loris.Automations.Triggers;
 
 [JsonPolymorphic(TypeDiscriminatorPropertyName = "$type")]
-[JsonDerivedType(typeof(TestValidTriggerDto), typeDiscriminator: TestValidTriggerDto.Discriminator)]
-[JsonDerivedType(
-    typeof(TestInvalidTriggerDto),
-    typeDiscriminator: TestInvalidTriggerDto.Discriminator
-)]
+[JsonDerivedType(typeof(ExampleTriggerDto), typeDiscriminator: ExampleTriggerDto.Discriminator)]
 public interface ITriggerDto : IAutomationBlock { }

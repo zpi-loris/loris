@@ -2,7 +2,7 @@ using Loris.Data;
 
 namespace Loris.Automations.Conditions.Example;
 
-public class TestValidConditionCompiler : ConditionCompilerBase<ExampleConditionDto>
+public class ExampleConditionCompiler : ConditionCompilerBase<ExampleConditionDto>
 {
     // see Triggers/Example for full example
     protected override Func<StateCache, bool> Compile(
