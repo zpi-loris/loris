@@ -46,7 +46,7 @@ of the conditions are valid like:
 - other sensor value is x
 - logical _and_/_or_ for all of the above
 
-Conditions are constructed as an delegate `Func<StateCache, bool>`, where
+Conditions are constructed as a delegate `Func<StateCache, bool>`, where
 `StateCache` is an object holding values for all of recent sensor readings.
 
 As stated above, conditions don't have to use the other sensors value, but they
@@ -78,6 +78,44 @@ prepare 2 classes:
   others accept dto argument:
   - `ValidateAsync`
   - `Compile`
+
+> [!IMPORTANT]
+>
+> The compilers logic will be invoked after successful DTOs parsing. **Invalid
+> json is rejected before any of the method runs**
+
+**To properly register block's DTO, the modification of interface DTO is
+required** (unfortunately it's a dotnets `System.Text.Json` polymorphic
+deserialization limitation).
+
+**The example shows necessary steps**
+
+```cs
+// new DTO implementing ITriggerDto, must provide a ServiceKey
+// that will be used during runtime compiler resolution
+//
+// The Discriminator is used to discriminate the derived ITriggerDto type
+//
+// THEY NEED TO BE THE SAME
+public record ExampleTriggerDto(string Name, int Value) : ITriggerDto
+{
+    public const string Discriminator = "example";
+    public string ServiceKey => Discriminator;
+}
+/* ... */
+
+
+[JsonPolymorphic(TypeDiscriminatorPropertyName = "$type")]
+/* ... */
+//
+// add new JsonDerivedType attribute
+[JsonDerivedType(typeof(ExampleTriggerDto), typeDiscriminator: ExampleTriggerDto.Discriminator)]
+public interface ITriggerDto : IAutomationBlock { }
+```
+
+> [!IMPORTANT]
+>
+> **It is very important that _Discriminator_ == _ServiceKey_**
 
 As mentioned earlier the generic `IAutomationBlockCompiler` is not meant to be
 implemented directly. There is an interface declared exactly for each block,
