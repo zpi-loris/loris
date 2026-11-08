@@ -27,4 +27,8 @@ public partial class Device
 
     [InverseProperty("Device")]
     public virtual ICollection<Sensor> Sensors { get; set; } = [];
+
+    //TODO: UPDATE MODEL
+    //
+    // Enum column 'public.devices.status' cannot be scaffolded, define a CLR enum type and add the property manually.
 }

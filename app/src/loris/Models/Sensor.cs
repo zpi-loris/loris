@@ -33,4 +33,10 @@ public partial class Sensor
 
     [InverseProperty("Sensor")]
     public virtual ICollection<SensorReading> SensorReadings { get; set; } = [];
+
+    // TODO: UPDATE MODEL
+    //
+    // Enum column 'public.sensors.value_type' cannot be scaffolded, define a CLR enum type and add the property manually.
+    //
+    // Enum column 'public.sensors.value_data_type' cannot be scaffolded, define a CLR enum type and add the property manually.
 }

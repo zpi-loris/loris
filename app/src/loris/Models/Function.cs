@@ -27,4 +27,8 @@ public partial class Function
     [ForeignKey("DeviceId")]
     [InverseProperty("Functions")]
     public virtual Device Device { get; set; } = null!;
+
+    // TODO: UPDATE MODEL
+    //
+    // Enum column 'public.functions.arg_type' cannot be scaffolded, define a CLR enum type and add the property manually.
 }
