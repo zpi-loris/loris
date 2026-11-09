@@ -4,14 +4,6 @@ package protocol.v1;
 
 option csharp_namespace = "Loris.Protocol";
 
-enum ValueType {
-  // General
-  VALUE_TYPE_UNSPECIFIED = 0;
-  VALUE_TYPE_NUMERIC = 1;
-  VALUE_TYPE_TEXT = 2;
-  VALUE_TYPE_BOOL = 3;
-}
-
 enum SensorValueType {
   SENSOR_VALUE_TYPE_UNSPECIFIED = 0;
   SENSOR_VALUE_TYPE_NUMERIC = 1;
