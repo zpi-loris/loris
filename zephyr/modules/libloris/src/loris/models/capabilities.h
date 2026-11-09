@@ -53,7 +53,8 @@ result_t add_sensor(
     capabilities_t* capabilities,
     const char* name,
     const char* description,
-    value_type_t value_type,
+    sensor_value_type_t value_type,
+    sensor_semantics_t semantics,
     const char* unit,
     report_t (*report_func)(struct sensor*),
     int32_t interval_sec

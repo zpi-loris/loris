@@ -120,7 +120,8 @@ bool pb_callback_encode_sensor_list(
     pb_s.id = s->id;
     str_borrow(&pb_s.name, &s->name);
     str_borrow(&pb_s.description, &s->description);
-    pb_s.value_type = (protocol_v1_value_type_t)s->value_type;
+    pb_s.value_type = (protocol_v1_sensor_value_type_t)s->value_type;
+    pb_s.semantics = (protocol_v1_sensor_semantics_t)s->semantics;
     if (s->has_unit) {
       str_borrow(&pb_s.unit, &s->unit);
     } else {
@@ -438,7 +439,8 @@ bool pb_callback_decode_sensor_to_list(
   s->id = read_sensor.id;
   str_move(&s->name, &read_sensor.name);
   str_move(&s->description, &read_sensor.description);
-  s->value_type = (value_type_t)read_sensor.value_type;
+  s->value_type = (sensor_value_type_t)read_sensor.value_type;
+  s->semantics = (sensor_semantics_t)read_sensor.semantics;
   if (read_sensor.unit.ptr != 0 && read_sensor.unit.len != 0) {
     s->has_unit = true;
     str_move(&s->unit, &read_sensor.unit);

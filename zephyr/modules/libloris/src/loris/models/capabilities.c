@@ -1,10 +1,11 @@
+#include <zephyr/sys/slist.h>
+
 #include "capabilities.h"
-#include "../str.h"
 #include "loris/models/devclass.h"
 #include "loris/models/function.h"
 #include "loris/models/sensor.h"
 #include "loris/result.h"
-#include "zephyr/sys/slist.h"
+#include "loris/str.h"
 
 static int32_t sensor_id = 0;
 static int32_t func_id = 0;
@@ -25,12 +26,10 @@ result_t capabilities_init(
     return ERROR;
   }
 
-  *out = (capabilities_t){
-      .device_name = device_name_str,
-      .device_class = device_class,
-      .functions = {},
-      .sensors = {}
-  };
+  *out = (capabilities_t){ .device_name = device_name_str,
+                           .device_class = device_class,
+                           .functions = {},
+                           .sensors = {} };
 
   sys_slist_init(&out->sensors);
   sys_slist_init(&out->functions);
@@ -42,7 +41,8 @@ result_t add_sensor(
     capabilities_t* capabilities,
     const char* name,
     const char* description,
-    value_type_t value_type,
+    sensor_value_type_t value_type,
+    sensor_semantics_t semantics,
     const char* unit,
     report_t (*report_func)(struct sensor*),
     int32_t interval_sec
@@ -69,17 +69,16 @@ result_t add_sensor(
     has_unit = true;
   }
 
-  sensor_buffer[sensor_id] = (sensor_t){
-      .id = sensor_id,
-      .name = s_name,
-      .description = s_desc,
-      .value_type = value_type,
-      .has_unit = has_unit,
-      .unit = s_unit,
-      .read_func = report_func,
-      .wake_interval_sec = interval_sec,
-      .node = {.next = NULL}
-  };
+  sensor_buffer[sensor_id] = (sensor_t){ .id = sensor_id,
+                                         .name = s_name,
+                                         .description = s_desc,
+                                         .value_type = value_type,
+                                         .semantics = semantics,
+                                         .has_unit = has_unit,
+                                         .unit = s_unit,
+                                         .read_func = report_func,
+                                         .wake_interval_sec = interval_sec,
+                                         .node = { .next = NULL } };
 
   sys_slist_append(&capabilities->sensors, &sensor_buffer[sensor_id].node);
 
@@ -109,15 +108,13 @@ result_t add_function(
     return ERROR;
   }
 
-  func_buffer[func_id] = (function_t){
-      .id = sensor_id,
-      .name = s_name,
-      .description = s_desc,
-      .arg_type = func_arg_type,
-      .call_function = call_func,
-      .wake_interval_sec = wake_interval_sec,
-      .node = {.next = NULL}
-  };
+  func_buffer[func_id] = (function_t){ .id = sensor_id,
+                                       .name = s_name,
+                                       .description = s_desc,
+                                       .arg_type = func_arg_type,
+                                       .call_function = call_func,
+                                       .wake_interval_sec = wake_interval_sec,
+                                       .node = { .next = NULL } };
 
   sys_slist_append(&capabilities->functions, &func_buffer[func_id].node);
 
