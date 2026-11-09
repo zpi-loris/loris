@@ -9,7 +9,7 @@ public class UserEntityConfiguration : IEntityTypeConfiguration<User>
     {
         // primary key
         builder.HasKey(e => e.UserId);
-        builder.Property(e => e.UserId).HasDefaultValue(Guid.CreateVersion7());
+        builder.Property(e => e.UserId).HasDefaultValueSql("uuidv7()");
 
         // unique index
         builder.HasIndex(e => e.DisplayName).IsUnique();

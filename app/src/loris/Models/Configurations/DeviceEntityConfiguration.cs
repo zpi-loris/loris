@@ -10,7 +10,7 @@ public class DeviceEntityConfiguration : IEntityTypeConfiguration<Device>
     {
         // primary key
         builder.HasKey(e => e.DeviceId);
-        builder.Property(e => e.DeviceId).HasDefaultValue(Guid.CreateVersion7());
+        builder.Property(e => e.DeviceId).HasDefaultValueSql("uuidv7()");
 
         // Unique indexes
         builder.HasIndex(e => e.DevEui).IsUnique();
@@ -19,12 +19,6 @@ public class DeviceEntityConfiguration : IEntityTypeConfiguration<Device>
         // text limits
         builder.Property(e => e.DeviceName).HasMaxLength(256);
         builder.Property(e => e.FriendlyName).HasMaxLength(256);
-
-        // Value conversion for DevEui
-        builder
-            .Property(e => e.DevEui)
-            .HasConversion(v => v.ToString(), v => DevEui.Parse(v))
-            .HasMaxLength(16);
 
         // TODO: add LastSeen value auto updating
     }
