@@ -127,5 +127,8 @@ public partial class LorisDbContext : DbContext
         OnModelCreatingPartial(modelBuilder);
     }
 
-    partial void OnModelCreatingPartial(ModelBuilder modelBuilder);
+    protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
+    {
+        configurationBuilder.Properties<DevEui>().HaveConversion<DevEuiConverter>();
+    }
 }
