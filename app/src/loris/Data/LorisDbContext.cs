@@ -24,9 +24,11 @@ public partial class LorisDbContext : DbContext
     public virtual DbSet<User> Users { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder) =>
-        optionsBuilder.UseNpgsql(
-            "CONFIGURE CONNECTION STRING" // TODO: CONFIGURE CONNECTION STRING
-        );
+        optionsBuilder
+            .UseNpgsql(
+            // "CONFIGURE CONNECTION STRING" // TODO: CONFIGURE CONNECTION STRING
+            )
+            .UseSnakeCaseNamingConvention();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

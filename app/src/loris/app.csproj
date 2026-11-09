@@ -9,6 +9,7 @@
   <ItemGroup>
     <PackageReference Include="CmdScale.EntityFrameworkCore.TimescaleDB" Version="10.5.0" />
     <PackageReference Include="CmdScale.EntityFrameworkCore.TimescaleDB.Design" Version="10.5.0" />
+    <PackageReference Include="EFCore.NamingConventions" Version="10.0.1" />
     <PackageReference Include="Google.Protobuf" Version="3.36.2" />
     <PackageReference Include="Grpc.AspNetCore" Version="2.85.0" />
     <PackageReference Include="Grpc.Tools" Version="2.85.0">
