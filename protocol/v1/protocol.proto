@@ -6,9 +6,10 @@ option csharp_namespace = "Loris.Protocol";
 
 enum SensorValueType {
   SENSOR_VALUE_TYPE_UNSPECIFIED = 0;
-  SENSOR_VALUE_TYPE_NUMERIC = 1;
-  SENSOR_VALUE_TYPE_TEXT = 2;
-  SENSOR_VALUE_TYPE_BOOL = 3;
+  SENSOR_VALUE_TYPE_INT = 1;
+  SENSOR_VALUE_TYPE_FLOAT = 2;
+  SENSOR_VALUE_TYPE_TEXT = 3;
+  SENSOR_VALUE_TYPE_BOOL = 4;
 }
 
 enum SensorSemantics {
