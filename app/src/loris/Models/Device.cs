@@ -1,34 +1,24 @@
-﻿using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
+﻿using Loris.Types;
 using Microsoft.EntityFrameworkCore;
 
 namespace Loris.Models;
 
-[Table("devices")]
-[Index("Deveui", Name = "devices_deveui_key", IsUnique = true)]
-[Index("FriendlyName", Name = "devices_friendly_name_key", IsUnique = true)]
+[Comment("All of the devices from Chirpstack")]
 public partial class Device
 {
-    [Key]
-    [Column("device_id")]
     public Guid DeviceId { get; set; }
 
-    [Column("deveui")]
-    public byte[] Deveui { get; set; } = null!;
+    public DevEui DevEui { get; set; }
 
-    [Column("device_name")]
     public string DeviceName { get; set; } = null!;
 
-    [Column("friendly_name")]
     public string FriendlyName { get; set; } = null!;
 
-    [InverseProperty("Device")]
-    public virtual ICollection<Function> Functions { get; set; } = [];
+    public DateTime LastSeen { get; set; }
 
-    [InverseProperty("Device")]
-    public virtual ICollection<Sensor> Sensors { get; set; } = [];
+    public DeviceStatus DeviceStatus { get; set; }
 
-    //TODO: UPDATE MODEL
-    //
-    // Enum column 'public.devices.status' cannot be scaffolded, define a CLR enum type and add the property manually.
+    public ICollection<Function> Functions { get; } = [];
+
+    public ICollection<Sensor> Sensors { get; } = [];
 }
