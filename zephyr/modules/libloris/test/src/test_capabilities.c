@@ -55,7 +55,8 @@ ZTEST(capabilities, test_add_sensors_to_the_list) {
           &cap,
           "test_name 1",
           "Measures temperature",
-          VALUE_TYPE_TEMPERATURE,
+          SENSOR_VALUE_TYPE_FLOAT,
+          SENSOR_SEMANTICS_TEMPERATURE,
           "C",
           &report_func,
           60
@@ -67,7 +68,8 @@ ZTEST(capabilities, test_add_sensors_to_the_list) {
           &cap,
           "test_name 2",
           "Measures temperature",
-          VALUE_TYPE_TEMPERATURE,
+          SENSOR_VALUE_TYPE_FLOAT,
+          SENSOR_SEMANTICS_TEMPERATURE,
           "F",
           &report_func,
           30

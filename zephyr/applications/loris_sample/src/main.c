@@ -56,7 +56,8 @@ int main() {
       &capabilities,
       "sample_sensor",
       "Measures temperature in the garden",
-      VALUE_TYPE_TEMPERATURE,
+      SENSOR_VALUE_TYPE_FLOAT,
+      SENSOR_SEMANTICS_TEMPERATURE,
       "C",
       &temp_report,
       10

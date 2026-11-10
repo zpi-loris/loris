@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) 2026 Tomasz Gadziński
+ *
+ * SPDX-License-Identifier: MIT
+ */
 #include <stdio.h>
 #include <zephyr/kernel.h>
 #include <zephyr/logging/log.h>
@@ -58,7 +63,7 @@ bool pb_callback_decode_str(pb_istream_t* istream, const pb_field_t* field) {
   }
 
   size_t len = istream->bytes_left;
-  str_t s = {0};
+  str_t s = { 0 };
   if (str_alloc_smart_len(&s, len) != OK) {
     LOG_WRN("str_alloc_smart_len failed\n");
     return false;
@@ -115,7 +120,8 @@ bool pb_callback_encode_sensor_list(
     pb_s.id = s->id;
     str_borrow(&pb_s.name, &s->name);
     str_borrow(&pb_s.description, &s->description);
-    pb_s.value_type = (protocol_v1_value_type_t)s->value_type;
+    pb_s.value_type = (protocol_v1_sensor_value_type_t)s->value_type;
+    pb_s.semantics = (protocol_v1_sensor_semantics_t)s->semantics;
     if (s->has_unit) {
       str_borrow(&pb_s.unit, &s->unit);
     } else {
@@ -283,6 +289,10 @@ result_t encode_uplink(
     size_t* bytes_written
 ) {
   LOG_DBG("Encoding uplink\n");
+  if (ul == NULL) {
+    LOG_WRN("uplink* src is NULL");
+    return ERROR;
+  }
 
   pb_ostream_t ostream = pb_ostream_from_buffer(out_buf, out_buf_size);
   protocol_v1_uplink_t pb_ul = PROTOCOL_V1_UPLINK_INIT_ZERO;
@@ -348,6 +358,12 @@ result_t encode_uplink(
 }
 
 result_t decode_downlink(downlink_t* out, const char* buf_in, size_t buf_size) {
+  LOG_DBG("Decoding downlink");
+  if (out == NULL) {
+    LOG_WRN("downlink* out is NULL");
+    return ERROR;
+  }
+
   pb_istream_t istream = pb_istream_from_buffer(buf_in, buf_size);
 
   protocol_v1_downlink_t pb_dl = PROTOCOL_V1_DOWNLINK_INIT_ZERO;
@@ -423,7 +439,8 @@ bool pb_callback_decode_sensor_to_list(
   s->id = read_sensor.id;
   str_move(&s->name, &read_sensor.name);
   str_move(&s->description, &read_sensor.description);
-  s->value_type = (value_type_t)read_sensor.value_type;
+  s->value_type = (sensor_value_type_t)read_sensor.value_type;
+  s->semantics = (sensor_semantics_t)read_sensor.semantics;
   if (read_sensor.unit.ptr != 0 && read_sensor.unit.len != 0) {
     s->has_unit = true;
     str_move(&s->unit, &read_sensor.unit);
@@ -471,6 +488,11 @@ result_t encode_downlink(
     size_t* bytes_written
 ) {
   LOG_DBG("Encoding downlink\n");
+  if (dl == NULL) {
+    LOG_WRN("downlink* src is NULL");
+    return ERROR;
+  }
+
   pb_ostream_t ostream = pb_ostream_from_buffer(out_buf, out_buf_size);
 
   protocol_v1_downlink_t pb_dl = PROTOCOL_V1_DOWNLINK_INIT_ZERO;
@@ -524,6 +546,11 @@ result_t encode_downlink(
 
 result_t decode_uplink(uplink_t* out, const char* buf_in, size_t buf_size) {
   LOG_DBG("Decoding uplink\n");
+  if (out == NULL) {
+    LOG_WRN("uplink* out is NULL");
+    return ERROR;
+  }
+
   pb_istream_t istream = pb_istream_from_buffer(buf_in, buf_size);
 
   protocol_v1_uplink_t pb_ul = PROTOCOL_V1_UPLINK_INIT_ZERO;
@@ -583,6 +610,10 @@ result_t decode_uplink(uplink_t* out, const char* buf_in, size_t buf_size) {
 }
 
 void uplink_free(uplink_t* ul) {
+  if (ul == NULL) {
+    return;
+  }
+
   switch (ul->payload_type) {
   case UPLINK_PAYLOAD_TYPE_REPORT:
     if (ul->payload.report.which_value == REPORT_VALUE_STRING) {

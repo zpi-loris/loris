@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) 2026 Tomasz Gadziński
+ *
+ * SPDX-License-Identifier: MIT
+ */
 #include <stdbool.h>
 #include <zephyr/kernel.h>
 #include <zephyr/kvss/zms.h>

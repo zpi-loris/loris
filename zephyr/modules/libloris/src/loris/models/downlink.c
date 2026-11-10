@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) 2026 Tomasz Gadziński
+ *
+ * SPDX-License-Identifier: MIT
+ */
 #include <zephyr/logging/log.h>
 
 #include "loris/models/downlink.h"
@@ -5,6 +10,10 @@
 LOG_MODULE_REGISTER(downlink);
 
 void downlink_free(downlink_t* dl) {
+  if (dl == NULL) {
+    return;
+  }
+
   if (dl->payload_type != DOWNLINK_PAYLOAD_TYPE_CALL) {
     return;
   }

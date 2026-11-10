@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) 2026 Tomasz Gadziński
+ *
+ * SPDX-License-Identifier: MIT
+ */
 #include <zephyr/logging/log.h>
 #include <zephyr/lorawan/lorawan.h>
 
@@ -70,10 +75,10 @@ void send_countdown(int countdown_secs) {
 }
 
 int main() {
-  // struct lorawan_downlink_cb dl_cb = { 0 };
-  // lr_lw_register_downlink_callback(&dl_cb, &dl_callback);
-  // lr_lw_register_dr_changed_callback(&datarate_changed_cb);
-  // lr_lw_register_link_check_ans_callback(&link_check_ans_cb);
+  struct lorawan_downlink_cb dl_cb = { 0 };
+  lr_lw_register_downlink_callback(&dl_cb, &dl_callback);
+  lr_lw_register_dr_changed_callback(&datarate_changed_cb);
+  lr_lw_register_link_check_ans_callback(&link_check_ans_cb);
 
   uint8_t dev_eui[] = LORAWAN_DEV_EUI;
   uint8_t join_eui[] = LORAWAN_JOIN_EUI;

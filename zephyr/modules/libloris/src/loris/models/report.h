@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) 2026 Tomasz Gadziński
+ *
+ * SPDX-License-Identifier: MIT
+ */
 #ifndef LORIS_REPORT_H
 #define LORIS_REPORT_H
 

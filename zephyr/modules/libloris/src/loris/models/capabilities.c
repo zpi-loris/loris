@@ -4,13 +4,14 @@
  * SPDX-License-Identifier: MIT
  */
 
+#include <zephyr/sys/slist.h>
+
 #include "capabilities.h"
-#include "../str.h"
 #include "loris/models/devclass.h"
 #include "loris/models/function.h"
 #include "loris/models/sensor.h"
 #include "loris/result.h"
-#include "zephyr/sys/slist.h"
+#include "loris/str.h"
 
 static int32_t sensor_id = 0;
 static int32_t func_id = 0;
@@ -46,7 +47,8 @@ result_t capabilities_add_sensor(
     capabilities_t* capabilities,
     const char* name,
     const char* description,
-    value_type_t value_type,
+    sensor_value_type_t value_type,
+    sensor_semantics_t semantics,
     const char* unit,
     report_t (*report_func)(struct sensor*),
     int32_t interval_sec
@@ -77,6 +79,7 @@ result_t capabilities_add_sensor(
                                          .name = s_name,
                                          .description = s_desc,
                                          .value_type = value_type,
+                                         .semantics = semantics,
                                          .has_unit = has_unit,
                                          .unit = s_unit,
                                          .read_func = report_func,
