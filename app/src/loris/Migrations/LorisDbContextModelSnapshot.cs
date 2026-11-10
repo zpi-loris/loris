@@ -155,13 +155,13 @@ namespace Loris.Migrations
 
             modelBuilder.Entity("Loris.Models.SensorReading", b =>
                 {
-                    b.Property<int>("SensorId")
-                        .HasColumnType("integer")
-                        .HasColumnName("sensor_id");
-
                     b.Property<byte[]>("DevEui")
                         .HasColumnType("bytea")
                         .HasColumnName("dev_eui");
+
+                    b.Property<int>("SensorId")
+                        .HasColumnType("integer")
+                        .HasColumnName("sensor_id");
 
                     b.Property<DateTime>("Time")
                         .HasColumnType("timestamp with time zone")
@@ -183,11 +183,8 @@ namespace Loris.Migrations
                         .HasColumnType("text")
                         .HasColumnName("string_value");
 
-                    b.HasKey("SensorId", "DevEui", "Time")
+                    b.HasKey("DevEui", "SensorId", "Time")
                         .HasName("pk_sensor_readings");
-
-                    b.HasIndex("DevEui", "SensorId")
-                        .HasDatabaseName("ix_sensor_readings_dev_eui_sensor_id");
 
                     b.ToTable("sensor_readings", null, t =>
                         {

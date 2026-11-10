@@ -11,8 +11,8 @@ public class SensorReadingEntityConfiguration : IEntityTypeConfiguration<SensorR
         // primary key
         builder.HasKey(e => new
         {
-            e.SensorId,
             e.DevEui,
+            e.SensorId,
             e.Time,
         });
 
