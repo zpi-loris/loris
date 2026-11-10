@@ -43,11 +43,7 @@ public static class ConfigServiceCollectionExtensions
         {
             var conf = configuration.GetSection("Chirpstack").GetSection("Integration");
 
-            var host = conf.TryGetPropertyValue<string?>("Host");
-            var port = conf.TryGetPropertyValue("Port", 1883);
-            var applicationId = conf.TryGetPropertyValue<Guid?>("ApplicationId");
-            var reconnectInterval = conf.TryGetPropertyValue("ReconnectInterval", 5);
-            var connectTimeout = conf.TryGetPropertyValue("ConnectTimeout", 5);
+            var host = conf["Host"];
 
             if (host == null)
             {
@@ -57,14 +53,35 @@ public static class ConfigServiceCollectionExtensions
                 );
             }
 
+            if (!int.TryParse(conf["Port"], out int port))
+            {
+                port = 1833;
+            }
+
+            if (!int.TryParse(conf["ReconnectInterval"], out var reconnectInterval))
+            {
+                reconnectInterval = 5;
+            }
+
+            if (!int.TryParse(conf["ConnectTimeout"], out var connectTimeout))
+            {
+                connectTimeout = 5;
+            }
+
+            // All important settings
             var settings = new ChirpstackIntegrationSettings
             {
                 Host = host,
                 Port = port,
-                ApplicationId = applicationId,
                 ReconnectInterval = reconnectInterval,
                 ConnectTimeout = connectTimeout,
             };
+
+            // filtering by application id
+            if (Guid.TryParse(conf["ApplicationId"], out var applicationId))
+            {
+                settings = settings with { ApplicationId = applicationId };
+            }
 
             services.AddSingleton(settings);
 
