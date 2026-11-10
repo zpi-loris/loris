@@ -1,6 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using Loris.Models;
+﻿using Loris.Models;
+using Loris.Protocol;
 using Loris.Types;
 using Microsoft.EntityFrameworkCore;
 
@@ -15,9 +14,9 @@ public partial class LorisDbContext : DbContext
 
     public virtual DbSet<Device> Devices { get; set; }
 
-    public virtual DbSet<Function> Functions { get; set; }
+    public virtual DbSet<Models.Function> Functions { get; set; }
 
-    public virtual DbSet<Sensor> Sensors { get; set; }
+    public virtual DbSet<Models.Sensor> Sensors { get; set; }
 
     public virtual DbSet<SensorReading> SensorReadings { get; set; }
 
@@ -26,7 +25,14 @@ public partial class LorisDbContext : DbContext
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder) =>
         optionsBuilder
             .UseNpgsql(
-            // "CONFIGURE CONNECTION STRING" // TODO: CONFIGURE CONNECTION STRING
+                // "CONFIGURE CONNECTION STRING" // TODO: CONFIGURE CONNECTION STRING
+                "Host=localhost;Port=5434;Database=loris;Username=postgres;Password=password",
+                options =>
+                    options
+                        .MapEnum<DeviceStatus>()
+                        .MapEnum<SensorValueType>()
+                        .MapEnum<SensorSemantics>()
+                        .MapEnum<FuncArgType>()
             )
             .UseSnakeCaseNamingConvention();
 

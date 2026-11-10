@@ -1,4 +1,5 @@
-﻿using Loris.Types;
+﻿using Loris.Protocol;
+using Loris.Types;
 using Microsoft.EntityFrameworkCore;
 
 namespace Loris.Models;
@@ -16,13 +17,15 @@ public partial class Sensor
 
     public string? Unit { get; set; }
 
+    public SensorValueType ValueType { get; set; }
+
+    public SensorSemantics Semantics { get; set; }
+
+    //
+    // REFERENCES
+    //
+
     public Device Device { get; set; } = null!;
 
     public ICollection<SensorReading> SensorReadings { get; } = [];
-
-    // TODO: UPDATE MODEL
-    //
-    // Enum column 'public.sensors.value_type' cannot be scaffolded, define a CLR enum type and add the property manually.
-    //
-    // Enum column 'public.sensors.value_data_type' cannot be scaffolded, define a CLR enum type and add the property manually.
 }

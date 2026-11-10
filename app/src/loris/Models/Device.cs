@@ -18,6 +18,10 @@ public partial class Device
 
     public DeviceStatus DeviceStatus { get; set; }
 
+    //
+    // REFERENCES
+    //
+
     public ICollection<Function> Functions { get; } = [];
 
     public ICollection<Sensor> Sensors { get; } = [];

@@ -20,5 +20,9 @@ public class SensorReading
 
     public bool? BoolValue { get; set; }
 
+    //
+    // REFERENCES
+    //
+
     public Sensor Sensor { get; set; } = null!;
 }

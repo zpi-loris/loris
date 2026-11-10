@@ -1,4 +1,5 @@
-﻿using Loris.Types;
+﻿using Loris.Protocol;
+using Loris.Types;
 using Microsoft.EntityFrameworkCore;
 
 namespace Loris.Models;
@@ -14,9 +15,11 @@ public partial class Function
 
     public string Description { get; set; } = null!;
 
-    public Device Device { get; set; } = null!;
+    public FuncArgType ArgType { get; set; }
 
-    // TODO: UPDATE MODEL
     //
-    // Enum column 'public.functions.arg_type' cannot be scaffolded, define a CLR enum type and add the property manually.
+    // REFERENCES
+    //
+
+    public Device Device { get; set; } = null!;
 }

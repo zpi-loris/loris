@@ -1,5 +1,4 @@
-﻿using Loris.Models.Configurations;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 
 namespace Loris.Models;
 
