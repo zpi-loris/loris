@@ -41,9 +41,9 @@ public static class ConfigServiceCollectionExtensions
         )
             where THandler : class, IChirpstackIntegrationHandler
         {
-            List<string> hierarchy = ["Chirpstack", "Integration"];
+            var conf = configuration.GetSection("Chirpstack").GetSection("Integration");
 
-            var host = configuration[string.Join(":", hierarchy.Append("Host"))];
+            var host = conf["Host"];
 
             if (host == null)
             {
@@ -53,46 +53,34 @@ public static class ConfigServiceCollectionExtensions
                 );
             }
 
-            var settings = new ChirpstackIntegrationSettings { Host = host };
-
-            if (
-                int.TryParse(
-                    configuration[string.Join(":", hierarchy.Append("Port"))],
-                    out var port
-                )
-            )
+            if (!int.TryParse(conf["Port"], out int port))
             {
-                settings = settings with { Port = port };
+                port = 1833;
             }
 
-            if (
-                Guid.TryParse(
-                    configuration[string.Join(":", hierarchy.Append("ApplicationId"))],
-                    out var applicationId
-                )
-            )
+            if (!int.TryParse(conf["ReconnectInterval"], out var reconnectInterval))
+            {
+                reconnectInterval = 5;
+            }
+
+            if (!int.TryParse(conf["ConnectTimeout"], out var connectTimeout))
+            {
+                connectTimeout = 5;
+            }
+
+            // All important settings
+            var settings = new ChirpstackIntegrationSettings
+            {
+                Host = host,
+                Port = port,
+                ReconnectInterval = reconnectInterval,
+                ConnectTimeout = connectTimeout,
+            };
+
+            // filtering by application id
+            if (Guid.TryParse(conf["ApplicationId"], out var applicationId))
             {
                 settings = settings with { ApplicationId = applicationId };
-            }
-
-            if (
-                int.TryParse(
-                    configuration[string.Join(":", hierarchy.Append("ReconnectInterval"))],
-                    out var reconnectInterval
-                )
-            )
-            {
-                settings = settings with { ReconnectInterval = reconnectInterval };
-            }
-
-            if (
-                int.TryParse(
-                    configuration[string.Join(":", hierarchy.Append("ConnectTimeout"))],
-                    out var connectTimeout
-                )
-            )
-            {
-                settings = settings with { ConnectTimeout = connectTimeout };
             }
 
             services.AddSingleton(settings);

@@ -1,15 +1,16 @@
-using Loris.Automations;
-using Loris.Automations.Actions;
-using Loris.Automations.Conditions;
-using Loris.Automations.Triggers;
+using CmdScale.EntityFrameworkCore.TimescaleDB;
 using Loris.Data;
 using Loris.Extensions;
 using Loris.MQTT.Client;
 using Loris.Services;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
+
+string? connectionString = builder.Configuration.GetConnectionString("Timescale");
+builder.Services.AddDbContext<LorisDbContext>(options => options.UseNpgsql(connectionString));
 
 // Configure channels for the ingestion subsystem
 builder.Services.AddChannels();
