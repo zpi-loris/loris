@@ -10,7 +10,6 @@
 #include "loris/models/function.h"
 #include "loris/models/sensor.h"
 #include "loris/result.h"
-#include "zephyr/sys/printk.h"
 #include "zephyr/sys/slist.h"
 
 static int32_t sensor_id = 0;
@@ -40,7 +39,6 @@ result_t capabilities_init(
   sys_slist_init(&out->sensors);
   sys_slist_init(&out->functions);
 
-  printk("\n capabilities done \n");
   return OK;
 }
 
