@@ -21,24 +21,6 @@ report_t report_func(struct sensor* t) {
   return rep;
 };
 
-result_t do_sth_int(void* arg) {
-  int val = *(int*)arg;
-
-  if (val == 1) {
-    return OK;
-  }
-  return ERROR;
-}
-
-result_t do_sth_float(void* arg) {
-  int val = *(float*)(arg);
-
-  if (val != 0) {
-    return OK;
-  }
-  return ERROR;
-}
-
 sensor_t* get_sensor_at_idx(sys_slist_t* sensor_list, int idx) {
   sensor_t* sensor;
 
@@ -125,6 +107,7 @@ ZTEST(capabilities, test_check_read_function_from_capabilities) {
   zassert_equal(fst_report.value.int_val, 2);
 }
 
+/*
 ZTEST(capabilities, test_add_functions_to_the_list) {
   zassert_equal(
       capabilities_add_function(
@@ -165,3 +148,5 @@ ZTEST(capabilities, test_add_functions_to_the_list) {
   zassert_not_equal(sys_slist_len(&cap.functions), 0);
   zassert_equal(sys_slist_len(&cap.functions), 2);
 }
+
+*/

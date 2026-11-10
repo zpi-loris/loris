@@ -83,7 +83,7 @@ result_t capabilities_add_function(
     char* name,
     char* description,
     func_arg_type_t func_arg_type,
-    result_t (*call_function)(void*),
+    void (*call_function)(void*),
     int32_t wake_interval_sec
 );
 
