@@ -4,7 +4,6 @@ using Microsoft.EntityFrameworkCore;
 namespace Loris.Models;
 
 [Comment("Web client users")]
-[EntityTypeConfiguration(typeof(UserEntityConfiguration))]
 public partial class User
 {
     public Guid UserId { get; set; }
