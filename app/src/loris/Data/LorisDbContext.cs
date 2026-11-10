@@ -1,4 +1,5 @@
-﻿using Loris.Models;
+﻿using CmdScale.EntityFrameworkCore.TimescaleDB;
+using Loris.Models;
 using Loris.Protocol;
 using Loris.Types;
 using Microsoft.EntityFrameworkCore;
@@ -24,23 +25,20 @@ public partial class LorisDbContext : DbContext
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder) =>
         optionsBuilder
-            .UseNpgsql(
-                // "CONFIGURE CONNECTION STRING" // TODO: CONFIGURE CONNECTION STRING
-                "Host=localhost;Port=5434;Database=loris;Username=postgres;Password=password",
-                options =>
-                    options
-                        .MapEnum<DeviceStatus>()
-                        .MapEnum<SensorValueType>()
-                        .MapEnum<SensorSemantics>()
-                        .MapEnum<FuncArgType>()
+            .UseNpgsql(options =>
+                options
+                    .MapEnum<DeviceStatus>()
+                    .MapEnum<SensorValueType>()
+                    .MapEnum<SensorSemantics>()
+                    .MapEnum<FuncArgType>()
             )
-            .UseSnakeCaseNamingConvention();
+            .UseSnakeCaseNamingConvention()
+            .UseTimescaleDb();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(LorisDbContext).Assembly);
-        modelBuilder.HasDefaultSchema("loris_schema");
     }
 
     protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)

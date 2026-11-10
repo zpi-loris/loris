@@ -8,11 +8,9 @@ using Microsoft.EntityFrameworkCore;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-string? connectionString = builder.Configuration.GetConnectionString("Timescale");
 
-builder.Services.AddDbContext<LorisDbContext>(options =>
-    options.UseNpgsql(connectionString).UseTimescaleDb()
-);
+string? connectionString = builder.Configuration.GetConnectionString("Timescale");
+builder.Services.AddDbContext<LorisDbContext>(options => options.UseNpgsql(connectionString));
 
 // Configure channels for the ingestion subsystem
 builder.Services.AddChannels();
