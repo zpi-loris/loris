@@ -1,3 +1,10 @@
+/*
+ * Copyright (c) 2026 Jan Kubów
+ * Copyright (c) 2026 Tomasz Gadziński
+ *
+ * SPDX-License-Identifier: MIT
+ */
+
 #ifndef LORIS_CAPABILITIES_H
 #define LORIS_CAPABILITIES_H
 
@@ -38,7 +45,7 @@ result_t capabilities_init(
 /**
  * @brief Adds a sensor to the capabilities of the device
  *
- * @param capabilities - A pointer to the capabilities_t
+ * @param[out] capabilities - A pointer to the capabilities_t
  * @param name - Name of the sensor to be displayed on the dashboard
  * @param description - Describes the sensor on the dashboard
  * @param value_type - Returned value type in report
@@ -49,7 +56,7 @@ result_t capabilities_init(
  *
  * @return result_t enum
  */
-result_t add_sensor(
+result_t capabilities_add_sensor(
     capabilities_t* capabilities,
     const char* name,
     const char* description,
@@ -63,7 +70,7 @@ result_t add_sensor(
 /**
  * @brief Adds a function to the capabilities of the device
  *
- * @param capabilities A pointer to the capabilities_t
+ * @param[out] capabilities A pointer to the capabilities_t
  * @param name Name of the function to be displayed on the dashboard
  * @param description Describes the function on the dashboard
  * @param func_arg_type Type of the argument
@@ -72,12 +79,12 @@ result_t add_sensor(
  *
  * @return result_t enum
  */
-result_t add_function(
+result_t capabilities_add_function(
     capabilities_t* capabilities,
     char* name,
     char* description,
     func_arg_type_t func_arg_type,
-    result_t (*call_function)(void*),
+    void (*call_function)(void*),
     int32_t wake_interval_sec
 );
 

@@ -1,3 +1,9 @@
+/*
+ * Copyright (c) 2026 Jan Kubów
+ *
+ * SPDX-License-Identifier: MIT
+ */
+
 #ifndef LORIS_DEVCLASS_H
 #define LORIS_DEVCLASS_H
 

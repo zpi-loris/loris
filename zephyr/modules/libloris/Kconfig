@@ -3,7 +3,7 @@
 
 menuconfig LORIS
   bool "Enable loris module"
-  depends on (LORA && LORAWAN && ZMS && FLASH && FLASH_MAP) || ZTEST
+  depends on (LORA && LORAWAN && ZMS && FLASH && FLASH_MAP && MIN_HEAP) || ZTEST
   help
     Enables the loris module.
 
@@ -13,11 +13,11 @@ menuconfig LORIS
 if LORIS
 
 config LORIS_SENSORS_AMOUNT
-  int
+  int "How many sensors are in the device"
   default 5
 
 config LORIS_FUNCS_AMOUNT
-  int
+  int "How many functions are provided"
   default 12
 
 config LORIS_TEST
@@ -25,5 +25,17 @@ config LORIS_TEST
   help
     When 'y' compiles additional helper functions not needed in production,
     e.g. uplink DECODING and downlink ENCODING.
+
+config LORIS_RECONNECT_INTERVAL
+  int "Defines how often will the device try establish a connection with the server. Unit: Seconds" 
+  default 60
+
+config LORIS_UPLINK_QUEUE_SIZE
+  int "How many uplink messages can be stored in a queue at once"
+  default 10
+
+config LORIS_DOWNLINK_QUEUE_SIZE
+  int "How many downlink messages can be stored in a queue at once"
+  default 10
 
 endif

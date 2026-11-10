@@ -5,7 +5,6 @@
  */
 
 #include "zephyr/sys/slist.h"
-#include <loris/models/capabilities.h>
 #include <zephyr/devicetree.h>
 #include <zephyr/drivers/adc.h>
 #include <zephyr/kernel.h>
@@ -16,9 +15,9 @@ static const struct adc_dt_spec adc_channel =
 int16_t sample_buffer[1];
 
 struct adc_sequence sequence = {
-    .buffer = sample_buffer,
-    .buffer_size = sizeof(sample_buffer),
-    // Optional: resolution, etc. Usually taken from DT
+  .buffer = sample_buffer,
+  .buffer_size = sizeof(sample_buffer),
+  // Optional: resolution, etc. Usually taken from DT
 };
 
 int main(void) {

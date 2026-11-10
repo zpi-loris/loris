@@ -26,18 +26,21 @@ static lr_lw_result_t join(
     LOG_WRN("Device '%s' not ready", lora_dev->name);
     return LR_LW_ERR_DEV_NOT_READY;
   }
+  LOG_INF("Device is ready");
 
   int ret = lorawan_set_region(region);
   if (ret < 0) {
     LOG_WRN("Couldn't set LoRaWAN region: %d", ret);
     return LR_LW_ERR_SET_REGION_FAILED;
   }
+  LOG_INF("Region set");
 
   ret = lorawan_start();
   if (ret < 0) {
     LOG_WRN("Error starting LoRaWAN stack: %d", ret);
     return LR_LW_ERR_START_FAILED;
   }
+  LOG_INF("LoRaWAN started");
 
   ret = lorawan_join(cfg);
   if (ret < 0) {
@@ -108,16 +111,16 @@ lr_lw_result_t lr_lw_join_otaa(
   LOG_DBG("Saved last used devnonce=%u", devnonce);
 
   struct lorawan_join_otaa otaa_cfg = {
-      .join_eui = cfg->join_eui,
-      .nwk_key = cfg->nwk_key,
-      .app_key = cfg->app_key,
-      .dev_nonce = devnonce,
+    .join_eui = cfg->join_eui,
+    .nwk_key = cfg->nwk_key,
+    .app_key = cfg->app_key,
+    .dev_nonce = devnonce,
   };
 
   struct lorawan_join_config join_cfg = {
-      .otaa = otaa_cfg,
-      .dev_eui = cfg->dev_eui,
-      .mode = LORAWAN_ACT_OTAA,
+    .otaa = otaa_cfg,
+    .dev_eui = cfg->dev_eui,
+    .mode = LORAWAN_ACT_OTAA,
   };
 
   return join(&join_cfg, region);
@@ -129,17 +132,15 @@ lr_lw_result_t lr_lw_join_abp(
 ) {
   LOG_DBG("Joining LoRaWAN using ABP");
 
-  struct lorawan_join_abp abp_cfg = {
-      .dev_addr = cfg->dev_addr,
-      .app_skey = cfg->app_skey,
-      .nwk_skey = cfg->nwk_skey,
-      .app_eui = cfg->app_eui
-  };
+  struct lorawan_join_abp abp_cfg = { .dev_addr = cfg->dev_addr,
+                                      .app_skey = cfg->app_skey,
+                                      .nwk_skey = cfg->nwk_skey,
+                                      .app_eui = cfg->app_eui };
 
   struct lorawan_join_config join_cfg = {
-      .abp = abp_cfg,
-      .dev_eui = cfg->dev_eui,
-      .mode = LORAWAN_ACT_ABP,
+    .abp = abp_cfg,
+    .dev_eui = cfg->dev_eui,
+    .mode = LORAWAN_ACT_ABP,
   };
 
   return join(&join_cfg, region);
@@ -217,8 +218,10 @@ lr_lw_result_t lr_lw_set_datarate(enum lorawan_datarate dr) {
   int ret = lorawan_set_datarate(dr);
 
   if (ret == -EINVAL) {
-    LOG_WRN("Setting datarate failed"
-            " - invalid datarate for the region or ADR enabled");
+    LOG_WRN(
+        "Setting datarate failed"
+        " - invalid datarate for the region or ADR enabled"
+    );
     return LR_LW_INVALID_DATARATE_OR_ADR_ENABLED;
   }
 

@@ -1,3 +1,9 @@
+/*
+ * Copyright (c) 2026 Jan Kubów
+ *
+ * SPDX-License-Identifier: MIT
+ */
+
 #include <zephyr/sys/slist.h>
 
 #include "capabilities.h"
@@ -37,7 +43,7 @@ result_t capabilities_init(
   return OK;
 }
 
-result_t add_sensor(
+result_t capabilities_add_sensor(
     capabilities_t* capabilities,
     const char* name,
     const char* description,
@@ -83,15 +89,16 @@ result_t add_sensor(
   sys_slist_append(&capabilities->sensors, &sensor_buffer[sensor_id].node);
 
   sensor_id++;
+
   return OK;
 }
 
-result_t add_function(
+result_t capabilities_add_function(
     capabilities_t* capabilities,
     char* name,
     char* description,
     func_arg_type_t func_arg_type,
-    result_t (*call_func)(void*),
+    void (*call_func)(void*),
     int32_t wake_interval_sec
 ) {
   if (capabilities == NULL) {
