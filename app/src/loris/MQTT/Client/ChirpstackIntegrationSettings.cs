@@ -12,7 +12,7 @@ public record ChirpstackIntegrationSettings
     /// MQTT integration broker listening port.<br/>
     /// 1883 is default
     /// </summary>
-    public int Port { get; init; } = 1883;
+    public int Port { get; init; }
 
     /// <summary>
     /// <para>
@@ -35,7 +35,7 @@ public record ChirpstackIntegrationSettings
     /// <b>Default value is 5 seconds</b>
     /// </para>
     /// </summary>
-    public int ReconnectInterval { get; init; } = 5;
+    public int ReconnectInterval { get; init; }
 
     /// <summary>
     /// <para>
@@ -49,5 +49,5 @@ public record ChirpstackIntegrationSettings
     /// <b>Default value is 5 seconds</b>
     /// </para>
     /// </summary>
-    public int ConnectTimeout { get; init; } = 5;
+    public int ConnectTimeout { get; init; }
 }
