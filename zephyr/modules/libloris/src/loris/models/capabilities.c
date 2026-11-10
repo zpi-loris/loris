@@ -23,24 +23,20 @@ result_t capabilities_init(
     const char* device_name,
     device_class_t device_class
 ) {
-  printk("1");
   if (out == NULL) {
     return ERROR;
   }
 
-  printk("2");
   str_t device_name_str;
   if (str_from_static(&device_name_str, device_name) == ERROR) {
     return ERROR;
   }
 
-  printk("3");
   *out = (capabilities_t){ .device_name = device_name_str,
                            .device_class = device_class,
                            .functions = {},
                            .sensors = {} };
 
-  printk("4");
   sys_slist_init(&out->sensors);
   sys_slist_init(&out->functions);
 
@@ -93,7 +89,6 @@ result_t capabilities_add_sensor(
 
   sensor_id++;
 
-  printk("add sensor done \n");
   return OK;
 }
 

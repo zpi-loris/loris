@@ -25,7 +25,7 @@
 
 #define HEAP_CAPACITY CONFIG_LORIS_SENSORS_AMOUNT
 
-LOG_MODULE_REGISTER(main);
+LOG_MODULE_REGISTER(loris, LOG_LEVEL_DBG);
 
 typedef struct lora_data {
   char* data;
@@ -40,6 +40,8 @@ typedef struct sensor_time {
 struct k_msgq dl_q;
 struct k_msgq ul_q;
 struct k_msgq lora_q;
+
+struct lorawan_downlink_cb dl_cb;
 
 bool device_connected = false;
 
@@ -260,9 +262,9 @@ K_THREAD_STACK_DEFINE(
     DL_COMMUNICATION_THREAD_SIZE
 );
 
-void loris_start(capabilities_t* capabilities) {
-  struct lorawan_downlink_cb dl_cb;
-  lr_lw_register_downlink_callback(&dl_cb, &dl_callback);
+void lr_init_loris() { lr_lw_register_downlink_callback(&dl_cb, &dl_callback); }
+
+void lr_start(capabilities_t* capabilities) {
 
   char dl_q_buf[2048];
   char ul_q_buf[2048];
@@ -272,6 +274,8 @@ void loris_start(capabilities_t* capabilities) {
   struct k_thread dl_tdata;
   struct k_thread ul_communication_tdata;
   struct k_thread dl_communication_tdata;
+
+  LOG_DBG("start: Structs created");
 
   k_tid_t ul_tid = k_thread_create(
       &ul_tdata,
@@ -327,8 +331,12 @@ void loris_start(capabilities_t* capabilities) {
   k_msgq_init(&ul_q, ul_q_buf, sizeof(uplink_t), 10);
   k_msgq_init(&lora_q, lora_q_buf, sizeof(lora_data_t), 10);
 
+  LOG_DBG("start: msgq init");
+
   k_thread_start(ul_tid);
   k_thread_start(dl_tid);
   k_thread_start(ul_communication_tid);
   k_thread_start(dl_communication_tid);
+
+  LOG_DBG("start: threads started");
 }
