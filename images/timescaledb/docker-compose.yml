@@ -1,0 +1,62 @@
+services:
+  timescaledb:
+    image: timescale/timescaledb:latest-pg18
+    volumes:
+      - loris-data:/pgdata
+    environment:
+      - PGDATA=/pgdata
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
+    container_name: timescaledb
+    networks:
+      - loris-network
+    ports:
+      - 6543:5432
+
+  pgadmin4:
+    image: dpage/pgadmin4
+    ports:
+      - 80:80
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=user@domain.com
+      - PGADMIN_DEFAULT_PASSWORD=password
+      - PGADMIN_CONFIG_SERVER_MODE=False
+      - PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED=False
+    networks:
+      - loris-network
+    configs:
+      - source: pgadmin-pgpass
+        target: /config/pgpass
+        uid: "5050"
+        gid: "5050"
+        mode: 0400
+      - source: pgadmin-servers
+        target: /pgadmin4/servers.json
+        mode: 0444
+
+networks:
+  loris-network:
+    driver: bridge
+
+volumes:
+  loris-data:
+
+configs:
+  pgadmin-servers:
+    content: |
+      {
+        "Servers": {
+          "1": {
+            "Name": "Local TimescaleDB",
+            "Group": "Servers",
+            "Host": "timescaledb",
+            "Port": 5432,
+            "MaintenanceDB": "postgres",
+            "Username": "postgres",
+            "PassFile": "/config/pgpass"
+          }
+        }
+      }
+  pgadmin-pgpass:
+    content: |
+      timescaledb:5432:*:postgres:password
