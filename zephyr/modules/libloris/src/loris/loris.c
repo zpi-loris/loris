@@ -6,6 +6,7 @@
 
 #include "loris.h"
 #include "loris/codec.h"
+#include "loris/lorawan.h"
 #include "loris/models/call.h"
 #include "loris/models/capabilities.h"
 #include "loris/models/downlink.h"
@@ -13,6 +14,7 @@
 #include "loris/models/sensor.h"
 #include "loris/models/uplink.h"
 #include "loris/result.h"
+#include "zephyr/lorawan/lorawan.h"
 
 #include <stdint.h>
 #include <zephyr/kernel.h>
@@ -35,17 +37,13 @@ typedef struct sensor_time {
   int64_t timestamp;
 } sensor_time_t;
 
-typedef struct uplink_wrp {
-  uplink_t uplink;
-  size_t bytes_written;
-} uplink_wrp_t;
-
-struct k_msgq downlink_q;
-struct k_msgq uplink_q;
+struct k_msgq dl_q;
+struct k_msgq ul_q;
 struct k_msgq lora_q;
 
 bool device_connected = false;
 
+/* Comparison function for min_heap */
 static int compare(const void* a, const void* b) {
   const sensor_time_t* st_a = a;
   const sensor_time_t* st_b = b;
@@ -61,13 +59,13 @@ MIN_HEAP_DEFINE_STATIC(
     compare
 );
 
-extern void uplink_thread(void* capabilities, void* unused1, void* unused2) {
+extern void ul_thread(void* capabilities, void* unused1, void* unused2) {
   /* 1. Check if the device is connected
-   *  1.a) If it's connected proceed with the usual sensor reporting
+   *  1.a) If it's connected, proceed with the usual sensor reporting
    *  1.b) If it's disconnected then we must establish a connection:
-   *    - add a payload with capabilities to the downlink_q and wait for
-   *      CONFIG_RECONNECT_INTERVAL (It could be improved later on but for now
-   *      it'll be simple enough and work).
+   *    - add a payload with capabilities to the ul_q
+   *    - wait for CONFIG_RECONNECT_INTERVAL (It could be improved later on but
+   *      for now it'll be simple enough and work).
    */
   if (capabilities == NULL) {
     return;
@@ -124,10 +122,10 @@ extern void uplink_thread(void* capabilities, void* unused1, void* unused2) {
         break;
       }
 
-      uplink_t report_uplink = { .payload.report = report,
-                                 .payload_type = UPLINK_PAYLOAD_TYPE_REPORT };
+      uplink_t report_ul = { .payload.report = report,
+                             .payload_type = UPLINK_PAYLOAD_TYPE_REPORT };
 
-      k_msgq_put(&uplink_q, &report_uplink, K_NO_WAIT);
+      k_msgq_put(&ul_q, &report_ul, K_NO_WAIT);
 
       LOG_DBG("Going to sleep at: %d\n", (int)k_uptime_get());
       k_msleep(
@@ -135,52 +133,51 @@ extern void uplink_thread(void* capabilities, void* unused1, void* unused2) {
           k_uptime_get()
       );
     } else {
-      uplink_t capabilities_uplink = { .payload.capabilities =
-                                           *capabilities_ptr,
-                                       .payload_type =
-                                           UPLINK_PAYLOAD_TYPE_CAPABILITIES };
+      LOG_DBG("Trying to connect to loris client");
+      uplink_t capabilities_ul = { .payload.capabilities = *capabilities_ptr,
+                                   .payload_type =
+                                       UPLINK_PAYLOAD_TYPE_CAPABILITIES };
 
-      k_msgq_put(&uplink_q, &capabilities_uplink, K_NO_WAIT);
-      k_timeout_t timeout = { .ticks = CONFIG_LORIS_RECONNECT_INTERVAL };
-      k_sleep(timeout);
+      k_msgq_put(&ul_q, &capabilities_ul, K_NO_WAIT);
+      k_msleep(CONFIG_LORIS_RECONNECT_INTERVAL * 1000);
     }
   }
 }
 
-extern void downlink_thread(void* capabilities, void* unused1, void* unused2) {
+extern void dl_thread(void* capabilities, void* unused1, void* unused2) {
   /*
-   * 1. Wait for a message from downlink_q
+   * 1. Wait for a message from dl_q
    *  1.a) If a message is a function - run it
    *  1.b) Else it must be a ping - set device_connected flag accordingly
    *    - Now in rest of the threads, the threads check whether the device
-   * is connected and what to do.
+   *      is connected and what to do.
    */
   if (capabilities == NULL) {
     return;
   }
   capabilities_t* capabilities_ptr = capabilities;
-  downlink_t downlink_msg;
+  downlink_t dl_msg;
 
   while (1) {
-    k_msgq_get(&downlink_q, &downlink_msg, K_FOREVER);
+    k_msgq_get(&dl_q, &dl_msg, K_FOREVER);
     if (!device_connected) {
-      if (downlink_msg.payload_type != DOWNLINK_PAYLOAD_TYPE_PING) {
+      if (dl_msg.payload_type != DOWNLINK_PAYLOAD_TYPE_PING) {
         continue;
       }
-      if (downlink_msg.payload.ping.type != DOWN_PING_TYPE_HELLO) {
+      if (dl_msg.payload.ping.type != DOWN_PING_TYPE_HELLO) {
         continue;
       }
       device_connected = true;
     } else {
-      if (downlink_msg.payload_type == DOWNLINK_PAYLOAD_TYPE_PING) {
-        if (downlink_msg.payload.ping.type == DOWN_PING_TYPE_DISCONNECT) {
+      if (dl_msg.payload_type == DOWNLINK_PAYLOAD_TYPE_PING) {
+        if (dl_msg.payload.ping.type == DOWN_PING_TYPE_DISCONNECT) {
           device_connected = false;
         }
       } else {
         function_t* func;
         SYS_SLIST_FOR_EACH_CONTAINER(&capabilities_ptr->functions, func, node) {
-          if (func->id == downlink_msg.payload.call.function_id) {
-            func->call_function(&downlink_msg.payload.call.value);
+          if (func->id == dl_msg.payload.call.function_id) {
+            func->call_function(&dl_msg.payload.call.value);
           }
         }
       }
@@ -188,78 +185,99 @@ extern void downlink_thread(void* capabilities, void* unused1, void* unused2) {
   }
 }
 
-extern void uplink_communication_thread() {
+extern void ul_communication_thread() {
   while (1) {
-    uplink_t uplink;
-    /*
-     * 1. Check if there are any incoming packets from physical LoRA
-     * (K_NO_WAIT) 1.a) If yes convert them to downlink_t and put them into
-     * the downlink_q (which is later handled by the downlink_thread)
-     * 2. Take messages from uplink_q, encode them and send them via LoRa
-     * (K_FOREVER)
-     *  - this way the thread wakes up each time a sensor reports or a
-     *    function sends a ping after timer ends.
-     */
-    k_msgq_get(&uplink_q, &uplink, K_FOREVER);
+    uplink_t ul;
+    k_msgq_get(&ul_q, &ul, K_FOREVER);
+
     char buf[1024];
     size_t bytes_written;
-    encode_uplink(buf, sizeof(buf), &uplink, &bytes_written);
-    // lora_data_t outgoing_data = {.data = buf, .data_size = bytes_written};
-    LOG_DBG("Sending uplink packet...");
+    encode_uplink(buf, sizeof(buf), &ul, &bytes_written);
+
+    LOG_INF("Sending packet!");
+    lr_lw_result_t ret =
+        lr_lw_send(1, buf, bytes_written, LORAWAN_MSG_CONFIRMED);
+
+    if (ret != LR_LW_OK) {
+      LOG_ERR("Sending message failed!");
+    }
   }
 }
 
-extern void downlink_communication_thread() {
+extern void dl_communication_thread() {
   while (1) {
-    downlink_t downlink;
-    /*
-     * 1. Check if there are any incoming packets from physical LoRA
-     * (K_NO_WAIT) 1.a) If yes convert them to downlink_t and put them into
-     * the downlink_q (which is later handled by the downlink_thread)
-     * 2. Take messages from uplink_q, encode them and send them via LoRa
-     * (K_FOREVER)
-     *  - this way the thread wakes up each time a sensor reports or a
-     *    function sends a ping after timer ends.
-     */
+    downlink_t dl;
     lora_data_t incoming_data;
     k_msgq_get(&lora_q, &incoming_data, K_FOREVER);
-    LOG_DBG("Received downlink packet...");
-    decode_downlink(&downlink, incoming_data.data, incoming_data.data_size);
-    k_msgq_put(&downlink_q, &downlink, K_FOREVER);
+
+    LOG_DBG("Received dl packet...");
+    decode_downlink(&dl, incoming_data.data, incoming_data.data_size);
+    k_msgq_put(&dl_q, &dl, K_FOREVER);
   }
 }
 
-#define UPLINK_THREAD_SIZE 500
-#define DOWNLINK_THREAD_SIZE 500
-#define UPLINK_COMMUNICATION_THREAD_SIZE 500
-#define DOWNLINK_COMMUNICATION_THREAD_SIZE 500
+static void dl_callback(
+    uint8_t port,
+    uint8_t flags,
+    int16_t rssi,
+    int8_t snr,
+    uint8_t len,
+    const uint8_t* hex_data
+) {
+  LOG_INF("Port %d, RSSI %ddB, SNR %ddBm", port, rssi, snr);
 
-K_THREAD_STACK_DEFINE(uplink_stack_area, UPLINK_THREAD_SIZE);
-K_THREAD_STACK_DEFINE(downlink_stack_area, DOWNLINK_THREAD_SIZE);
+  if (flags & LORAWAN_TIME_UPDATED) {
+    /* The stack has synced the network time from a DeviceTimeAns. */
+    LOG_INF("Network time updated");
+  }
+
+  if (flags & LORAWAN_DATA_PENDING) {
+    /* The network server has more dls queued.  An application
+     * that wants to drain them promptly can schedule another ul
+     * (e.g. an empty one on any port) here.
+     */
+    LOG_INF("Network reports more data pending (FPending set)");
+  }
+
+  if (hex_data) {
+    k_msgq_put(&lora_q, hex_data, K_FOREVER);
+  }
+}
+
+#define UL_THREAD_SIZE 4096
+#define DL_THREAD_SIZE 4096
+#define UL_COMMUNICATION_THREAD_SIZE 4096
+#define DL_COMMUNICATION_THREAD_SIZE 4096
+
+K_THREAD_STACK_DEFINE(ul_stack_area, UL_THREAD_SIZE);
+K_THREAD_STACK_DEFINE(dl_stack_area, DL_THREAD_SIZE);
 K_THREAD_STACK_DEFINE(
-    uplink_communication_stack_area,
-    UPLINK_COMMUNICATION_THREAD_SIZE
+    ul_communication_stack_area,
+    UL_COMMUNICATION_THREAD_SIZE
 );
 K_THREAD_STACK_DEFINE(
-    downlink_communication_stack_area,
-    DOWNLINK_COMMUNICATION_THREAD_SIZE
+    dl_communication_stack_area,
+    DL_COMMUNICATION_THREAD_SIZE
 );
 
-result_t loris_main_loop(capabilities_t* capabilities) {
-  char downlink_q_buf[1024];
-  char uplink_q_buf[1024];
-  char lora_q_buf[1024];
+void loris_start(capabilities_t* capabilities) {
+  struct lorawan_downlink_cb dl_cb;
+  lr_lw_register_downlink_callback(&dl_cb, &dl_callback);
 
-  struct k_thread uplink_tdata;
-  struct k_thread downlink_tdata;
-  struct k_thread uplink_communication_tdata;
-  struct k_thread downlink_communication_tdata;
+  char dl_q_buf[2048];
+  char ul_q_buf[2048];
+  char lora_q_buf[2048];
 
-  k_tid_t uplink_tid = k_thread_create(
-      &uplink_tdata,
-      uplink_stack_area,
-      K_THREAD_STACK_SIZEOF(uplink_stack_area),
-      uplink_thread,
+  struct k_thread ul_tdata;
+  struct k_thread dl_tdata;
+  struct k_thread ul_communication_tdata;
+  struct k_thread dl_communication_tdata;
+
+  k_tid_t ul_tid = k_thread_create(
+      &ul_tdata,
+      ul_stack_area,
+      K_THREAD_STACK_SIZEOF(ul_stack_area),
+      ul_thread,
       &capabilities,
       NULL,
       NULL,
@@ -267,11 +285,11 @@ result_t loris_main_loop(capabilities_t* capabilities) {
       0,
       K_FOREVER
   );
-  k_tid_t downlink_tid = k_thread_create(
-      &downlink_tdata,
-      downlink_stack_area,
-      K_THREAD_STACK_SIZEOF(downlink_stack_area),
-      downlink_thread,
+  k_tid_t dl_tid = k_thread_create(
+      &dl_tdata,
+      dl_stack_area,
+      K_THREAD_STACK_SIZEOF(dl_stack_area),
+      dl_thread,
       &capabilities,
       NULL,
       NULL,
@@ -279,11 +297,11 @@ result_t loris_main_loop(capabilities_t* capabilities) {
       0,
       K_FOREVER
   );
-  k_tid_t uplink_communication_tid = k_thread_create(
-      &uplink_communication_tdata,
-      uplink_communication_stack_area,
-      K_THREAD_STACK_SIZEOF(uplink_communication_stack_area),
-      uplink_communication_thread,
+  k_tid_t ul_communication_tid = k_thread_create(
+      &ul_communication_tdata,
+      ul_communication_stack_area,
+      K_THREAD_STACK_SIZEOF(ul_communication_stack_area),
+      ul_communication_thread,
       NULL,
       NULL,
       NULL,
@@ -292,11 +310,11 @@ result_t loris_main_loop(capabilities_t* capabilities) {
       K_FOREVER
   );
 
-  k_tid_t downlink_communication_tid = k_thread_create(
-      &downlink_communication_tdata,
-      downlink_communication_stack_area,
-      K_THREAD_STACK_SIZEOF(downlink_communication_stack_area),
-      downlink_communication_thread,
+  k_tid_t dl_communication_tid = k_thread_create(
+      &dl_communication_tdata,
+      dl_communication_stack_area,
+      K_THREAD_STACK_SIZEOF(dl_communication_stack_area),
+      dl_communication_thread,
       NULL,
       NULL,
       NULL,
@@ -305,14 +323,12 @@ result_t loris_main_loop(capabilities_t* capabilities) {
       K_FOREVER
   );
 
-  k_msgq_init(&downlink_q, downlink_q_buf, sizeof(downlink_t), 10);
-  k_msgq_init(&uplink_q, uplink_q_buf, sizeof(uplink_t), 10);
+  k_msgq_init(&dl_q, dl_q_buf, sizeof(downlink_t), 10);
+  k_msgq_init(&ul_q, ul_q_buf, sizeof(uplink_t), 10);
   k_msgq_init(&lora_q, lora_q_buf, sizeof(lora_data_t), 10);
 
-  k_thread_start(uplink_tid);
-  k_thread_start(downlink_tid);
-  k_thread_start(uplink_communication_tid);
-  k_thread_start(downlink_communication_tid);
-
-  return OK;
+  k_thread_start(ul_tid);
+  k_thread_start(dl_tid);
+  k_thread_start(ul_communication_tid);
+  k_thread_start(dl_communication_tid);
 }
