@@ -15,11 +15,9 @@ ZTEST_SUITE(capabilities, NULL, NULL, NULL, NULL, NULL);
 capabilities_t cap;
 
 report_t report_func(struct sensor* t) {
-  report_t rep = {
-      .sensor_id = t->id,
-      .value = {2},
-      .which_value = REPORT_VALUE_INT
-  };
+  report_t rep = { .sensor_id = t->id,
+                   .value = { 2 },
+                   .which_value = REPORT_VALUE_INT };
   return rep;
 };
 
@@ -75,7 +73,8 @@ ZTEST(capabilities, test_add_sensors_to_the_list) {
           &cap,
           "test_name 1",
           "Measures temperature",
-          VALUE_TYPE_TEMPERATURE,
+          SENSOR_VALUE_TYPE_FLOAT,
+          SENSOR_SEMANTICS_TEMPERATURE,
           "C",
           &report_func,
           60
@@ -87,7 +86,8 @@ ZTEST(capabilities, test_add_sensors_to_the_list) {
           &cap,
           "test_name 2",
           "Measures temperature",
-          VALUE_TYPE_TEMPERATURE,
+          SENSOR_VALUE_TYPE_FLOAT,
+          SENSOR_SEMANTICS_TEMPERATURE,
           "F",
           &report_func,
           30
