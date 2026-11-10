@@ -10,8 +10,10 @@
     <PackageReference Include="CmdScale.EntityFrameworkCore.TimescaleDB" Version="10.5.0" />
     <PackageReference Include="CmdScale.EntityFrameworkCore.TimescaleDB.Design" Version="10.5.0" />
     <PackageReference Include="EFCore.NamingConventions" Version="10.0.1" />
+    <PackageReference Include="Chirpstack.Api" Version="4.100.2" />
     <PackageReference Include="Google.Protobuf" Version="3.36.2" />
     <PackageReference Include="Grpc.AspNetCore" Version="2.85.0" />
+    <PackageReference Include="Grpc.Net.Client.Web" Version="2.85.0" />
     <PackageReference Include="Grpc.Tools" Version="2.85.0">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
@@ -32,15 +34,6 @@
     <RuntimeHostConfigurationOption Include="System.Text.Json.Serialization.RespectRequiredConstructorParametersDefault" Value="true" />
   </ItemGroup>
   <ItemGroup>
-    <Protobuf Include="../../../protocol/v1/protocol.proto" Link="Protos/protocol.proto" />
-    <Protobuf Include="../../proto/chirpstack/common/common.proto" Link="Protos/common.proto">
-      <SourceUrl>https://raw.githubusercontent.com/chirpstack/chirpstack/refs/heads/master/api/proto/common/common.proto</SourceUrl>
-    </Protobuf>
-    <Protobuf Include="../../proto/chirpstack/gw/gw.proto" AdditionalImportDirs="../../proto/chirpstack/" Link="Protos/gw.proto">
-      <SourceUrl>https://raw.githubusercontent.com/chirpstack/chirpstack/refs/heads/master/api/proto/gw/gw.proto</SourceUrl>
-    </Protobuf>
-    <Protobuf Include="../../proto/chirpstack/integration/integration.proto" AdditionalImportDirs="../../proto/chirpstack/" Link="Protos/integration.proto">
-      <SourceUrl>https://raw.githubusercontent.com/chirpstack/chirpstack/refs/heads/master/api/proto/integration/integration.proto</SourceUrl>
-    </Protobuf>
+    <Protobuf Include="..\..\..\protocol\v1\protocol.proto" Link="Protos\protocol.proto" />
   </ItemGroup>
 </Project>
