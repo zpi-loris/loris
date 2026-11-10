@@ -21,3 +21,8 @@
     power-amplifier-output = "pa-boost";
   };
 };
+
+&rtc_timer {
+  status = "okay";
+  wakeup-source;
+};
