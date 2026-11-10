@@ -1,0 +1,6 @@
+[submodule "docs"]
+	path = docs
+	url = git@github.com:zpi-loris/docs.git
+[submodule "chirpastack-simulator"]
+	path = chirpastack-simulator
+	url = git@github.com:zpi-loris/chirpstack-simulator.git
