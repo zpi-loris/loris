@@ -1,6 +1,8 @@
 #include "loris/lorawan.h"
 #include "loris/loris.h"
 #include "loris/models/capabilities.h"
+#include "loris/models/function.h"
+#include "zephyr/sys/printk.h"
 
 #include <zephyr/logging/log.h>
 #include <zephyr/lorawan/lorawan.h>
@@ -11,9 +13,9 @@
   { 0xd9, 0xc7, 0xae, 0xd4, 0x2c, 0x8e, 0x86, 0xed,                            \
     0x21, 0x8e, 0x13, 0xf3, 0x3f, 0x86, 0xeb, 0x38 }
 
-LOG_MODULE_REGISTER(lorawan_main_test, LOG_LEVEL_DBG);
+LOG_MODULE_REGISTER(lorawan_main_test, LOG_LEVEL_INF);
 
-#define REJOIN_RETRY_SECONDS 5
+#define REJOIN_RETRY_SECONDS 30
 
 report_t temp_report(sensor_t* sensor) {
   report_t sample_report = { .sensor_id = 1,
@@ -21,6 +23,8 @@ report_t temp_report(sensor_t* sensor) {
                              .which_value = REPORT_VALUE_FLOAT };
   return sample_report;
 }
+
+void hello_world(void* unused) { printk("Hello world!"); };
 
 int main() {
   uint8_t dev_eui[] = LORAWAN_DEV_EUI;
@@ -56,6 +60,15 @@ int main() {
       "C",
       &temp_report,
       10
+  );
+
+  capabilities_add_function(
+      &capabilities,
+      "Hello",
+      "Welcomes the world",
+      FUNC_ARG_TYPE_VOID,
+      &hello_world,
+      30
   );
 
   LOG_INF("Starting main loop");
