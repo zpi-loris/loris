@@ -16,10 +16,6 @@ public class DeviceEntityConfiguration : IEntityTypeConfiguration<Device>
         builder.HasIndex(e => e.DevEui).IsUnique();
         builder.HasIndex(e => e.FriendlyName).IsUnique();
 
-        // text limits
-        builder.Property(e => e.DeviceName).HasMaxLength(256);
-        builder.Property(e => e.FriendlyName).HasMaxLength(256);
-
         // TODO: add LastSeen value auto updating
     }
 }

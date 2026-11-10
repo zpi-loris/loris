@@ -16,10 +16,6 @@ public class FunctionEntityConfiguration : IEntityTypeConfiguration<Function>
         // AND WE DON'T WANT THAT HERE
         builder.Property(e => e.FunctionId).ValueGeneratedNever();
 
-        // text lengths
-        builder.Property(e => e.Name).HasMaxLength(256);
-        builder.Property(e => e.Description).HasMaxLength(512);
-
         // relationship [p]rincipal - [d]ependant
         builder
             .HasOne(d => d.Device)
