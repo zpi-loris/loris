@@ -26,11 +26,13 @@
 
 LOG_MODULE_REGISTER(loris, LOG_LEVEL_DBG);
 
-typedef struct lora_data {
+/* Holds inbound data */
+typedef struct lr_data {
   char* data;
   int data_size;
-} lora_data_t;
+} lr_data_t;
 
+/* Holds sensor with senor wake-up time */
 typedef struct sensor_time {
   sensor_t* sensor;
   int64_t timestamp;
@@ -80,6 +82,8 @@ extern void ul_thread(void* capabilities, void* unused1, void* unused2) {
   }
 
   sensor_time_t st;
+
+  LOG_DBG("Uplink thread started successfully!");
   while (1) {
     if (device_connected) {
       LOG_DBG("Woke up at: %d\n", (int)k_uptime_get());
@@ -153,8 +157,6 @@ extern void dl_thread(void* capabilities, void* unused1, void* unused2) {
    * 1. Wait for a message from dl_q
    *  1.a) If a message is a function - run it
    *  1.b) Else it must be a ping - set device_connected flag accordingly
-   *    - Now in rest of the threads, the threads check whether the device
-   *      is connected and what to do.
    */
   if (capabilities == NULL) {
     return;
@@ -162,6 +164,7 @@ extern void dl_thread(void* capabilities, void* unused1, void* unused2) {
   capabilities_t* capabilities_ptr = capabilities;
   downlink_t dl_msg;
 
+  LOG_DBG("Downlink thread started successfully!");
   while (1) {
     k_msgq_get(&dl_q, &dl_msg, K_FOREVER);
     if (!device_connected) {
@@ -189,7 +192,9 @@ extern void dl_thread(void* capabilities, void* unused1, void* unused2) {
   }
 }
 
-extern void ul_communication_thread() {
+/* Takes the outbound message, encodes it and sends it via LoRaWAN */
+extern void ul_comm_thread() {
+  LOG_DBG("Uplink communication thread started successfully!");
   while (1) {
     uplink_t ul;
     k_msgq_get(&ul_q, &ul, K_FOREVER);
@@ -208,18 +213,21 @@ extern void ul_communication_thread() {
   }
 }
 
-extern void dl_communication_thread() {
+/* Takes the inbound message, decodes it and puts it into the downlink_queue */
+extern void dl_comm_thread() {
+  LOG_DBG("Downlink communication thread started successfully!");
   while (1) {
     downlink_t dl;
-    lora_data_t incoming_data;
+    lr_data_t incoming_data;
     k_msgq_get(&lora_q, &incoming_data, K_FOREVER);
 
-    LOG_DBG("Received dl packet...");
+    LOG_DBG("Received downlink message...");
     decode_downlink(&dl, incoming_data.data, incoming_data.data_size);
     k_msgq_put(&dl_q, &dl, K_FOREVER);
   }
 }
 
+/* Puts the message into the inbound lora queue */
 static void dl_callback(
     uint8_t port,
     uint8_t flags,
@@ -233,35 +241,32 @@ static void dl_callback(
   }
 }
 
+// TODO: These could be optimized in the future, but this works for now
+// Could be calculated from the ul/dl queue size (param of KCONFIG - also todo)
 #define UL_THREAD_SIZE 4096
 #define DL_THREAD_SIZE 4096
-#define UL_COMMUNICATION_THREAD_SIZE 4096
-#define DL_COMMUNICATION_THREAD_SIZE 4096
+#define UL_COMM_THREAD_SIZE 4096
+#define DL_COMM_THREAD_SIZE 4096
+
+#define DL_Q_SIZE CONFIG_LORIS_DOWNLINK_QUEUE_SIZE
+#define UL_Q_SIZE CONFIG_LORIS_UPLINK_QUEUE_SIZE
 
 K_THREAD_STACK_DEFINE(ul_stack_area, UL_THREAD_SIZE);
 K_THREAD_STACK_DEFINE(dl_stack_area, DL_THREAD_SIZE);
-K_THREAD_STACK_DEFINE(
-    ul_communication_stack_area,
-    UL_COMMUNICATION_THREAD_SIZE
-);
-K_THREAD_STACK_DEFINE(
-    dl_communication_stack_area,
-    DL_COMMUNICATION_THREAD_SIZE
-);
+K_THREAD_STACK_DEFINE(ul_comm_stack_area, UL_COMM_THREAD_SIZE);
+K_THREAD_STACK_DEFINE(dl_comm_stack_area, DL_COMM_THREAD_SIZE);
 
 void lr_start(capabilities_t* capabilities) {
   lr_lw_register_downlink_callback(&dl_cb, &dl_callback);
 
-  char dl_q_buf[sizeof(downlink_t) * 10];
-  char ul_q_buf[sizeof(uplink_t) * 10];
-  char lora_q_buf[sizeof(lora_data_t) * 10];
+  char dl_q_buf[sizeof(downlink_t) * DL_Q_SIZE];
+  char ul_q_buf[sizeof(uplink_t) * UL_Q_SIZE];
+  char lora_q_buf[sizeof(lr_data_t) * DL_Q_SIZE];
 
   struct k_thread ul_tdata;
   struct k_thread dl_tdata;
-  struct k_thread ul_communication_tdata;
-  struct k_thread dl_communication_tdata;
-
-  LOG_DBG("start: Structs created");
+  struct k_thread ul_comm_tdata;
+  struct k_thread dl_comm_tdata;
 
   k_tid_t ul_tid = k_thread_create(
       &ul_tdata,
@@ -287,11 +292,11 @@ void lr_start(capabilities_t* capabilities) {
       0,
       K_FOREVER
   );
-  k_tid_t ul_communication_tid = k_thread_create(
-      &ul_communication_tdata,
-      ul_communication_stack_area,
-      K_THREAD_STACK_SIZEOF(ul_communication_stack_area),
-      ul_communication_thread,
+  k_tid_t ul_comm_tid = k_thread_create(
+      &ul_comm_tdata,
+      ul_comm_stack_area,
+      K_THREAD_STACK_SIZEOF(ul_comm_stack_area),
+      ul_comm_thread,
       NULL,
       NULL,
       NULL,
@@ -300,11 +305,11 @@ void lr_start(capabilities_t* capabilities) {
       K_FOREVER
   );
 
-  k_tid_t dl_communication_tid = k_thread_create(
-      &dl_communication_tdata,
-      dl_communication_stack_area,
-      K_THREAD_STACK_SIZEOF(dl_communication_stack_area),
-      dl_communication_thread,
+  k_tid_t dl_comm_tid = k_thread_create(
+      &dl_comm_tdata,
+      dl_comm_stack_area,
+      K_THREAD_STACK_SIZEOF(dl_comm_stack_area),
+      dl_comm_thread,
       NULL,
       NULL,
       NULL,
@@ -313,19 +318,16 @@ void lr_start(capabilities_t* capabilities) {
       K_FOREVER
   );
 
-  k_msgq_init(&dl_q, dl_q_buf, sizeof(downlink_t), 10);
-  k_msgq_init(&ul_q, ul_q_buf, sizeof(uplink_t), 10);
-  k_msgq_init(&lora_q, lora_q_buf, sizeof(lora_data_t), 10);
-
-  LOG_DBG("start: msgq init");
+  k_msgq_init(&dl_q, dl_q_buf, sizeof(downlink_t), DL_Q_SIZE);
+  k_msgq_init(&ul_q, ul_q_buf, sizeof(uplink_t), UL_Q_SIZE);
+  k_msgq_init(&lora_q, lora_q_buf, sizeof(lr_data_t), DL_Q_SIZE);
 
   k_thread_start(ul_tid);
   k_thread_start(dl_tid);
-  k_thread_start(ul_communication_tid);
-  k_thread_start(dl_communication_tid);
+  k_thread_start(ul_comm_tid);
+  k_thread_start(dl_comm_tid);
 
-  LOG_DBG("start: threads started");
-
+  // In order to never end - threads do all the job
   while (1) {
     k_sleep(K_FOREVER);
   }
