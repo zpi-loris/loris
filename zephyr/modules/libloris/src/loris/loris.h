@@ -10,13 +10,6 @@
 #define LIBLORIS_H
 
 /*
- * @brief Init loris module
- *
- * @param capabilities Capabilities of the device
- */
-void lr_init_loris();
-
-/*
  * @brief Start the device. Gather data from sensors and send it and/or respond
  * to the incoming function calls
  *

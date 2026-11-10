@@ -13,12 +13,11 @@
 #include "loris/models/report.h"
 #include "loris/models/sensor.h"
 #include "loris/models/uplink.h"
-#include "loris/result.h"
-#include "zephyr/lorawan/lorawan.h"
 
 #include <stdint.h>
 #include <zephyr/kernel.h>
 #include <zephyr/logging/log.h>
+#include <zephyr/lorawan/lorawan.h>
 #include <zephyr/sleep.h>
 #include <zephyr/sys/min_heap.h>
 #include <zephyr/sys/slist.h>
@@ -126,14 +125,17 @@ extern void ul_thread(void* capabilities, void* unused1, void* unused2) {
 
       uplink_t report_ul = { .payload.report = report,
                              .payload_type = UPLINK_PAYLOAD_TYPE_REPORT };
-
       k_msgq_put(&ul_q, &report_ul, K_NO_WAIT);
 
       LOG_DBG("Going to sleep at: %d\n", (int)k_uptime_get());
-      k_msleep(
+      int64_t sleep_time =
           ((sensor_time_t*)min_heap_peek(&sensors_heap))->timestamp -
-          k_uptime_get()
-      );
+          k_uptime_get();
+      if (sleep_time < 1) {
+        sleep_time = 1;
+      }
+
+      k_msleep(sleep_time);
     } else {
       LOG_DBG("Trying to connect to loris client");
       uplink_t capabilities_ul = { .payload.capabilities = *capabilities_ptr,
@@ -226,21 +228,6 @@ static void dl_callback(
     uint8_t len,
     const uint8_t* hex_data
 ) {
-  LOG_INF("Port %d, RSSI %ddB, SNR %ddBm", port, rssi, snr);
-
-  if (flags & LORAWAN_TIME_UPDATED) {
-    /* The stack has synced the network time from a DeviceTimeAns. */
-    LOG_INF("Network time updated");
-  }
-
-  if (flags & LORAWAN_DATA_PENDING) {
-    /* The network server has more dls queued.  An application
-     * that wants to drain them promptly can schedule another ul
-     * (e.g. an empty one on any port) here.
-     */
-    LOG_INF("Network reports more data pending (FPending set)");
-  }
-
   if (hex_data) {
     k_msgq_put(&lora_q, hex_data, K_FOREVER);
   }
@@ -262,13 +249,12 @@ K_THREAD_STACK_DEFINE(
     DL_COMMUNICATION_THREAD_SIZE
 );
 
-void lr_init_loris() { lr_lw_register_downlink_callback(&dl_cb, &dl_callback); }
-
 void lr_start(capabilities_t* capabilities) {
+  lr_lw_register_downlink_callback(&dl_cb, &dl_callback);
 
-  char dl_q_buf[2048];
-  char ul_q_buf[2048];
-  char lora_q_buf[2048];
+  char dl_q_buf[sizeof(downlink_t) * 10];
+  char ul_q_buf[sizeof(uplink_t) * 10];
+  char lora_q_buf[sizeof(lora_data_t) * 10];
 
   struct k_thread ul_tdata;
   struct k_thread dl_tdata;
@@ -282,7 +268,7 @@ void lr_start(capabilities_t* capabilities) {
       ul_stack_area,
       K_THREAD_STACK_SIZEOF(ul_stack_area),
       ul_thread,
-      &capabilities,
+      capabilities,
       NULL,
       NULL,
       3,
@@ -294,7 +280,7 @@ void lr_start(capabilities_t* capabilities) {
       dl_stack_area,
       K_THREAD_STACK_SIZEOF(dl_stack_area),
       dl_thread,
-      &capabilities,
+      capabilities,
       NULL,
       NULL,
       2,
@@ -339,4 +325,8 @@ void lr_start(capabilities_t* capabilities) {
   k_thread_start(dl_communication_tid);
 
   LOG_DBG("start: threads started");
+
+  while (1) {
+    k_sleep(K_FOREVER);
+  }
 }
