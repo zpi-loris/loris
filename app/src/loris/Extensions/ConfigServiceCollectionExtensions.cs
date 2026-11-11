@@ -121,8 +121,8 @@ public static class ConfigServiceCollectionExtensions
 
             // register chirpstack api token for requests
             services.AddKeyedSingleton(
-                new Metadata { { "Authorization", "Bearer" + token } },
-                "chirpstack-api-token"
+                "chirpstack-api-token",
+                new Metadata { { "Authorization", "Bearer " + token } }
             );
 
             return services;
