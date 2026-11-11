@@ -22,15 +22,7 @@ builder.Services.AddChannels();
 
 builder.Services.AddSingleton<AutomationIndex>();
 
-builder
-    .Services.AddGrpcClient<DeviceService.DeviceServiceClient>(options =>
-    {
-        options.Address = new Uri("http://192.168.10.111:8080");
-    })
-    .ConfigureChannel(options =>
-    {
-        options.Credentials = ChannelCredentials.Insecure;
-    });
+builder.Services.AddChirpstackDeviceService(builder.Configuration);
 
 // Add chirpstack integration background task with handler implementation
 builder.Services.AddChirpstackIntegration<ChirpstackIntegrationHandler>(builder.Configuration);
