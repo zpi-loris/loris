@@ -47,6 +47,11 @@ your copy.
 > Note that `appsettings.Development.json` is excluded from git tracking in
 > _gitignore_
 
+> [!CAUTION]
+>
+> Keep in mind that for dotnet it is **double underscore (\__)** for nested
+> environmental variables
+
 #### TimescaleDB connection
 
 In order to use database connection for development, you need to provide a
@@ -64,11 +69,9 @@ complete setup there, with pgadmin for gui access to database.
 "Host=localhost;Port=6543;Database=loris;Username=postgres;Password=password"
 ```
 
-#### Chirpstack integration
+#### Chirpstack MQTT integration
 
-For chirpstack integration operation there are currently 4 environmental
-variables defined for client configuration (_and corresponding section in json
-file_):
+MQTT uplink and application data _coming from_ the Chirpstack
 
 - **required**:
   - `Chirpstack__Integration__Host` - specifies chirpstack MQTT broker ip
@@ -85,10 +88,19 @@ file_):
     (in seconds) for connect timeout. It does not stop the app and works with
     ReconnectInterval - _**5s if ommited**_
 
-> [!CAUTION]
->
-> Keep in mind that for dotnet it is **double underscore (\__)** for nested
-> environmental variables
+#### Chirpstack device service
+
+Devices and downlink service - data _going to_ the chirpstack
+
+- **required**:
+  - `Chirpstack__DeviceService__Host` - specifies the domain or address
+    hosting api
+  - `Chirpstack__DeviceService__ApiToken` - Api token used for authorization
+    to interact with **chirpstack's Tenant**. Can be obtained from the
+    chirpstack cli or web GUI
+- **optional**:
+  - `Chirpstack__DeviceService__Port` - specified api port. - _**8080 if
+    ommited**_
 
 ## Running tests
 
