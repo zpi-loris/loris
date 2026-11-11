@@ -39,8 +39,18 @@ public class ExampleDownlinkController(
         var json = await reader.ReadToEndAsync();
 
         Downlink message;
-
-        message = _protoParser.Parse<Downlink>(json);
+        try
+        {
+            message = _protoParser.Parse<Downlink>(json);
+        }
+        catch (InvalidJsonException)
+        {
+            return BadRequest("Invalid json");
+        }
+        catch (InvalidProtocolBufferException)
+        {
+            return BadRequest("Invalid protocol buffer");
+        }
 
         if (message.PayloadCase != Downlink.PayloadOneofCase.Call)
         {
