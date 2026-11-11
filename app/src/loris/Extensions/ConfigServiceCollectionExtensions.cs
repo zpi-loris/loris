@@ -1,10 +1,11 @@
-using System.Diagnostics.CodeAnalysis;
 using System.Threading.Channels;
 using Chirpstack.Api;
 using Grpc.Core;
 using Loris.Messages;
 using Loris.MQTT.Client;
-using Namotion.Reflection;
+//
+// resolve ambiguity with Grpc.Channel with alias
+using AsyncChannel = System.Threading.Channels.Channel;
 
 namespace Loris.Extensions;
 
@@ -22,9 +23,9 @@ public static class ConfigServiceCollectionExtensions
                 SingleReader = true,
             };
 
-            var deviceChannel = Channel.CreateBounded<IDeviceMessage>(boundedOptions);
-            var dbWriteChannel = Channel.CreateBounded<IDbWriteMessage>(boundedOptions);
-            var eventChannel = Channel.CreateBounded<IEventMessage>(boundedOptions);
+            var deviceChannel = AsyncChannel.CreateBounded<IDeviceMessage>(boundedOptions);
+            var dbWriteChannel = AsyncChannel.CreateBounded<IDbWriteMessage>(boundedOptions);
+            var eventChannel = AsyncChannel.CreateBounded<IEventMessage>(boundedOptions);
 
             services.AddSingleton(deviceChannel.Writer);
             services.AddSingleton(deviceChannel.Reader);
