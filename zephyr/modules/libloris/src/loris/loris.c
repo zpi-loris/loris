@@ -28,7 +28,7 @@ LOG_MODULE_REGISTER(loris, LOG_LEVEL_DBG);
 
 /* Holds inbound data */
 typedef struct lr_data {
-  char* data;
+  const char* data;
   int data_size;
 } lr_data_t;
 
@@ -90,6 +90,9 @@ extern void ul_thread(void* capabilities, void* unused1, void* unused2) {
 
       min_heap_pop(&sensors_heap, &st);
       st.timestamp += (st.sensor->wake_interval_sec * 1000);
+      if (st.timestamp < k_uptime_get()) {
+        st.timestamp += k_uptime_get();
+      }
       min_heap_push(&sensors_heap, &st);
 
       report_t report = st.sensor->read_func(st.sensor);
@@ -97,28 +100,28 @@ extern void ul_thread(void* capabilities, void* unused1, void* unused2) {
       case REPORT_VALUE_INT:
         LOG_INF(
             "Report from sensor %d, reads: %d",
-            st.sensor->id,
+            report.sensor_id,
             report.value.int_val
         );
         break;
       case REPORT_VALUE_BOOL:
         LOG_INF(
             "Report from sensor %d, reads: %d",
-            st.sensor->id,
+            report.sensor_id,
             report.value.bool_val
         );
         break;
       case REPORT_VALUE_FLOAT:
         LOG_INF(
             "Report from sensor %d, reads: %f",
-            st.sensor->id,
+            report.sensor_id,
             (double)report.value.float_val
         );
         break;
       case REPORT_VALUE_STRING:
         LOG_INF(
             "Report from sensor %d, reads: %s",
-            st.sensor->id,
+            report.sensor_id,
             report.value.str_val.ptr
         );
         break;
@@ -145,8 +148,12 @@ extern void ul_thread(void* capabilities, void* unused1, void* unused2) {
       uplink_t capabilities_ul = { .payload.capabilities = *capabilities_ptr,
                                    .payload_type =
                                        UPLINK_PAYLOAD_TYPE_CAPABILITIES };
+      uplink_t hello_ul = { .payload.ping.type = UP_PING_TYPE_HELLO,
+                            .payload_type = UPLINK_PAYLOAD_TYPE_PING };
 
       k_msgq_put(&ul_q, &capabilities_ul, K_NO_WAIT);
+      k_msleep(1000);
+      k_msgq_put(&ul_q, &hello_ul, K_NO_WAIT);
       k_msleep(CONFIG_LORIS_RECONNECT_INTERVAL * 1000);
     }
   }
@@ -174,16 +181,23 @@ extern void dl_thread(void* capabilities, void* unused1, void* unused2) {
       if (dl_msg.payload.ping.type != DOWN_PING_TYPE_HELLO) {
         continue;
       }
+      LOG_DBG("Device connected!");
       device_connected = true;
     } else {
       if (dl_msg.payload_type == DOWNLINK_PAYLOAD_TYPE_PING) {
         if (dl_msg.payload.ping.type == DOWN_PING_TYPE_DISCONNECT) {
+          LOG_DBG("Disconnecting device...");
           device_connected = false;
         }
       } else {
         function_t* func;
         SYS_SLIST_FOR_EACH_CONTAINER(&capabilities_ptr->functions, func, node) {
           if (func->id == dl_msg.payload.call.function_id) {
+            LOG_DBG(
+                "Calling function id: %i, name: %s",
+                dl_msg.payload.call.function_id,
+                func->name.ptr
+            );
             func->call_function(&dl_msg.payload.call.value);
           }
         }
@@ -203,7 +217,6 @@ extern void ul_comm_thread() {
     size_t bytes_written;
     encode_uplink(buf, sizeof(buf), &ul, &bytes_written);
 
-    LOG_INF("Sending packet!");
     lr_lw_result_t ret =
         lr_lw_send(1, buf, bytes_written, LORAWAN_MSG_CONFIRMED);
 
@@ -221,7 +234,7 @@ extern void dl_comm_thread() {
     lr_data_t incoming_data;
     k_msgq_get(&lora_q, &incoming_data, K_FOREVER);
 
-    LOG_DBG("Received downlink message...");
+    LOG_DBG("Received downlink message");
     decode_downlink(&dl, incoming_data.data, incoming_data.data_size);
     k_msgq_put(&dl_q, &dl, K_FOREVER);
   }
@@ -237,7 +250,8 @@ static void dl_callback(
     const uint8_t* hex_data
 ) {
   if (hex_data) {
-    k_msgq_put(&lora_q, hex_data, K_FOREVER);
+    lr_data_t data = { .data = hex_data, .data_size = len };
+    k_msgq_put(&lora_q, &data, K_FOREVER);
   }
 }
 
