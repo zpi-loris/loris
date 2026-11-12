@@ -1,7 +1,7 @@
 using Loris.Events;
 using Loris.Protocol;
 
-namespace Loris.Messages;
+namespace Loris.Messages.Event;
 
 public record SensorEventMessage : IEventMessage
 {

@@ -1,7 +1,9 @@
 using System.Threading.Channels;
 using Chirpstack.Api;
 using Grpc.Core;
-using Loris.Messages;
+using Loris.Messages.Database;
+using Loris.Messages.Device;
+using Loris.Messages.Event;
 using Loris.MQTT.Client;
 //
 // resolve ambiguity with Grpc.Channel with alias

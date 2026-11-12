@@ -1,7 +1,7 @@
 using Loris.Protocol;
 using Loris.Types;
 
-namespace Loris.Messages;
+namespace Loris.Messages.Device;
 
 public readonly record struct UplinkMessage : IDeviceMessage
 {
