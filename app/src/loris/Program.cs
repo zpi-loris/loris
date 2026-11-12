@@ -20,21 +20,23 @@ builder.Services.AddDbContext<LorisDbContext>(options => options.UseNpgsql(conne
 // Configure channels for the ingestion subsystem
 builder.Services.AddChannels();
 
-builder.Services.AddSingleton<AutomationIndex>();
+builder.Services.AddSingleton<IAutomationIndex, AutomationIndex>();
+
 builder.Services.AddSingleton<IStateCache, StateCache>();
 
-builder.Services.AddChirpstackDeviceService(builder.Configuration);
+builder.Services.AddScoped<IAutomationService, AutomationService>();
+
+builder.Services.AddAutomationsCompilers();
 
 // Add chirpstack integration background task with handler implementation
 builder.Services.AddChirpstackIntegration<ChirpstackIntegrationHandler>(builder.Configuration);
 
+// Add chirpstack grpc device service client factory
+builder.Services.AddChirpstackDeviceService(builder.Configuration);
+
 builder.Services.AddControllers();
 
 builder.Services.AddProblemDetails();
-
-builder.Services.AddAutomationsCompilers();
-
-builder.Services.AddScoped<IAutomationService, AutomationService>();
 
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
