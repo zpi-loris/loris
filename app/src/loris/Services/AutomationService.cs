@@ -259,7 +259,11 @@ public sealed class AutomationService(
         }
     }
 
-    private Action CompileAction(AutomationDto rule, IActionDto dto, LookupContext? lookup)
+    private Func<CancellationToken, Task> CompileAction(
+        AutomationDto rule,
+        IActionDto dto,
+        LookupContext? lookup
+    )
     {
         _logger.CompilingBlock("Action", dto.ServiceKey, rule.Name, rule.Id);
 

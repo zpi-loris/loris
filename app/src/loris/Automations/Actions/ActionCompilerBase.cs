@@ -3,7 +3,7 @@ namespace Loris.Automations.Actions;
 public abstract class ActionCompilerBase<TDto> : IActionCompiler
     where TDto : IActionDto
 {
-    public Action Compile(IActionDto dto, LookupContext? lookup)
+    public Func<CancellationToken, Task> Compile(IActionDto dto, LookupContext? lookup)
     {
         var typedDto = EnsureTyped(dto, nameof(dto));
         return Compile(typedDto, lookup);
@@ -18,7 +18,7 @@ public abstract class ActionCompilerBase<TDto> : IActionCompiler
         return ValidateAsync(typedDto, cancellationToken);
     }
 
-    protected abstract Action Compile(TDto dto, LookupContext? lookup);
+    protected abstract Func<CancellationToken, Task> Compile(TDto dto, LookupContext? lookup);
 
     protected abstract Task<ValidationResult> ValidateAsync(
         TDto dto,

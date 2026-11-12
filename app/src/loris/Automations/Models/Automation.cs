@@ -10,5 +10,5 @@ public record Automation(
     IEvent Trigger,
     Func<IEventMessage, bool> TriggerFilter,
     IReadOnlyList<Func<IStateCache, bool>> Conditions,
-    IReadOnlyList<Action> Actions
+    IReadOnlyList<Func<CancellationToken, Task>> Actions
 ) { }
