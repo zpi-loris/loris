@@ -1,0 +1,38 @@
+/ {
+  aliases {
+    led-green = &led_green;
+    led-yellow = &led_yellow;
+    led-red = &led_red;
+    env-temp-sensor = &env_ds18b20;
+    w1 = &w1_bus;
+  };
+
+  leds {
+    compatible = "gpio-leds";
+    led_green: led_0 {
+      gpios = <&gpio0 25 GPIO_ACTIVE_HIGH>;
+    };
+    led_yellow: led_1 {
+      gpios = <&gpio0 26 GPIO_ACTIVE_HIGH>;
+    };
+    led_red: led_2 {
+      gpios = <&gpio0 27 GPIO_ACTIVE_HIGH>;
+    };
+  };
+
+  w1_bus: w1-bus {
+    compatible = "zephyr,w1-gpio";
+    // gpio1 is the second gpio controller, offset by 32, thus 
+    // 33 (actual pin) - 32 -> 1
+    gpios = <&gpio1 1 (GPIO_ACTIVE_HIGH | GPIO_OPEN_DRAIN)>;
+    status = "okay";
+
+    env_ds18b20: ds18b20 {
+      compatible = "maxim,ds18b20";
+      family-code = <0x28>;
+      resolution = <12>;
+      status = "okay";
+    };
+  };
+};
+

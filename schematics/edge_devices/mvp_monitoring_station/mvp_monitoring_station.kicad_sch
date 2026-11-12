@@ -5,7 +5,7 @@
 	(uuid "08203ee5-32dd-43d7-8eb6-09a929ab0a23")
 	(paper "A4")
 	(title_block
-		(title "loris LoRa base")
+		(title "loris MVP edge device example")
 		(date "2026-11-10")
 		(rev "0.1")
 		(comment 4 "Authors: Jan Kubów, Tomasz Gadziński")
@@ -2479,7 +2479,7 @@
 		)
 	)
 	(junction
-		(at 80.01 102.87)
+		(at 72.39 102.87)
 		(diameter 0)
 		(color 0 0 0 0)
 		(uuid "11bbae59-9da0-41f6-a29b-bf657ee615a1")
@@ -2573,10 +2573,6 @@
 		(uuid "6047c209-6f59-4538-94f9-60526dc4ab2a")
 	)
 	(no_connect
-		(at 101.6 95.25)
-		(uuid "633e7caa-2b87-4601-93ae-3ae549d5234b")
-	)
-	(no_connect
 		(at 137.16 97.79)
 		(uuid "64ad7434-03d1-4141-9f48-590d7764dfdd")
 	)
@@ -2619,6 +2615,10 @@
 	(no_connect
 		(at 137.16 90.17)
 		(uuid "e1732282-bafa-4603-927b-6f61e0d46402")
+	)
+	(no_connect
+		(at 101.6 95.25)
+		(uuid "e300392a-f51e-4164-8ca0-e6c4a4a6ec13")
 	)
 	(no_connect
 		(at 100.33 45.72)
@@ -2670,16 +2670,6 @@
 	)
 	(wire
 		(pts
-			(xy 85.09 100.33) (xy 101.6 100.33)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "2400db64-53e3-4cba-89c2-5987670b198a")
-	)
-	(wire
-		(pts
 			(xy 85.09 110.49) (xy 101.6 110.49)
 		)
 		(stroke
@@ -2710,7 +2700,7 @@
 	)
 	(wire
 		(pts
-			(xy 80.01 81.28) (xy 80.01 90.17)
+			(xy 72.39 78.74) (xy 72.39 87.63)
 		)
 		(stroke
 			(width 0)
@@ -2740,7 +2730,7 @@
 	)
 	(wire
 		(pts
-			(xy 80.01 97.79) (xy 80.01 102.87)
+			(xy 72.39 95.25) (xy 72.39 102.87)
 		)
 		(stroke
 			(width 0)
@@ -2870,6 +2860,16 @@
 	)
 	(wire
 		(pts
+			(xy 85.09 100.33) (xy 101.6 100.33)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "81c15ed0-425e-44ab-9fc4-0c43b338c542")
+	)
+	(wire
+		(pts
 			(xy 142.24 53.34) (xy 142.24 60.96)
 		)
 		(stroke
@@ -2920,7 +2920,7 @@
 	)
 	(wire
 		(pts
-			(xy 68.58 102.87) (xy 101.6 102.87)
+			(xy 60.96 102.87) (xy 101.6 102.87)
 		)
 		(stroke
 			(width 0)
@@ -3320,18 +3320,8 @@
 		)
 		(uuid "4d3e4def-e6b4-4ccb-b0e7-8f9bfc6e33d5")
 	)
-	(label "MOISTURE_AOUT"
-		(at 85.09 100.33 0)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify left bottom)
-		)
-		(uuid "502d3a4a-7339-406c-9f92-717290491291")
-	)
 	(label "VCC_3V3"
-		(at 80.01 81.28 270)
+		(at 72.39 78.74 270)
 		(effects
 			(font
 				(size 1.27 1.27)
@@ -3371,7 +3361,7 @@
 		(uuid "6d392125-49ce-4653-9782-387ced3de8d3")
 	)
 	(label "1WIRE_BUS"
-		(at 68.58 102.87 0)
+		(at 60.96 102.87 0)
 		(effects
 			(font
 				(size 1.27 1.27)
@@ -3380,7 +3370,7 @@
 		)
 		(uuid "6da215b8-709a-47aa-97de-e7f8ad3f8f12")
 	)
-	(label "BUZZER"
+	(label "MOISTURE_AOUT"
 		(at 85.09 97.79 0)
 		(effects
 			(font
@@ -3499,6 +3489,16 @@
 			(justify left bottom)
 		)
 		(uuid "b5b65762-75b4-40cf-8406-7fae6f7b9a2b")
+	)
+	(label "BUZZER"
+		(at 85.09 100.33 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left bottom)
+		)
+		(uuid "bcf6358a-b20c-4abe-91b0-0cf5a9045003")
 	)
 	(label "BUZZER_5V"
 		(at 135.89 43.18 0)
@@ -4038,7 +4038,7 @@
 	)
 	(symbol
 		(lib_id "Device:R")
-		(at 80.01 93.98 0)
+		(at 72.39 91.44 0)
 		(unit 1)
 		(body_style 1)
 		(exclude_from_sim no)
@@ -4048,7 +4048,7 @@
 		(dnp no)
 		(uuid "2dfbf17e-3171-400e-81e8-250725dc6ad0")
 		(property "Reference" "R1"
-			(at 81.534 92.71 0)
+			(at 73.914 90.17 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -4059,7 +4059,7 @@
 			)
 		)
 		(property "Value" "4k7"
-			(at 81.534 95.25 0)
+			(at 73.914 92.71 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -4070,7 +4070,7 @@
 			)
 		)
 		(property "Footprint" ""
-			(at 78.232 93.98 90)
+			(at 70.612 91.44 90)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -4081,7 +4081,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 80.01 93.98 0)
+			(at 72.39 91.44 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -4092,7 +4092,7 @@
 			)
 		)
 		(property "Description" "Resistor"
-			(at 80.01 93.98 0)
+			(at 72.39 91.44 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -4138,7 +4138,7 @@
 				)
 			)
 		)
-		(property "Value" "130"
+		(property "Value" "122"
 			(at 207.01 96.52 90)
 			(show_name no)
 			(do_not_autoplace no)
