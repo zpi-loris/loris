@@ -2,15 +2,15 @@
 #include <zephyr/drivers/adc.h>
 #include <zephyr/drivers/buzzer.h>
 #include <zephyr/drivers/gpio.h>
+#include <zephyr/drivers/led.h>
 #include <zephyr/drivers/sensor.h>
-#include <zephyr/drivers/uart.h>
 #include <zephyr/drivers/w1.h>
 #include <zephyr/kernel.h>
 #include <zephyr/logging/log.h>
 
 LOG_MODULE_REGISTER(mvp_pure);
 
-#define MAIN_LOOP_SLEEP_MS 10000
+#define MAIN_LOOP_SLEEP_MS 1000
 #define LED_TOGGLE_DELAY_MS 200
 #define BUZZ_TIME_MS 1000
 
@@ -19,12 +19,11 @@ LOG_MODULE_REGISTER(mvp_pure);
 
 // #define SOIL_TEMP_SENSOR(soil_temp_sensor)
 
-static const struct gpio_dt_spec led_green =
-    GPIO_DT_SPEC_GET(DT_ALIAS(led_green), gpios);
-static const struct gpio_dt_spec led_yellow =
-    GPIO_DT_SPEC_GET(DT_ALIAS(led_yellow), gpios);
-static const struct gpio_dt_spec led_red =
-    GPIO_DT_SPEC_GET(DT_ALIAS(led_red), gpios);
+static const struct led_dt_spec led_green =
+    LED_DT_SPEC_GET(DT_ALIAS(led_green));
+static const struct led_dt_spec led_yellow =
+    LED_DT_SPEC_GET(DT_ALIAS(led_yellow));
+static const struct led_dt_spec led_red = LED_DT_SPEC_GET(DT_ALIAS(led_red));
 
 static const struct device* w1_bus = DEVICE_DT_GET(DT_ALIAS(w1));
 
@@ -65,18 +64,13 @@ bool read_temp(const struct device* dev, struct sensor_value* out) {
 
 int main(void) {
 
-  struct gpio_dt_spec leds[3] = { led_green, led_yellow, led_red };
+  struct led_dt_spec leds[3] = { led_green, led_yellow, led_red };
   size_t n_leds = sizeof(leds) / sizeof(leds[0]);
 
   // LEDs
   for (size_t i = 0; i < n_leds; i++) {
-    if (!gpio_is_ready_dt(&leds[i])) {
+    if (!led_is_ready_dt(&leds[i])) {
       LOG_ERR("LED #%d is not ready!", i);
-      return 1;
-    }
-
-    if (gpio_pin_configure_dt(&leds[i], GPIO_OUTPUT_ACTIVE) < 0) {
-      LOG_ERR("Faield to setup LED #%d", i);
       return 1;
     }
   }
@@ -124,14 +118,19 @@ int main(void) {
   }
 
   // main loop
+  uint8_t brightness = 100;
   while (1) {
     printk("Toggling LEDs\n");
+
+    printk("Setting LEDs to %u%%\n", brightness);
     for (size_t i = 0; i < n_leds; i++) {
-      if (gpio_pin_toggle_dt(&leds[i]) < 0) {
-        LOG_WRN("Failed to toggle LED #%d", i);
+      if (led_set_brightness(leds[i].dev, leds[i].index, brightness) < 0) {
+        LOG_WRN("Failed to set brightness for LED #%zu", i);
       }
       k_msleep(LED_TOGGLE_DELAY_MS);
     }
+
+    brightness = (brightness > 0) ? 0 : 100;
 
     printk("Getting temperature\n");
     struct sensor_value temp = { 0 };
@@ -166,7 +165,8 @@ int main(void) {
     }
 
     printk("Bzzzz...\n");
-    buzzer_beep(buzzer, BUZZ_TIME_MS);
+    // NOTE: commented out - too annoying
+    // buzzer_beep(buzzer, BUZZ_TIME_MS);
     k_msleep(BUZZ_TIME_MS);
     printk("<silence>\n");
 

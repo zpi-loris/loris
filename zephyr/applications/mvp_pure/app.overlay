@@ -13,6 +13,49 @@
     };
 };
 
+
+&pinctrl {
+  ledc0_default: ledc0_default {
+    group1 {
+      pinmux = <LEDC_CH0_GPIO25>;
+      output-enable;
+    };
+
+    group2 {
+      pinmux = <LEDC_CH1_GPIO26>;
+      output-enable;
+    };
+
+    group3 {
+      pinmux = <LEDC_CH2_GPIO27>;
+      output-enable;
+    };
+  };
+};
+
+&ledc0 {
+  pinctrl-0 = <&ledc0_default>;
+  pinctrl-names = "default";
+  status = "okay";
+  #address-cells = <1>;
+  #size-cells = <0>;
+
+  channel0@0 {
+    reg = <0x0>;
+    timer = <0>;
+  };
+
+  channel1@1 {
+    reg = <0x1>;
+    timer = <0>;
+  };
+
+  channel2@2 {
+    reg = <0x2>;
+    timer = <0>;
+  };
+};
+
 / {
   aliases {
     led-green = &led_green;
@@ -28,16 +71,18 @@
     io-channel-names = "moisture";
   };
 
-  leds {
-    compatible = "gpio-leds";
-    led_green: led_0 {
-      gpios = <&gpio0 25 GPIO_ACTIVE_HIGH>;
+  pwmleds {
+    compatible = "pwm-leds";
+    led_green: led_green {
+      pwms = <&ledc0 0 10000 PWM_POLARITY_NORMAL>;
     };
-    led_yellow: led_1 {
-      gpios = <&gpio0 26 GPIO_ACTIVE_HIGH>;
+
+    led_yellow: led_yellow {
+      pwms = <&ledc0 1 10000 PWM_POLARITY_NORMAL>;
     };
-    led_red: led_2 {
-      gpios = <&gpio0 27 GPIO_ACTIVE_HIGH>;
+
+    led_red: led_red {
+      pwms = <&ledc0 2 10000 PWM_POLARITY_NORMAL>;
     };
   };
 
