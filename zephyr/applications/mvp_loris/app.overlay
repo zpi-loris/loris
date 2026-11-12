@@ -1,0 +1,129 @@
+&spi3 {
+  status = "okay";
+  cs-gpios = <&gpio0 5 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>;
+
+  sx1276: lora@0 {
+    compatible = "semtech,sx1276";
+    reg = <0>;
+
+    reset-gpios = <&gpio0 13 GPIO_ACTIVE_LOW>;
+
+    // order of dio pins matters - idx 0 -> DIO0, idx 1 -> DIO1 and so on
+    dio-gpios = <&gpio0 16 (GPIO_PULL_DOWN | GPIO_ACTIVE_HIGH)>,
+      <&gpio0 17 (GPIO_PULL_DOWN | GPIO_ACTIVE_HIGH)>;
+    spi-max-frequency = <1000000>;
+    power-amplifier-output = "pa-boost";
+  };
+};
+
+&pinctrl {
+  ledc0_default: ledc0_default {
+    group1 {
+      pinmux = <LEDC_CH0_GPIO25>;
+      output-enable;
+    };
+
+    group2 {
+      pinmux = <LEDC_CH1_GPIO26>;
+      output-enable;
+    };
+
+    group3 {
+      pinmux = <LEDC_CH2_GPIO27>;
+      output-enable;
+    };
+  };
+};
+
+&ledc0 {
+  pinctrl-0 = <&ledc0_default>;
+  pinctrl-names = "default";
+  status = "okay";
+  #address-cells = <1>;
+  #size-cells = <0>;
+
+  channel0@0 {
+    reg = <0x0>;
+    timer = <0>;
+  };
+
+  channel1@1 {
+    reg = <0x1>;
+    timer = <0>;
+  };
+
+  channel2@2 {
+    reg = <0x2>;
+    timer = <0>;
+  };
+};
+
+
+&adc0 {
+    status = "okay";
+    #address-cells = <1>;
+    #size-cells = <0>;
+
+    channel@7 {
+        reg = <7>;
+        zephyr,gain = "ADC_GAIN_1_4";
+        zephyr,reference = "ADC_REF_INTERNAL";
+        zephyr,acquisition-time = <ADC_ACQ_TIME_DEFAULT>;
+        zephyr,resolution = <12>;
+        zephyr,vref-mv = <1100>;
+    };
+};
+
+/ {
+  aliases {
+    lora0 = &sx1276;
+    led-green = &led_green;
+    led-yellow = &led_yellow;
+    led-red = &led_red;
+    env-temp-sensor = &env_ds18b20;
+    w1 = &w1_bus;
+    buzzer = &buzzer;
+  };
+
+  zephyr,user {
+    io-channels = <&adc0 7>;
+    io-channel-names = "moisture";
+  };
+
+  pwmleds {
+    compatible = "pwm-leds";
+    led_green: led_green {
+      pwms = <&ledc0 0 10000 PWM_POLARITY_NORMAL>;
+    };
+
+    led_yellow: led_yellow {
+      pwms = <&ledc0 1 10000 PWM_POLARITY_NORMAL>;
+    };
+
+    led_red: led_red {
+      pwms = <&ledc0 2 10000 PWM_POLARITY_NORMAL>;
+    };
+  };
+
+  buzzer: buzzer {
+    compatible = "gpio-buzzer";
+    gpios = <&gpio1 0 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>;
+  };
+
+  w1_bus: w1-bus {
+    compatible = "zephyr,w1-gpio";
+    // gpio1 is the second gpio controller, offset by 32, thus 
+    // 33 (actual pin) - 32 -> 1
+    gpios = <&gpio1 1 (GPIO_ACTIVE_HIGH | GPIO_OPEN_DRAIN)>;
+    status = "okay";
+
+    env_ds18b20: ds18b20 {
+      compatible = "maxim,ds18b20";
+      family-code = <0x28>;
+      resolution = <12>;
+      status = "okay";
+    };
+  };
+};
+
+
