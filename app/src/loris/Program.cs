@@ -1,9 +1,5 @@
-using Chirpstack.Api;
-using Grpc.Core;
-using Loris.Automations;
-using Loris.Automations.Actions;
-using Loris.Automations.Conditions;
-using Loris.Automations.Triggers;
+using Loris.Channels;
+using Loris.Consumers;
 using Loris.Data;
 using Loris.Extensions;
 using Loris.MQTT.Client;
@@ -17,16 +13,25 @@ var builder = WebApplication.CreateBuilder(args);
 string? connectionString = builder.Configuration.GetConnectionString("Timescale");
 builder.Services.AddDbContext<LorisDbContext>(options => options.UseNpgsql(connectionString));
 
+// Global state
+builder.Services.AddSingleton<IAutomationIndex, AutomationIndex>();
+builder.Services.AddSingleton<IStateCache, StateCache>();
+
 // Configure channels for the ingestion subsystem
 builder.Services.AddChannels();
 
-builder.Services.AddSingleton<IAutomationIndex, AutomationIndex>();
+// Configure consumers for each channel
+builder.Services.AddHostedService<DeviceChannelConsumer>();
 
-builder.Services.AddSingleton<IStateCache, StateCache>();
+// builder.Services.AddHostedService<EventChannelConsumer>();
+// builder.Services.AddHostedService<DbWriteChannelConsumer>();
 
-builder.Services.AddScoped<IAutomationService, AutomationService>();
+// Configure handlers for each channel consumer
+builder.Services.AddSingleton<IDeviceChannelHandler, DeviceChannelHandler>();
 
 builder.Services.AddAutomationsCompilers();
+
+builder.Services.AddScoped<IAutomationService, AutomationService>();
 
 // Add chirpstack integration background task with handler implementation
 builder.Services.AddChirpstackIntegration<ChirpstackIntegrationHandler>(builder.Configuration);
