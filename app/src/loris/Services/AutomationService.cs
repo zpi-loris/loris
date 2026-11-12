@@ -13,10 +13,10 @@ namespace Loris.Services;
 public sealed class AutomationService(
     ILogger<AutomationService> logger,
     IServiceProvider provider,
-    AutomationIndex index
+    IAutomationIndex index
 ) : IAutomationService
 {
-    private readonly AutomationIndex _index = index;
+    private readonly IAutomationIndex _index = index;
     private readonly IServiceProvider _provider = provider;
     private readonly ILogger<AutomationService> _logger = logger;
 
