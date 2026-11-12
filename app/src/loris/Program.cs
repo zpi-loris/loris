@@ -1,4 +1,9 @@
-using CmdScale.EntityFrameworkCore.TimescaleDB;
+using Chirpstack.Api;
+using Grpc.Core;
+using Loris.Automations;
+using Loris.Automations.Actions;
+using Loris.Automations.Conditions;
+using Loris.Automations.Triggers;
 using Loris.Data;
 using Loris.Extensions;
 using Loris.MQTT.Client;
@@ -17,10 +22,13 @@ builder.Services.AddChannels();
 
 builder.Services.AddSingleton<AutomationIndex>();
 
+builder.Services.AddChirpstackDeviceService(builder.Configuration);
+
 // Add chirpstack integration background task with handler implementation
 builder.Services.AddChirpstackIntegration<ChirpstackIntegrationHandler>(builder.Configuration);
 
 builder.Services.AddControllers();
+
 builder.Services.AddProblemDetails();
 
 builder.Services.AddAutomationsCompilers();
