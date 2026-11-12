@@ -8,25 +8,11 @@
 
 #include "loris/lorawan.h"
 
-#define LORAWAN_DEV_EUI {0x52, 0xa6, 0x13, 0x65, 0x7c, 0xb5, 0x29, 0xee}
-#define LORAWAN_JOIN_EUI {0xb1, 0xaa, 0x7f, 0xb2, 0xd5, 0x24, 0x69, 0xab}
+#define LORAWAN_DEV_EUI { 0x5b, 0xd1, 0x3f, 0x6a, 0xd9, 0x5e, 0xe2, 0x1c }
+#define LORAWAN_JOIN_EUI { 0x52, 0xf1, 0xcc, 0xb8, 0x84, 0xf6, 0xdc, 0x7c }
 #define LORAWAN_APP_KEY                                                        \
-  {0x36,                                                                       \
-   0xc7,                                                                       \
-   0x98,                                                                       \
-   0xaa,                                                                       \
-   0x69,                                                                       \
-   0xcf,                                                                       \
-   0xc9,                                                                       \
-   0xab,                                                                       \
-   0xdf,                                                                       \
-   0x49,                                                                       \
-   0xd2,                                                                       \
-   0xcf,                                                                       \
-   0xd6,                                                                       \
-   0x71,                                                                       \
-   0xd7,                                                                       \
-   0x15}
+  { 0xd9, 0xc7, 0xae, 0xd4, 0x2c, 0x8e, 0x86, 0xed,                            \
+    0x21, 0x8e, 0x13, 0xf3, 0x3f, 0x86, 0xeb, 0x38 }
 
 LOG_MODULE_REGISTER(lorawan_main_test);
 
@@ -76,7 +62,7 @@ static void link_check_ans_cb(uint8_t demod_margin, uint8_t nb_gateways) {
 }
 
 void send_countdown(int countdown_secs) {
-  char spinner[] = {'|', '/', '-', '\\'};
+  char spinner[] = { '|', '/', '-', '\\' };
   for (int i = 0; i < countdown_secs; i++) {
     size_t idx = i % (sizeof(spinner) / sizeof(spinner[0]));
     printf(
@@ -89,32 +75,32 @@ void send_countdown(int countdown_secs) {
 }
 
 int main() {
-  struct lorawan_downlink_cb dl_cb = {0};
+  struct lorawan_downlink_cb dl_cb = { 0 };
   lr_lw_register_downlink_callback(&dl_cb, &dl_callback);
   lr_lw_register_dr_changed_callback(&datarate_changed_cb);
-  lr_lw_link_check_ans_callback(&link_check_ans_cb);
+  lr_lw_register_link_check_ans_callback(&link_check_ans_cb);
 
   uint8_t dev_eui[] = LORAWAN_DEV_EUI;
   uint8_t join_eui[] = LORAWAN_JOIN_EUI;
   uint8_t app_key[] = LORAWAN_APP_KEY;
 
   lr_lw_join_otaa_config_t cfg = {
-      .dev_eui = dev_eui,
-      .join_eui = join_eui,
-      .app_key = app_key,
-      .nwk_key = app_key,
+    .dev_eui = dev_eui,
+    .join_eui = join_eui,
+    .app_key = app_key,
+    .nwk_key = app_key,
   };
-
-  if (lr_lw_set_datarate(LORAWAN_DR_3) != LR_LW_OK) {
-    LOG_ERR("Failed to set datarate!");
-  }
-
-  lr_lw_set_adr_mode(true);
 
   while (lr_lw_join_otaa(&cfg, LORAWAN_REGION_EU868) != LR_LW_OK) {
     LOG_ERR("Joining LoRaWAN failed. Trying again in %i", REJOIN_RETRY_SECONDS);
     k_sleep(K_SECONDS(REJOIN_RETRY_SECONDS));
   }
+
+  lr_lw_set_adr_mode(false);
+  if (lr_lw_set_datarate(LORAWAN_DR_3) != LR_LW_OK) {
+    LOG_ERR("Failed to set datarate!");
+  }
+  lr_lw_set_adr_mode(true);
 
   while (true) {
     LOG_INF("Sending packet!");

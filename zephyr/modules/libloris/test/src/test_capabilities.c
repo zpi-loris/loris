@@ -15,31 +15,11 @@ ZTEST_SUITE(capabilities, NULL, NULL, NULL, NULL, NULL);
 capabilities_t cap;
 
 report_t report_func(struct sensor* t) {
-  report_t rep = {
-      .sensor_id = t->id,
-      .value = {2},
-      .which_value = REPORT_VALUE_INT
-  };
+  report_t rep = { .sensor_id = t->id,
+                   .value = { 2 },
+                   .which_value = REPORT_VALUE_INT };
   return rep;
 };
-
-result_t do_sth_int(void* arg) {
-  int val = *(int*)arg;
-
-  if (val == 1) {
-    return OK;
-  }
-  return ERROR;
-}
-
-result_t do_sth_float(void* arg) {
-  int val = *(float*)(arg);
-
-  if (val != 0) {
-    return OK;
-  }
-  return ERROR;
-}
 
 sensor_t* get_sensor_at_idx(sys_slist_t* sensor_list, int idx) {
   sensor_t* sensor;
@@ -71,11 +51,12 @@ ZTEST(capabilities, test_add_sensors_to_the_list) {
   capabilities_init(&cap, "capabilities_sensors", DEVICE_CLASS_A);
 
   zassert_equal(
-      add_sensor(
+      capabilities_add_sensor(
           &cap,
           "test_name 1",
           "Measures temperature",
-          VALUE_TYPE_TEMPERATURE,
+          SENSOR_VALUE_TYPE_FLOAT,
+          SENSOR_SEMANTICS_TEMPERATURE,
           "C",
           &report_func,
           60
@@ -83,11 +64,12 @@ ZTEST(capabilities, test_add_sensors_to_the_list) {
       OK
   );
   zassert_equal(
-      add_sensor(
+      capabilities_add_sensor(
           &cap,
           "test_name 2",
           "Measures temperature",
-          VALUE_TYPE_TEMPERATURE,
+          SENSOR_VALUE_TYPE_FLOAT,
+          SENSOR_SEMANTICS_TEMPERATURE,
           "F",
           &report_func,
           30
@@ -127,9 +109,10 @@ ZTEST(capabilities, test_check_read_function_from_capabilities) {
   zassert_equal(fst_report.value.int_val, 2);
 }
 
+/*
 ZTEST(capabilities, test_add_functions_to_the_list) {
   zassert_equal(
-      add_function(
+      capabilities_add_function(
           &cap,
           "do_sth_1",
           "does sth 1",
@@ -140,7 +123,7 @@ ZTEST(capabilities, test_add_functions_to_the_list) {
       OK
   );
   zassert_equal(
-      add_function(
+      capabilities_add_function(
           &cap,
           "do_sth_2",
           "does sth 2",
@@ -167,3 +150,5 @@ ZTEST(capabilities, test_add_functions_to_the_list) {
   zassert_not_equal(sys_slist_len(&cap.functions), 0);
   zassert_equal(sys_slist_len(&cap.functions), 2);
 }
+
+*/

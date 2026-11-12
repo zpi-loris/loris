@@ -116,7 +116,7 @@ ZTEST_INSTANTIATE_TEST_SUITE_P(
     call_downlink_confs
 );
 ZTEST_P(codec_downlink, test_encodes_and_decodes_call) {
-  downlink_t dl = {0};
+  downlink_t dl = { 0 };
   call_downlink_conf_t conf = ZTEST_GET_PARAM(call_downlink_conf_t);
   mk_call_downlink(&dl, conf.type, &conf.value);
 
@@ -125,15 +125,15 @@ ZTEST_P(codec_downlink, test_encodes_and_decodes_call) {
   zassert_equal(encode_downlink(buf, sizeof(buf), &dl, &bytes_written), OK);
   zassert_not_equal(bytes_written, 0);
 
-  downlink_t decoded = {0};
+  downlink_t decoded = { 0 };
   zassert_equal(decode_downlink(&decoded, buf, bytes_written), OK);
   assert_downlinks_equal(&dl, &decoded);
 }
 
 static const down_ping_type_t downping_types[] = {
-    DOWN_PING_TYPE_UNSPECIFIED,
-    DOWN_PING_TYPE_DISCONNECT,
-    DOWN_PING_TYPE_HELLO,
+  DOWN_PING_TYPE_UNSPECIFIED,
+  DOWN_PING_TYPE_DISCONNECT,
+  DOWN_PING_TYPE_HELLO,
 };
 
 ZTEST_DEFINE_PARAM_VALUES_ARRAY(down_ping_types, downping_types);
@@ -145,18 +145,17 @@ ZTEST_INSTANTIATE_TEST_SUITE_P(
 );
 ZTEST_P(codec_downlink, test_encodes_and_decodes_downping) {
   down_ping_type_t type = ZTEST_GET_PARAM(down_ping_type_t);
-  downlink_t dl =
-      {.payload_type = DOWNLINK_PAYLOAD_TYPE_PING,
-       .payload.ping = {
-           .type = type,
-       }};
+  downlink_t dl = { .payload_type = DOWNLINK_PAYLOAD_TYPE_PING,
+                    .payload.ping = {
+                        .type = type,
+                    } };
 
   char buf[1024];
   size_t bytes_written = 0;
   zassert_equal(encode_downlink(buf, sizeof(buf), &dl, &bytes_written), OK);
   zassert_true(bytes_written > 0);
 
-  downlink_t decoded = {0};
+  downlink_t decoded = { 0 };
   zassert_equal(decode_downlink(&decoded, buf, bytes_written), OK);
   assert_downlinks_equal(&dl, &decoded);
 }
@@ -168,6 +167,7 @@ void assert_sensors_equal(const sensor_t* s1, const sensor_t* s2) {
   zassert_str_equal(s1->name.ptr, s2->name.ptr);
   zassert_str_equal(s1->description.ptr, s2->description.ptr);
   zassert_equal(s1->value_type, s2->value_type);
+  zassert_equal(s1->semantics, s2->semantics);
   zassert_equal(s1->has_unit, s2->has_unit);
   if (s1->has_unit) {
     zassert_str_equal(s1->unit.ptr, s2->unit.ptr);
@@ -298,8 +298,8 @@ void mk_report_uplink(uplink_t* out, report_value_type_t type, void* value) {
 }
 
 static const up_ping_type_t upts[] = {
-    UP_PING_TYPE_UNSPECIFIED,
-    UP_PING_TYPE_HELLO,
+  UP_PING_TYPE_UNSPECIFIED,
+  UP_PING_TYPE_HELLO,
 };
 
 ZTEST_DEFINE_PARAM_VALUES_ARRAY(upping_types, upts);
@@ -311,17 +311,15 @@ ZTEST_INSTANTIATE_TEST_SUITE_P(
 );
 ZTEST_P(codec_uplink, test_encodes_and_decodes_upping) {
   up_ping_type_t type = ZTEST_GET_PARAM(up_ping_type_t);
-  uplink_t ul = {
-      .payload_type = UPLINK_PAYLOAD_TYPE_PING,
-      .payload.ping.type = type
-  };
+  uplink_t ul = { .payload_type = UPLINK_PAYLOAD_TYPE_PING,
+                  .payload.ping.type = type };
 
   char buf[1024];
   size_t bytes_written = 0;
   zassert_equal(encode_uplink(buf, sizeof(buf), &ul, &bytes_written), OK);
   zassert_not_equal(bytes_written, 0);
 
-  uplink_t decoded = {0};
+  uplink_t decoded = { 0 };
   zassert_equal(decode_uplink(&decoded, buf, bytes_written), OK);
   zassert_equal(decoded.payload_type, UPLINK_PAYLOAD_TYPE_PING);
   zassert_equal(decoded.payload.ping.type, type);
@@ -369,7 +367,7 @@ ZTEST_INSTANTIATE_TEST_SUITE_P(
 );
 ZTEST_P(codec_uplink, test_encodes_and_decodes_report) {
   report_conf_t conf = ZTEST_GET_PARAM(report_conf_t);
-  uplink_t ul = {0};
+  uplink_t ul = { 0 };
   mk_report_uplink(&ul, conf.type, &conf.value);
 
   char buf[1024];
@@ -377,7 +375,7 @@ ZTEST_P(codec_uplink, test_encodes_and_decodes_report) {
   zassert_equal(encode_uplink(buf, sizeof(buf), &ul, &bytes_written), OK);
   zassert_true(bytes_written > 0);
 
-  uplink_t decoded = {0};
+  uplink_t decoded = { 0 };
   zassert_equal(decode_uplink(&decoded, buf, bytes_written), OK);
   zassert_equal(ul.payload_type, decoded.payload_type);
   uplink_free(&decoded);
@@ -385,64 +383,64 @@ ZTEST_P(codec_uplink, test_encodes_and_decodes_report) {
 
 ZTEST(codec_uplink, test_encodes_and_decodes_capabilities) {
   sensor_t s1 = {
-      .id = 1,
-      .name = {.ptr = "Temperature", .len = 11, .src_type = STR_SRC_STATIC},
-      .description =
-          {.ptr = "Ambient temperature sensor",
-           .len = 26,
-           .src_type = STR_SRC_STATIC},
-      .value_type = VALUE_TYPE_TEMPERATURE,
-      .has_unit = true,
-      .unit = {.ptr = "C", .len = 1, .src_type = STR_SRC_STATIC},
-      .read_func = NULL,
-      .wake_interval_sec = 60,
+    .id = 1,
+    .name = { .ptr = "Temperature", .len = 11, .src_type = STR_SRC_STATIC },
+    .description = { .ptr = "Ambient temperature sensor",
+                     .len = 26,
+                     .src_type = STR_SRC_STATIC },
+    .value_type = SENSOR_VALUE_TYPE_FLOAT,
+    .semantics = SENSOR_SEMANTICS_TEMPERATURE,
+    .has_unit = true,
+    .unit = { .ptr = "C", .len = 1, .src_type = STR_SRC_STATIC },
+    .read_func = NULL,
+    .wake_interval_sec = 60,
   };
   sensor_t s2 = {
-      .id = 2,
-      .name = {.ptr = "Humidity", .len = 8, .src_type = STR_SRC_STATIC},
-      .description =
-          {.ptr = "Relative humidity sensor",
-           .len = 24,
-           .src_type = STR_SRC_STATIC},
-      .value_type = VALUE_TYPE_HUMIDITY,
-      .has_unit = true,
-      .unit = {.ptr = "%", .len = 1, .src_type = STR_SRC_STATIC},
-      .read_func = NULL,
-      .wake_interval_sec = 120,
+    .id = 2,
+    .name = { .ptr = "Humidity", .len = 8, .src_type = STR_SRC_STATIC },
+    .description = { .ptr = "Relative humidity sensor",
+                     .len = 24,
+                     .src_type = STR_SRC_STATIC },
+    .value_type = SENSOR_VALUE_TYPE_FLOAT,
+    .semantics = SENSOR_SEMANTICS_HUMIDITY,
+    .has_unit = true,
+    .unit = { .ptr = "%", .len = 1, .src_type = STR_SRC_STATIC },
+    .read_func = NULL,
+    .wake_interval_sec = 120,
   };
   sensor_t s3 = {
-      .id = 3,
-      .name = {.ptr = "CO2", .len = 3, .src_type = STR_SRC_STATIC},
-      .description =
-          {.ptr = "Carbon dioxide concentration",
-           .len = 28,
-           .src_type = STR_SRC_STATIC},
-      .value_type = VALUE_TYPE_CO2,
-      .has_unit = false,
-      .unit = LORIS_STR_NONE,
-      .read_func = NULL,
-      .wake_interval_sec = 300,
+    .id = 3,
+    .name = { .ptr = "CO2", .len = 3, .src_type = STR_SRC_STATIC },
+    .description = { .ptr = "Carbon dioxide concentration",
+                     .len = 28,
+                     .src_type = STR_SRC_STATIC },
+    .value_type = SENSOR_VALUE_TYPE_FLOAT,
+    .semantics = SENSOR_SEMANTICS_CO2,
+    .has_unit = false,
+    .unit = LORIS_STR_NONE,
+    .read_func = NULL,
+    .wake_interval_sec = 300,
   };
 
   function_t f1 = {
-      .id = 10,
-      .name = {.ptr = "Reboot", .len = 6, .src_type = STR_SRC_STATIC},
-      .description =
-          {.ptr = "Reboots the device", .len = 18, .src_type = STR_SRC_STATIC},
-      .arg_type = FUNC_ARG_TYPE_VOID,
-      .call_function = NULL,
-      .wake_interval_sec = 0,
+    .id = 10,
+    .name = { .ptr = "Reboot", .len = 6, .src_type = STR_SRC_STATIC },
+    .description = { .ptr = "Reboots the device",
+                     .len = 18,
+                     .src_type = STR_SRC_STATIC },
+    .arg_type = FUNC_ARG_TYPE_VOID,
+    .call_function = NULL,
+    .wake_interval_sec = 0,
   };
   function_t f2 = {
-      .id = 11,
-      .name = {.ptr = "SetInterval", .len = 11, .src_type = STR_SRC_STATIC},
-      .description =
-          {.ptr = "Sets sensor update interval in seconds",
-           .len = 39,
-           .src_type = STR_SRC_STATIC},
-      .arg_type = FUNC_ARG_TYPE_INT,
-      .call_function = NULL,
-      .wake_interval_sec = 10,
+    .id = 11,
+    .name = { .ptr = "SetInterval", .len = 11, .src_type = STR_SRC_STATIC },
+    .description = { .ptr = "Sets sensor update interval in seconds",
+                     .len = 39,
+                     .src_type = STR_SRC_STATIC },
+    .arg_type = FUNC_ARG_TYPE_INT,
+    .call_function = NULL,
+    .wake_interval_sec = 10,
   };
 
   uplink_t ul =
@@ -471,7 +469,7 @@ ZTEST(codec_uplink, test_encodes_and_decodes_capabilities) {
   zassert_equal(encode_uplink(buf, sizeof(buf), &ul, &bytes_written), OK);
   zassert_true(bytes_written > 0);
 
-  uplink_t decoded = {0};
+  uplink_t decoded = { 0 };
   zassert_equal(decode_uplink(&decoded, buf, bytes_written), OK);
   assert_uplinks_equal(&ul, &decoded);
   uplink_free(&decoded);
@@ -479,10 +477,10 @@ ZTEST(codec_uplink, test_encodes_and_decodes_capabilities) {
 
 ZTEST(codec_uplink, test_above_cap) {
   uplink_t ul = {
-      .payload_type = UPLINK_PAYLOAD_TYPE_REPORT,
-      .payload.report.sensor_id = 4,
-      .payload.report.which_value = REPORT_VALUE_INT,
-      .payload.report.value.int_val = 10,
+    .payload_type = UPLINK_PAYLOAD_TYPE_REPORT,
+    .payload.report.sensor_id = 4,
+    .payload.report.which_value = REPORT_VALUE_INT,
+    .payload.report.value.int_val = 10,
   };
 
   char buf[2]; // too small, should fail
