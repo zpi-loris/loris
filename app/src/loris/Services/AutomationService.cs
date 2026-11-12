@@ -226,7 +226,7 @@ public sealed class AutomationService(
         }
     }
 
-    private Func<StateCache, bool> CompileCondition(
+    private Func<IStateCache, bool> CompileCondition(
         AutomationDto rule,
         IConditionDto dto,
         LookupContext? lookup

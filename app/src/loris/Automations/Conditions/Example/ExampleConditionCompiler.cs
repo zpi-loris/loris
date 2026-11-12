@@ -5,7 +5,7 @@ namespace Loris.Automations.Conditions.Example;
 public class ExampleConditionCompiler : ConditionCompilerBase<ExampleConditionDto>
 {
     // see Triggers/Example for full example
-    protected override Func<StateCache, bool> Compile(
+    protected override Func<IStateCache, bool> Compile(
         ExampleConditionDto dto,
         LookupContext? lookup
     ) => (_) => true;

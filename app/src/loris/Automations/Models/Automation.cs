@@ -9,6 +9,6 @@ public record Automation(
     string Name,
     IEvent Trigger,
     Func<IEventMessage, bool> TriggerFilter,
-    IReadOnlyList<Func<StateCache, bool>> Conditions,
+    IReadOnlyList<Func<IStateCache, bool>> Conditions,
     IReadOnlyList<Action> Actions
 ) { }

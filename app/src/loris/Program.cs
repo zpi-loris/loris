@@ -21,6 +21,7 @@ builder.Services.AddDbContext<LorisDbContext>(options => options.UseNpgsql(conne
 builder.Services.AddChannels();
 
 builder.Services.AddSingleton<AutomationIndex>();
+builder.Services.AddSingleton<IStateCache, StateCache>();
 
 builder.Services.AddChirpstackDeviceService(builder.Configuration);
 
