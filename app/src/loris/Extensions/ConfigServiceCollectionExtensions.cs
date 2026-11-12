@@ -1,6 +1,8 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Threading.Channels;
-using Loris.Messages;
+using Loris.Messages.Database;
+using Loris.Messages.Device;
+using Loris.Messages.Event;
 using Loris.MQTT.Client;
 using Namotion.Reflection;
 

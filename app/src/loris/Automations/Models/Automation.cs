@@ -1,6 +1,6 @@
 using Loris.Data;
 using Loris.Events;
-using Loris.Messages;
+using Loris.Messages.Event;
 
 namespace Loris.Automations.Models;
 
