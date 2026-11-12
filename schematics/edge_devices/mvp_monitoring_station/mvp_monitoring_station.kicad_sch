@@ -1056,7 +1056,7 @@
 			(symbol "Active_Buzzer_0_1"
 				(rectangle
 					(start -7.62 3.81)
-					(end -3.81 -3.81)
+					(end -2.54 -3.81)
 					(stroke
 						(width 0)
 						(type default)
@@ -1066,7 +1066,7 @@
 					)
 				)
 				(rectangle
-					(start -3.81 3.81)
+					(start -2.54 3.81)
 					(end 7.62 -3.81)
 					(stroke
 						(width 0)
@@ -1107,7 +1107,7 @@
 				(pin passive line
 					(at -10.16 0 0)
 					(length 2.54)
-					(name "IN"
+					(name "OUT"
 						(effects
 							(font
 								(size 1.27 1.27)
@@ -2981,16 +2981,6 @@
 	)
 	(wire
 		(pts
-			(xy 135.89 53.34) (xy 142.24 53.34)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "b9731390-5d28-4411-b9b7-62fdc5dd7ed0")
-	)
-	(wire
-		(pts
 			(xy 210.82 81.28) (xy 210.82 90.17)
 		)
 		(stroke
@@ -3068,6 +3058,16 @@
 			(type default)
 		)
 		(uuid "d3515ffa-7b1d-4ce2-887f-b238b3d71083")
+	)
+	(wire
+		(pts
+			(xy 135.89 53.34) (xy 142.24 53.34)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "dc0a85e6-d644-438e-8f90-a5039a57ff43")
 	)
 	(wire
 		(pts

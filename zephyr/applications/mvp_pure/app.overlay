@@ -20,6 +20,7 @@
     led-red = &led_red;
     env-temp-sensor = &env_ds18b20;
     w1 = &w1_bus;
+    buzzer = &buzzer;
   };
 
   zephyr,user {
@@ -38,6 +39,11 @@
     led_red: led_2 {
       gpios = <&gpio0 27 GPIO_ACTIVE_HIGH>;
     };
+  };
+
+  buzzer: buzzer {
+    compatible = "gpio-buzzer";
+    gpios = <&gpio1 0 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>;
   };
 
   w1_bus: w1-bus {

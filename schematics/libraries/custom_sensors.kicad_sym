@@ -64,7 +64,7 @@
 		(symbol "Active_Buzzer_0_1"
 			(rectangle
 				(start -7.62 3.81)
-				(end -3.81 -3.81)
+				(end -2.54 -3.81)
 				(stroke
 					(width 0)
 					(type default)
@@ -74,7 +74,7 @@
 				)
 			)
 			(rectangle
-				(start -3.81 3.81)
+				(start -2.54 3.81)
 				(end 7.62 -3.81)
 				(stroke
 					(width 0)
@@ -115,7 +115,7 @@
 			(pin passive line
 				(at -10.16 0 0)
 				(length 2.54)
-				(name "IN"
+				(name "OUT"
 					(effects
 						(font
 							(size 1.27 1.27)
