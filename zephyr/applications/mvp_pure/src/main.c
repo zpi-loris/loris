@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <zephyr/drivers/adc.h>
 #include <zephyr/drivers/gpio.h>
 #include <zephyr/drivers/sensor.h>
 #include <zephyr/drivers/uart.h>
@@ -11,25 +12,25 @@ LOG_MODULE_REGISTER(mvp_pure);
 #define MAIN_LOOP_SLEEP_MS 1000
 #define LED_TOGGLE_DELAY_MS 200
 
-#define LED_GREEN_NODE DT_ALIAS(led_green)
-#define LED_YELLOW_NODE DT_ALIAS(led_yellow)
-#define LED_RED_NODE DT_ALIAS(led_red)
+#define MOISTURE_SENSOR_DRY_MV 2500
+#define MOISTURE_SENSOR_WET_MV 1000
 
-#define W1_BUS DT_ALIAS(w1)
-
-#define ENV_TEMP_SENSOR DT_ALIAS(env_temp_sensor)
 // #define SOIL_TEMP_SENSOR(soil_temp_sensor)
 
 static const struct gpio_dt_spec led_green =
-    GPIO_DT_SPEC_GET(LED_GREEN_NODE, gpios);
+    GPIO_DT_SPEC_GET(DT_ALIAS(led_green), gpios);
 static const struct gpio_dt_spec led_yellow =
-    GPIO_DT_SPEC_GET(LED_YELLOW_NODE, gpios);
+    GPIO_DT_SPEC_GET(DT_ALIAS(led_yellow), gpios);
 static const struct gpio_dt_spec led_red =
-    GPIO_DT_SPEC_GET(LED_RED_NODE, gpios);
+    GPIO_DT_SPEC_GET(DT_ALIAS(led_red), gpios);
 
-static const struct device* w1_bus = DEVICE_DT_GET(W1_BUS);
+static const struct device* w1_bus = DEVICE_DT_GET(DT_ALIAS(w1));
 
-static const struct device* env_temp_sensor = DEVICE_DT_GET(ENV_TEMP_SENSOR);
+static const struct device* env_temp_sensor =
+    DEVICE_DT_GET(DT_ALIAS(env_temp_sensor));
+
+static const struct adc_dt_spec moisture_sensor_adc =
+    ADC_DT_SPEC_GET_BY_NAME(DT_PATH(zephyr_user), moisture);
 
 void w1_search_callback(struct w1_rom rom, void* user_data) {
   printk(
@@ -95,6 +96,25 @@ int main(void) {
   }
   LOG_INF("Found env temp sensor: %s", env_temp_sensor->name);
 
+  // ADC - moisture sensor
+  if (!adc_is_ready_dt(&moisture_sensor_adc)) {
+    LOG_ERR("Moisture sensor ADC is not ready!");
+    return 1;
+  }
+
+  if (adc_channel_setup_dt(&moisture_sensor_adc)) {
+    LOG_ERR("Error configuring moisture sensor ADC!");
+    return 1;
+  }
+
+  int32_t moisuter_sensor_adc_buf[1] = { 0 };
+  struct adc_sequence moisture_sensor_adc_seq = {
+    .buffer = &moisuter_sensor_adc_buf,
+    .buffer_size = sizeof(moisuter_sensor_adc_buf),
+  };
+  adc_sequence_init_dt(&moisture_sensor_adc, &moisture_sensor_adc_seq);
+
+  // main loop
   while (1) {
     LOG_INF("Toggling LEDs");
     for (size_t i = 0; i < n_leds; i++) {
@@ -106,14 +126,34 @@ int main(void) {
 
     LOG_INF("Getting temperature");
     struct sensor_value temp = { 0 };
-    if (read_temp(env_temp_sensor, &temp)) {
+    if (!read_temp(env_temp_sensor, &temp)) {
+      LOG_WRN("Failed to get environment temperature");
+    } else {
       printk(
           "Current environment temperature is %d.%06d\n",
           temp.val1,
           temp.val2
       );
+    }
+
+    LOG_INF("Getting moisture");
+    if (adc_read_dt(&moisture_sensor_adc, &moisture_sensor_adc_seq) < 0) {
+      LOG_ERR("Error reading moisture");
     } else {
-      LOG_WRN("Failed to get environment temperature");
+      LOG_INF("Moisture raw=%d", moisuter_sensor_adc_buf[0]);
+      int32_t moisture_mv = moisuter_sensor_adc_buf[0];
+
+      if (adc_raw_to_millivolts_dt(&moisture_sensor_adc, &moisture_mv) != 0) {
+        LOG_WRN("Couldn't convert raw to mV");
+      } else {
+        LOG_INF("Moisture as voltage U=%dmV", moisture_mv);
+        float moisture_perc =
+            ((float)(MOISTURE_SENSOR_DRY_MV - moisture_mv) /
+             (float)(MOISTURE_SENSOR_DRY_MV - MOISTURE_SENSOR_WET_MV)) *
+            100;
+        LOG_INF("Moisture: %.2f%%", (double)moisture_perc);
+        // NOTE: Might be a good idea to clamp it [0; 100]
+      }
     }
 
     k_msleep(MAIN_LOOP_SLEEP_MS);
