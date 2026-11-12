@@ -20,6 +20,10 @@ config LORIS_FUNCS_AMOUNT
   int "How many functions are provided"
   default 12
 
+config LORIS_WAKE_INTERVAL
+  int "How often will the device wake up in seconds"
+  default 60
+
 config LORIS_TEST
   bool "Compile additional test helper functions"
   help

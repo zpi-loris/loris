@@ -327,8 +327,7 @@ void lr_start(capabilities_t* capabilities) {
   k_thread_start(ul_comm_tid);
   k_thread_start(dl_comm_tid);
 
-  // In order to never end - threads do all the job
   while (1) {
-    k_sleep(K_FOREVER);
+    k_sleep(K_SECONDS(CONFIG_LORIS_WAKE_INTERVAL));
   }
 }
