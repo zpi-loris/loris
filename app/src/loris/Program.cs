@@ -16,6 +16,7 @@ builder.Services.AddDbContext<LorisDbContext>(options => options.UseNpgsql(conne
 builder.Services.AddChannels();
 
 builder.Services.AddSingleton<AutomationIndex>();
+builder.Services.AddSingleton<IStateCache, StateCache>();
 
 // Add chirpstack integration background task with handler implementation
 builder.Services.AddChirpstackIntegration<ChirpstackIntegrationHandler>(builder.Configuration);

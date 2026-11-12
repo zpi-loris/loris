@@ -1,64 +1,52 @@
+using System.Diagnostics.CodeAnalysis;
 using Loris.Models;
 using Loris.Protocol;
 using Loris.Types;
 
 namespace Loris.Data;
 
-public sealed record CacheEntry(Report? Report, DateTime Time)
+public sealed class StateCache : IStateCache
 {
-    public static CacheEntry FromModel(SensorReading sensorReading)
+    private readonly HashSet<DevEui> _devices = [];
+    private readonly Dictionary<(DevEui, int), (Report, DateTime)> _sensorsCache = [];
+
+    public bool TryGetSensorLastState(
+        DevEui devEui,
+        int sensorId,
+        [NotNullWhen(true)] out Report? state
+    )
     {
-        var entry = new CacheEntry(null, sensorReading.Time);
-
-        if (sensorReading.FloatValue.HasValue)
+        if (!_sensorsCache.TryGetValue((devEui, sensorId), out var value))
         {
-            entry = entry with
-            {
-                Report = new Report
-                {
-                    SensorId = sensorReading.SensorId,
-                    FloatVal = sensorReading.FloatValue.Value,
-                },
-            };
+            state = default;
+            return false;
         }
-        else if (sensorReading.IntValue.HasValue)
-        {
-            entry = entry with
-            {
-                Report = new Report
-                {
-                    SensorId = sensorReading.SensorId,
-                    IntVal = sensorReading.IntValue.Value,
-                },
-            };
-        }
-        else if (sensorReading.BoolValue.HasValue)
-        {
-            entry = entry with
-            {
-                Report = new Report
-                {
-                    SensorId = sensorReading.SensorId,
-                    BoolVal = sensorReading.BoolValue.Value,
-                },
-            };
-        }
-        else if (sensorReading.StringValue is not null)
-        {
-            entry = entry with
-            {
-                Report = new Report
-                {
-                    SensorId = sensorReading.SensorId,
-                    StrVal = sensorReading.StringValue,
-                },
-            };
-        }
-        return entry;
+        state = value.Item1;
+        return true;
     }
-}
 
-public sealed class StateCache
-{
-    private readonly Dictionary<DevEui, CacheEntry> state = [];
+    public bool TryGetSensorLastSeen(
+        DevEui devEui,
+        int sensorId,
+        [MaybeNullWhen(false)] out DateTime state
+    )
+    {
+        if (!_sensorsCache.TryGetValue((devEui, sensorId), out var value))
+        {
+            state = default;
+            return false;
+        }
+        state = value.Item2;
+        return true;
+    }
+
+    public bool IsDeviceAccepted(DevEui devEui) => _devices.Contains(devEui);
+
+    public void UpdateSensors(DevEui devEui, Report report, DateTime time) =>
+        _sensorsCache[(devEui, report.SensorId)] = (report, time);
+
+    public void UpdateSensors(DevEui devEui, SensorReading model) =>
+        _sensorsCache[(devEui, model.SensorId)] = (model.ToReport(), model.Time);
+
+    public void UpdateDevices(DevEui devEui) => _devices.Add(devEui);
 }
