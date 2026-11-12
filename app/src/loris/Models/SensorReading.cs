@@ -1,4 +1,5 @@
-﻿using Loris.Types;
+﻿using Loris.Protocol;
+using Loris.Types;
 using Microsoft.EntityFrameworkCore;
 
 namespace Loris.Models;
@@ -25,4 +26,32 @@ public class SensorReading
     //
 
     public Sensor Sensor { get; set; } = null!;
+
+    //
+    // Proto helpers
+    //
+
+    public Report ToReport()
+    {
+        if (FloatValue.HasValue)
+        {
+            return new Report { SensorId = SensorId, FloatVal = FloatValue.Value };
+        }
+        else if (IntValue.HasValue)
+        {
+            return new Report { SensorId = SensorId, IntVal = IntValue.Value };
+        }
+        else if (BoolValue.HasValue)
+        {
+            return new Report { SensorId = SensorId, BoolVal = BoolValue.Value };
+        }
+        else if (StringValue is not null)
+        {
+            return new Report { SensorId = SensorId, StrVal = StringValue };
+        }
+        else
+        {
+            throw new InvalidOperationException("SensorReading object does not hold any state");
+        }
+    }
 }
