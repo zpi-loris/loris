@@ -2,6 +2,7 @@
 #include "loris/loris.h"
 #include "loris/models/capabilities.h"
 #include "loris/models/function.h"
+#include "loris/models/report.h"
 #include "zephyr/sys/printk.h"
 
 #include <zephyr/logging/log.h>
@@ -19,12 +20,12 @@ LOG_MODULE_REGISTER(lorawan_main_test, LOG_LEVEL_INF);
 
 report_t temp_report(sensor_t* sensor) {
   report_t sample_report = { .sensor_id = 1,
-                             .value.float_val = 22.5,
-                             .which_value = REPORT_VALUE_FLOAT };
+                             .value.int_val = 22,
+                             .which_value = REPORT_VALUE_INT };
   return sample_report;
 }
 
-void hello_world(void* unused) { printk("Hello world!"); };
+void hello_world(void* unused) { printk("Hello world! \n"); };
 
 int main() {
   uint8_t dev_eui[] = LORAWAN_DEV_EUI;
