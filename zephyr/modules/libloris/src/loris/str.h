@@ -35,7 +35,7 @@ typedef struct str {
 } str_t;
 
 #define LORIS_STR_NONE                                                         \
-  ((str_t){.ptr = NULL, .len = 0, .src_type = STR_SRC_NONE})
+  ((str_t){ .ptr = NULL, .len = 0, .src_type = STR_SRC_NONE })
 
 void str_free(str_t* str);
 

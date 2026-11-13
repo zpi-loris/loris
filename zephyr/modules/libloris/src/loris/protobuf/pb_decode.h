@@ -61,15 +61,15 @@ struct pb_istream_s {
 
 #ifdef PB_MESSAGE_NESTING_MAX
 #ifndef PB_NO_ERRMSG
-#define PB_ISTREAM_EMPTY {0, 0, 0, 0, 0}
+#define PB_ISTREAM_EMPTY { 0, 0, 0, 0, 0 }
 #else
-#define PB_ISTREAM_EMPTY {0, 0, 0, 0}
+#define PB_ISTREAM_EMPTY { 0, 0, 0, 0 }
 #endif
 #else
 #ifndef PB_NO_ERRMSG
-#define PB_ISTREAM_EMPTY {0, 0, 0, 0}
+#define PB_ISTREAM_EMPTY { 0, 0, 0, 0 }
 #else
-#define PB_ISTREAM_EMPTY {0, 0, 0}
+#define PB_ISTREAM_EMPTY { 0, 0, 0 }
 #endif
 #endif
 

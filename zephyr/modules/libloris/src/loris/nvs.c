@@ -20,7 +20,7 @@ LOG_MODULE_REGISTER(lr_nvs);
 
 static const uint32_t SECTOR_COUNT = 4; // TODO: maybe put in Kconfig
 
-static struct zms_fs fs = {0};
+static struct zms_fs fs = { 0 };
 
 static atomic_t is_initialized = ATOMIC_INIT(false);
 static K_MUTEX_DEFINE(init_mutex);
@@ -44,7 +44,7 @@ lr_nvs_result_t lr_nvs_init(void) {
   }
 
   fs.offset = ZMS_PARTITION_OFFSET;
-  struct flash_pages_info info = {0};
+  struct flash_pages_info info = { 0 };
   if (flash_get_page_info_by_offs(fs.flash_device, fs.offset, &info) != 0) {
     LOG_ERR("Unable to get flash page info");
     k_mutex_unlock(&init_mutex);

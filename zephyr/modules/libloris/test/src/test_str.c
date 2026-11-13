@@ -109,9 +109,9 @@ ZTEST(str, test_alloc_copies) {
     result_t (*fn)(str_t*, const char*);
     str_src_type_t type;
   } cases[] = {
-      {str_alloc_dynamic, STR_SRC_DYNAMIC},
-      {str_alloc_slab, STR_SRC_SLAB},
-      {str_alloc_smart, STR_SRC_SLAB},
+    { str_alloc_dynamic, STR_SRC_DYNAMIC },
+    { str_alloc_slab, STR_SRC_SLAB },
+    { str_alloc_smart, STR_SRC_SLAB },
   };
   char src[] = "hello";
 
@@ -132,10 +132,10 @@ ZTEST(str, test_alloc_smart_len_sizes) {
     size_t len;
     str_src_type_t type;
   } cases[] = {
-      {0, STR_SRC_SLAB},
-      {STR_SLAB_BLOCK_SIZE - 1, STR_SRC_SLAB},
-      {STR_SLAB_BLOCK_SIZE, STR_SRC_DYNAMIC},
-      {STR_SLAB_BLOCK_SIZE * 4, STR_SRC_DYNAMIC},
+    { 0, STR_SRC_SLAB },
+    { STR_SLAB_BLOCK_SIZE - 1, STR_SRC_SLAB },
+    { STR_SLAB_BLOCK_SIZE, STR_SRC_DYNAMIC },
+    { STR_SLAB_BLOCK_SIZE * 4, STR_SRC_DYNAMIC },
   };
 
   for (size_t i = 0; i < ARRAY_SIZE(cases); i++) {
