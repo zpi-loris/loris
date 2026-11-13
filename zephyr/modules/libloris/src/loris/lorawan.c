@@ -152,7 +152,7 @@ lr_lw_result_t lr_lw_send(
     size_t size,
     enum lorawan_message_type type
 ) {
-  LOG_DBG("Sending data");
+  LOG_DBG("Sending data of size %u", size);
   int ret = lorawan_send(port, data, size, type);
 
   if (ret == -EAGAIN || ret == -ECONNREFUSED) {
@@ -218,10 +218,8 @@ lr_lw_result_t lr_lw_set_datarate(enum lorawan_datarate dr) {
   int ret = lorawan_set_datarate(dr);
 
   if (ret == -EINVAL) {
-    LOG_WRN(
-        "Setting datarate failed"
-        " - invalid datarate for the region or ADR enabled"
-    );
+    LOG_WRN("Setting datarate failed"
+            " - invalid datarate for the region or ADR enabled");
     return LR_LW_INVALID_DATARATE_OR_ADR_ENABLED;
   }
 

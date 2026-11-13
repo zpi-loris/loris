@@ -13,8 +13,8 @@
 #include "loris/result.h"
 #include "loris/str.h"
 
-static int32_t sensor_id = 0;
-static int32_t func_id = 0;
+static int32_t sensor_id = 1;
+static int32_t func_id = 1;
 static sensor_t sensor_buffer[CONFIG_LORIS_SENSORS_AMOUNT];
 static function_t func_buffer[CONFIG_LORIS_FUNCS_AMOUNT];
 
@@ -115,7 +115,7 @@ result_t capabilities_add_function(
     return ERROR;
   }
 
-  func_buffer[func_id] = (function_t){ .id = sensor_id,
+  func_buffer[func_id] = (function_t){ .id = func_id,
                                        .name = s_name,
                                        .description = s_desc,
                                        .arg_type = func_arg_type,
