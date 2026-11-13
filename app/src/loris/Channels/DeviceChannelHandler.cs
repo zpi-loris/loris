@@ -80,7 +80,7 @@ public class DeviceChannelHandler(
 
         // write to database
         await _dbWriteChannel.WriteAsync(
-            new SensorWriteMessage()
+            new ReportWriteMessage()
             {
                 DevEui = devEui,
                 Report = report,

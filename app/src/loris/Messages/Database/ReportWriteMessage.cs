@@ -3,7 +3,7 @@ using Loris.Types;
 
 namespace Loris.Messages.Database;
 
-public record SensorWriteMessage : IDbWriteMessage
+public record ReportWriteMessage : IDbWriteMessage
 {
     public required Report Report { get; init; }
     public required DevEui DevEui { get; init; }
