@@ -3,7 +3,7 @@ using Loris.Types;
 
 namespace Loris.Messages;
 
-public readonly record struct UplinkMessage : IChirpstackMessage
+public readonly record struct UplinkMessage : IDeviceMessage
 {
     public required DevEui DevEUI { get; init; }
     public required Uplink Payload { get; init; }
