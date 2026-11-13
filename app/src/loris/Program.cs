@@ -11,6 +11,13 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 
 string? connectionString = builder.Configuration.GetConnectionString("Timescale");
+
+// add factory first because it's singleton, thus options will inherit singleton
+builder.Services.AddDbContextFactory<LorisDbContext>(options =>
+    options.UseNpgsql(connectionString)
+);
+
+// add scoped second, because it can use singleton options in the scoped
 builder.Services.AddDbContext<LorisDbContext>(options => options.UseNpgsql(connectionString));
 
 // Global state
@@ -22,12 +29,13 @@ builder.Services.AddChannels();
 
 // Configure consumers for each channel
 builder.Services.AddHostedService<DeviceChannelConsumer>();
-
-// builder.Services.AddHostedService<EventChannelConsumer>();
-// builder.Services.AddHostedService<DbWriteChannelConsumer>();
+builder.Services.AddHostedService<DbWriteChannelConsumer>();
+builder.Services.AddHostedService<EventChannelConsumer>();
 
 // Configure handlers for each channel consumer
 builder.Services.AddSingleton<IDeviceChannelHandler, DeviceChannelHandler>();
+builder.Services.AddSingleton<IDbWriteChannelHandler, DbWriteChannelHandler>();
+builder.Services.AddSingleton<IEventChannelHandler, EventChannelHandler>();
 
 builder.Services.AddAutomationsCompilers();
 

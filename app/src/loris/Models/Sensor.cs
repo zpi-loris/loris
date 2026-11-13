@@ -28,4 +28,22 @@ public partial class Sensor
     public Device Device { get; set; } = null!;
 
     public ICollection<SensorReading> SensorReadings { get; } = [];
+
+    //
+    // Proto helpers
+    //
+
+    public static Sensor FromProto(DevEui devEui, Protocol.Sensor sensor)
+    {
+        return new Sensor()
+        {
+            DevEui = devEui,
+            SensorId = sensor.Id,
+            Name = sensor.Name,
+            Description = sensor.Description,
+            Unit = sensor.HasUnit ? sensor.Unit : default,
+            ValueType = sensor.ValueType,
+            Semantics = sensor.Semantics,
+        };
+    }
 }

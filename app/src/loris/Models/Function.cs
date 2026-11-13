@@ -22,4 +22,20 @@ public partial class Function
     //
 
     public Device Device { get; set; } = null!;
+
+    //
+    // Proto helpers
+    //
+
+    public static Function FromProto(DevEui devEui, Protocol.Function function)
+    {
+        return new Function()
+        {
+            DevEui = devEui,
+            FunctionId = function.Id,
+            Name = function.Name,
+            Description = function.Description,
+            ArgType = function.ArgType,
+        };
+    }
 }

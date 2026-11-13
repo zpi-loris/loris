@@ -1,4 +1,5 @@
-﻿using Loris.Protocol;
+﻿using System.ComponentModel;
+using Loris.Protocol;
 using Loris.Types;
 using Microsoft.EntityFrameworkCore;
 
@@ -30,6 +31,38 @@ public class SensorReading
     //
     // Proto helpers
     //
+
+    public static SensorReading FromProto(DevEui devEui, DateTime dateTime, Report report)
+    {
+        var reading = new SensorReading()
+        {
+            DevEui = devEui,
+            SensorId = report.SensorId,
+            Time = dateTime,
+        };
+
+        switch (report.ValueCase)
+        {
+            case Report.ValueOneofCase.FloatVal:
+                reading.FloatValue = report.FloatVal;
+                break;
+            case Report.ValueOneofCase.IntVal:
+                reading.IntValue = report.IntVal;
+                break;
+            case Report.ValueOneofCase.BoolVal:
+                reading.BoolValue = report.BoolVal;
+                break;
+            case Report.ValueOneofCase.StrVal:
+                reading.StringValue = report.StrVal;
+                break;
+            case Report.ValueOneofCase.None:
+            default:
+                throw new InvalidEnumArgumentException(
+                    "Sensor report does not have any value associated"
+                );
+        }
+        return reading;
+    }
 
     public Report ToReport()
     {
