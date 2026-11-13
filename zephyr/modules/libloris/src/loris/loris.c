@@ -148,12 +148,8 @@ extern void ul_thread(void* capabilities, void* unused1, void* unused2) {
       uplink_t capabilities_ul = { .payload.capabilities = *capabilities_ptr,
                                    .payload_type =
                                        UPLINK_PAYLOAD_TYPE_CAPABILITIES };
-      uplink_t hello_ul = { .payload.ping.type = UP_PING_TYPE_HELLO,
-                            .payload_type = UPLINK_PAYLOAD_TYPE_PING };
 
       k_msgq_put(&ul_q, &capabilities_ul, K_NO_WAIT);
-      k_msleep(1000);
-      k_msgq_put(&ul_q, &hello_ul, K_NO_WAIT);
       k_msleep(CONFIG_LORIS_RECONNECT_INTERVAL * 1000);
     }
   }
@@ -341,7 +337,19 @@ void lr_start(capabilities_t* capabilities) {
   k_thread_start(ul_comm_tid);
   k_thread_start(dl_comm_tid);
 
+#ifdef CONFIG_LORIS_ENABLE_WAKE
+  uplink_t hello_ul = { .payload.ping.type = UP_PING_TYPE_HELLO,
+                        .payload_type = UPLINK_PAYLOAD_TYPE_PING };
+#endif
+
   while (1) {
+
+#ifdef CONFIG_LORIS_ENABLE_WAKE
     k_sleep(K_SECONDS(CONFIG_LORIS_WAKE_INTERVAL));
+    k_msgq_put(&ul_q, &hello_ul, K_NO_WAIT);
+#else
+    /* Sleep forever so the main thread never ends */
+    k_sleep(K_FOREVER);
   }
 }
+#endif

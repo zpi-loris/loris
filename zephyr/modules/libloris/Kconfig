@@ -14,14 +14,22 @@ if LORIS
 
 config LORIS_SENSORS_AMOUNT
   int "How many sensors are in the device"
-  default 5
+  default 4
 
 config LORIS_FUNCS_AMOUNT
   int "How many functions are provided"
-  default 12
+  default 4
+
+config LORIS_ENABLE_WAKE
+  bool "Enable periodic wake interval"
+  default n
+  help
+    Useful when no sensors are attached (so no RX windows by default) and you
+    still want to receive packets from LoRaWAN.
 
 config LORIS_WAKE_INTERVAL
-  int "How often will the device wake up in seconds"
+  int "How often will the device wake up. Unit: Seconds."
+  depends on LORIS_ENABLE_WAKE
   default 60
 
 config LORIS_TEST
