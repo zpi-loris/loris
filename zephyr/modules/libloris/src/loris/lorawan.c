@@ -218,8 +218,10 @@ lr_lw_result_t lr_lw_set_datarate(enum lorawan_datarate dr) {
   int ret = lorawan_set_datarate(dr);
 
   if (ret == -EINVAL) {
-    LOG_WRN("Setting datarate failed"
-            " - invalid datarate for the region or ADR enabled");
+    LOG_WRN(
+        "Setting datarate failed"
+        " - invalid datarate for the region or ADR enabled"
+    );
     return LR_LW_INVALID_DATARATE_OR_ADR_ENABLED;
   }
 

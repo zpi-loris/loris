@@ -65,16 +65,16 @@ static void before_test(void* fixture) {
 ZTEST_SUITE(lorawan_suite, NULL, NULL, before_test, NULL, NULL);
 
 ZTEST(lorawan_suite, test_otaa_join_increments_devnonce) {
-  uint8_t dev_eui[8] = {0x01};
-  uint8_t join_eui[8] = {0x02};
-  uint8_t app_key[16] = {0x03};
-  uint8_t nwk_key[16] = {0x04};
+  uint8_t dev_eui[8] = { 0x01 };
+  uint8_t join_eui[8] = { 0x02 };
+  uint8_t app_key[16] = { 0x03 };
+  uint8_t nwk_key[16] = { 0x04 };
 
   lr_lw_join_otaa_config_t cfg = {
-      .dev_eui = dev_eui,
-      .join_eui = join_eui,
-      .app_key = app_key,
-      .nwk_key = nwk_key,
+    .dev_eui = dev_eui,
+    .join_eui = join_eui,
+    .app_key = app_key,
+    .nwk_key = nwk_key,
   };
 
   zassert_equal(lr_lw_join_otaa(&cfg, LORAWAN_REGION_EU868), LR_LW_OK);
@@ -116,16 +116,16 @@ ZTEST_P(lorawan_suite, test_join_failures) {
   lorawan_start_fake.return_val = tc.start_ret;
   lorawan_join_fake.return_val = tc.join_ret;
 
-  uint8_t dev_eui[8] = {0};
-  uint8_t join_eui[8] = {0};
-  uint8_t app_key[16] = {0};
-  uint8_t nwk_key[16] = {0};
+  uint8_t dev_eui[8] = { 0 };
+  uint8_t join_eui[8] = { 0 };
+  uint8_t app_key[16] = { 0 };
+  uint8_t nwk_key[16] = { 0 };
 
   lr_lw_join_otaa_config_t cfg = {
-      .dev_eui = dev_eui,
-      .join_eui = join_eui,
-      .app_key = app_key,
-      .nwk_key = nwk_key,
+    .dev_eui = dev_eui,
+    .join_eui = join_eui,
+    .app_key = app_key,
+    .nwk_key = nwk_key,
   };
 
   lr_lw_result_t res = lr_lw_join_otaa(&cfg, (enum lorawan_region)0);
@@ -133,17 +133,17 @@ ZTEST_P(lorawan_suite, test_join_failures) {
 }
 
 ZTEST(lorawan_suite, test_abp_join_success) {
-  uint8_t dev_eui[8] = {0x01};
-  uint8_t app_skey[16] = {0x02};
-  uint8_t nwk_skey[16] = {0x03};
-  uint8_t app_eui[8] = {0x04};
+  uint8_t dev_eui[8] = { 0x01 };
+  uint8_t app_skey[16] = { 0x02 };
+  uint8_t nwk_skey[16] = { 0x03 };
+  uint8_t app_eui[8] = { 0x04 };
 
   lr_lw_join_abp_config_t cfg = {
-      .dev_eui = dev_eui,
-      .dev_addr = 0x12345678,
-      .app_skey = app_skey,
-      .nwk_skey = nwk_skey,
-      .app_eui = app_eui,
+    .dev_eui = dev_eui,
+    .dev_addr = 0x12345678,
+    .app_skey = app_skey,
+    .nwk_skey = nwk_skey,
+    .app_eui = app_eui,
   };
 
   zassert_equal(lr_lw_join_abp(&cfg, (enum lorawan_region)0), LR_LW_OK);
@@ -182,7 +182,7 @@ ZTEST_P(lorawan_suite, test_lr_lw_send_status) {
   send_test_case_t tc = ZTEST_GET_PARAM(send_test_case_t);
   lorawan_send_fake.return_val = tc.lorawan_ret;
 
-  uint8_t payload[] = {0xDE, 0xAD, 0xBE, 0xEF};
+  uint8_t payload[] = { 0xDE, 0xAD, 0xBE, 0xEF };
   zassert_equal(
       lr_lw_send(10, payload, sizeof(payload), LORAWAN_MSG_UNCONFIRMED),
       tc.expected_res
@@ -245,7 +245,7 @@ static void mock_dr_changed_cb(enum lorawan_datarate dr) {}
 static void mock_link_check_ans_cb(uint8_t demod_margin, uint8_t nb_gateways) {}
 
 ZTEST(lorawan_suite, test_register_downlink_callback) {
-  struct lorawan_downlink_cb dummy = {0};
+  struct lorawan_downlink_cb dummy = { 0 };
   lr_lw_register_downlink_callback(&dummy, mock_downlink_cb);
 
   zassert_equal(lorawan_register_downlink_callback_fake.call_count, 1);

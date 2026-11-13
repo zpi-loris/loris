@@ -33,11 +33,9 @@ result_t str_from_static(str_t* out, const char* cstr) {
 
   str_free(out);
 
-  *out = (str_t){
-      .ptr = (char*)cstr,
-      .len = strlen(cstr),
-      .src_type = STR_SRC_STATIC
-  };
+  *out = (str_t){ .ptr = (char*)cstr,
+                  .len = strlen(cstr),
+                  .src_type = STR_SRC_STATIC };
   return OK;
 }
 
@@ -49,7 +47,7 @@ result_t str_borrow_cstr(str_t* out, const char* cstr) {
   str_free(out);
 
   *out =
-      (str_t){.ptr = cstr, .len = strlen(cstr), .src_type = STR_SRC_BORROWED};
+      (str_t){ .ptr = cstr, .len = strlen(cstr), .src_type = STR_SRC_BORROWED };
 
   return OK;
 }
