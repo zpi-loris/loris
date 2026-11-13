@@ -245,13 +245,6 @@ int main() {
 
   setup_devices();
 
-  int brightness = 500;
-  function_set_led_green((void*)&brightness);
-  brightness = -50;
-  function_set_led_yellow((void*)&brightness);
-  brightness = 110;
-  function_set_led_red((void*)&brightness);
-
   capabilities_t capabilities;
 
   capabilities_init(&capabilities, "loris_sample", DEVICE_CLASS_A);
