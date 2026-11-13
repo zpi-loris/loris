@@ -1094,7 +1094,7 @@ static bool checkreturn pb_decode_inner(
   bool eof;
 
   /* Track presence of required fields */
-  pb_fields_seen_t fields_seen = {{0, 0}};
+  pb_fields_seen_t fields_seen = { { 0, 0 } };
   const uint32_t allbits = ~(uint32_t)0;
 
   /* Descriptor for the structure field matching the tag decoded from stream */

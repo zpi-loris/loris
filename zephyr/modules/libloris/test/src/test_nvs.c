@@ -50,7 +50,7 @@ ZTEST_INSTANTIATE_TEST_SUITE_P(
 
 ZTEST_P(lr_nvs, test_write_read_roundtrip_types) {
   nvs_type_param_t param = ZTEST_GET_PARAM(nvs_type_param_t);
-  uint8_t read_buf[64] = {0};
+  uint8_t read_buf[64] = { 0 };
   size_t bytes_written = 0;
   size_t bytes_read = 0;
 

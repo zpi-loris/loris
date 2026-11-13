@@ -544,7 +544,7 @@ struct pb_extension_s {
   bool found;
 };
 
-#define pb_extension_init_zero {NULL, NULL, NULL, false}
+#define pb_extension_init_zero { NULL, NULL, NULL, false }
 
 /* Memory allocation functions to use. You can define pb_realloc and
  * pb_free to custom functions if you want. */
@@ -574,19 +574,19 @@ struct pb_extension_s {
 /* Binding of a message field set into a specific structure */
 #define PB_BIND(msgname, structname, width)                                    \
   const uint32_t structname##_field_info[] PB_PROGMEM = {                      \
-      msgname##_FIELDLIST(PB_GEN_FIELD_INFO_##width, structname) 0             \
+    msgname##_FIELDLIST(PB_GEN_FIELD_INFO_##width, structname) 0               \
   };                                                                           \
   const pb_msgdesc_t* const structname##_submsg_info[] = {                     \
-      msgname##_FIELDLIST(PB_GEN_SUBMSG_INFO, structname) NULL                 \
+    msgname##_FIELDLIST(PB_GEN_SUBMSG_INFO, structname) NULL                   \
   };                                                                           \
   const pb_msgdesc_t structname##_msg = {                                      \
-      structname##_field_info,                                                 \
-      structname##_submsg_info,                                                \
-      msgname##_DEFAULT,                                                       \
-      msgname##_CALLBACK,                                                      \
-      0 msgname##_FIELDLIST(PB_GEN_FIELD_COUNT, structname),                   \
-      0 msgname##_FIELDLIST(PB_GEN_REQ_FIELD_COUNT, structname),               \
-      0 msgname##_FIELDLIST(PB_GEN_LARGEST_TAG, structname),                   \
+    structname##_field_info,                                                   \
+    structname##_submsg_info,                                                  \
+    msgname##_DEFAULT,                                                         \
+    msgname##_CALLBACK,                                                        \
+    0 msgname##_FIELDLIST(PB_GEN_FIELD_COUNT, structname),                     \
+    0 msgname##_FIELDLIST(PB_GEN_REQ_FIELD_COUNT, structname),                 \
+    0 msgname##_FIELDLIST(PB_GEN_LARGEST_TAG, structname),                     \
   };                                                                           \
   msgname##_FIELDLIST(PB_GEN_FIELD_INFO_ASSERT_##width, structname)
 
