@@ -6,4 +6,4 @@
 	url = git@github.com:zpi-loris/chirpstack-simulator.git
 [submodule "chirpstack_simulator"]
 	path = chirpstack_simulator
-	url = git@github.com:zpi-loris/chirpstack-simulator
+	url = git@github.com:zpi-loris/chirpstack-simulator.git
