@@ -1,0 +1,6 @@
+(sym_lib_table
+  (version 7)
+  (lib (name "custom_sensors")(type "KiCad")(uri "${KIPRJMOD}/../../libraries/custom_sensors.kicad_sym")(options "")(descr ""))
+  (lib (name "battery_management")(type "KiCad")(uri "${KIPRJMOD}/../../libraries/battery_management.kicad_sym")(options "")(descr ""))
+  (lib (name "battery_management")(type "KiCad")(uri "${KIPRJMOD}/../../libraries/Custom_RF_Modules.kicad_sym")(options "")(descr ""))
+)

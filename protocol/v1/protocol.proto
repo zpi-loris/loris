@@ -2,6 +2,8 @@ syntax = "proto3";
 
 package protocol.v1;
 
+import 'nanopb.proto';
+
 option csharp_namespace = "Loris.Protocol";
 
 enum SensorValueType {
@@ -65,24 +67,24 @@ enum FuncArgType {
 
 message Sensor {
   int32 id = 1;
-  string name = 2;
-  string description = 3;
+  string name = 2 [(nanopb).callback_datatype = "str_t"];
+  string description = 3 [(nanopb).callback_datatype = "str_t"];
   SensorValueType value_type = 4;
   SensorSemantics semantics = 5;
-  optional string unit = 6;
+  optional string unit = 6 [(nanopb).callback_datatype = "str_t"];
 }
 
 message Function {
   int32 id = 1;
-  string name = 2;
-  string description = 3;
+  string name = 2 [(nanopb).callback_datatype = "str_t"];
+  string description = 3 [(nanopb).callback_datatype = "str_t"];
   FuncArgType arg_type = 4;
 }
 
 message Capabilities {
-  string device_name = 1;
-  repeated Sensor sensors = 2;
-  repeated Function functions = 3;
+  string device_name = 1 [(nanopb).callback_datatype = "str_t"];
+  repeated Sensor sensors = 2 [(nanopb).callback_datatype = "sys_slist_t"];
+  repeated Function functions = 3 [(nanopb).callback_datatype = "sys_slist_t"];
 }
 
 message Report {
@@ -90,7 +92,7 @@ message Report {
   oneof value {
     int32 int_val = 2;
     float float_val = 3;
-    string str_val = 4;
+    string str_val = 4 [(nanopb).callback_datatype = "str_t"];
     bool bool_val = 5;
   }
 }
@@ -99,7 +101,7 @@ message Call {
   int32 function_id = 1;
   oneof value {
     int32 int_val = 2;
-    string str_val = 3;
+    string str_val = 3 [(nanopb).callback_datatype = "str_t"];
     bool bool_val = 4;
     float float_val = 5;
   }

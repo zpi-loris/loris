@@ -1,0 +1,5 @@
+tests:
+  loris.tests:
+    tags: loris
+    platform_allow:
+      - native_sim

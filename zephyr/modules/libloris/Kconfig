@@ -1,0 +1,53 @@
+# TODO: find out how to specify LORAWAN_SYSTEM_MAX_RX_ERROR=100
+# when LORIS=y
+
+menuconfig LORIS
+  bool "Enable loris module"
+  depends on (LORA && LORAWAN && ZMS && FLASH && FLASH_MAP && MIN_HEAP) || ZTEST
+  help
+    Enables the loris module.
+
+    NOTE: to ensure proper LoRaWAN stack functionality set
+    LORAWAN_SYSTEM_MAX_RX_ERROR to a reasonable value, e.g. 100.
+
+if LORIS
+
+config LORIS_SENSORS_AMOUNT
+  int "How many sensors are in the device"
+  default 4
+
+config LORIS_FUNCS_AMOUNT
+  int "How many functions are provided"
+  default 4
+
+config LORIS_ENABLE_WAKE
+  bool "Enable periodic wake interval"
+  default n
+  help
+    Useful when no sensors are attached (so no RX windows by default) and you
+    still want to receive packets from LoRaWAN.
+
+config LORIS_WAKE_INTERVAL
+  int "How often will the device wake up. Unit: Seconds."
+  depends on LORIS_ENABLE_WAKE
+  default 60
+
+config LORIS_TEST
+  bool "Compile additional test helper functions"
+  help
+    When 'y' compiles additional helper functions not needed in production,
+    e.g. uplink DECODING and downlink ENCODING.
+
+config LORIS_RECONNECT_INTERVAL
+  int "Defines how often will the device try establish a connection with the server. Unit: Seconds" 
+  default 60
+
+config LORIS_UPLINK_QUEUE_SIZE
+  int "How many uplink messages can be stored in a queue at once"
+  default 10
+
+config LORIS_DOWNLINK_QUEUE_SIZE
+  int "How many downlink messages can be stored in a queue at once"
+  default 10
+
+endif

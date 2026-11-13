@@ -1,0 +1,10 @@
+/ {
+  aliases {
+    lora0 = &fakelora;
+  };
+
+  fakelora: fakelora {
+    compatible = "zephyr,fake-lora";
+    status = "okay";
+  };
+};

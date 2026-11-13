@@ -1,0 +1,154 @@
+#include <assert.h>
+#include <zephyr/ztest.h>
+
+#include "loris/models/capabilities.h"
+#include "loris/models/function.h"
+#include "loris/models/report.h"
+#include "loris/models/sensor.h"
+#include "loris/str.h"
+#include "zephyr/sys/slist.h"
+#include "zephyr/ztest_assert.h"
+#include "zephyr/ztest_test.h"
+
+ZTEST_SUITE(capabilities, NULL, NULL, NULL, NULL, NULL);
+
+capabilities_t cap;
+
+report_t report_func(struct sensor* t) {
+  report_t rep = { .sensor_id = t->id,
+                   .value = { 2 },
+                   .which_value = REPORT_VALUE_INT };
+  return rep;
+};
+
+sensor_t* get_sensor_at_idx(sys_slist_t* sensor_list, int idx) {
+  sensor_t* sensor;
+
+  int i = 0;
+  SYS_SLIST_FOR_EACH_CONTAINER(sensor_list, sensor, node) {
+    if (i == idx) {
+      return sensor;
+    }
+    i++;
+  }
+  return NULL;
+}
+
+function_t* get_func_at_idx(sys_slist_t* func_list, int idx) {
+  function_t* func;
+
+  int i = 0;
+  SYS_SLIST_FOR_EACH_CONTAINER(func_list, func, node) {
+    if (i == idx) {
+      return func;
+    }
+    i++;
+  }
+  return NULL;
+}
+
+ZTEST(capabilities, test_add_sensors_to_the_list) {
+  capabilities_init(&cap, "capabilities_sensors", DEVICE_CLASS_A);
+
+  zassert_equal(
+      capabilities_add_sensor(
+          &cap,
+          "test_name 1",
+          "Measures temperature",
+          SENSOR_VALUE_TYPE_FLOAT,
+          SENSOR_SEMANTICS_TEMPERATURE,
+          "C",
+          &report_func,
+          60
+      ),
+      OK
+  );
+  zassert_equal(
+      capabilities_add_sensor(
+          &cap,
+          "test_name 2",
+          "Measures temperature",
+          SENSOR_VALUE_TYPE_FLOAT,
+          SENSOR_SEMANTICS_TEMPERATURE,
+          "F",
+          &report_func,
+          30
+      ),
+      OK
+  );
+
+  sensor_t* fst_sensor = get_sensor_at_idx(&cap.sensors, 0);
+  sensor_t* snd_sensor = get_sensor_at_idx(&cap.sensors, 1);
+
+  str_t str1;
+  str_t str2;
+  str_from_static(&str1, "test_name 1");
+  str_from_static(&str2, "test_name 2");
+
+  if (fst_sensor != NULL) {
+    zassert_str_equal(fst_sensor->name.ptr, str1.ptr);
+  }
+  if (snd_sensor != NULL) {
+    zassert_str_equal(snd_sensor->name.ptr, str2.ptr);
+  }
+  zassert_not_equal(sys_slist_len(&cap.sensors), 0);
+  zassert_equal(sys_slist_len(&cap.sensors), 2);
+  if (fst_sensor != NULL && snd_sensor != NULL) {
+    zassert_equal(fst_sensor->node.next, &snd_sensor->node);
+  }
+}
+
+ZTEST(capabilities, test_check_read_function_from_capabilities) {
+  sensor_t* fst_sensor = get_sensor_at_idx(&cap.sensors, 0);
+  sensor_t* snd_sensor = get_sensor_at_idx(&cap.sensors, 1);
+
+  report_t fst_report = fst_sensor->read_func(fst_sensor);
+  report_t snd_report = snd_sensor->read_func(snd_sensor);
+
+  zassert_equal(fst_report.value.int_val, snd_report.value.int_val);
+  zassert_equal(fst_report.value.int_val, 2);
+}
+
+/*
+ZTEST(capabilities, test_add_functions_to_the_list) {
+  zassert_equal(
+      capabilities_add_function(
+          &cap,
+          "do_sth_1",
+          "does sth 1",
+          FUNC_ARG_TYPE_INT,
+          &do_sth_int,
+          0
+      ),
+      OK
+  );
+  zassert_equal(
+      capabilities_add_function(
+          &cap,
+          "do_sth_2",
+          "does sth 2",
+          FUNC_ARG_TYPE_FLOAT,
+          &do_sth_float,
+          3
+      ),
+      OK
+  );
+
+  function_t* int_func = get_func_at_idx(&cap.functions, 0);
+  function_t* float_func = get_func_at_idx(&cap.functions, 1);
+
+  if (int_func != NULL) {
+    int a = 1;
+    void* ptr = &a;
+    zassert_equal(int_func->call_function(ptr), OK);
+  }
+  if (float_func != NULL) {
+    float b = 2;
+    void* ptr = &b;
+    zassert_equal(float_func->call_function(ptr), OK);
+  }
+  zassert_not_equal(sys_slist_len(&cap.functions), 0);
+  zassert_equal(sys_slist_len(&cap.functions), 2);
+}
+
+*/

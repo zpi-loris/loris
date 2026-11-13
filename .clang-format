@@ -1,0 +1,20 @@
+---
+BasedOnStyle: LLVM
+Language: Cpp
+IndentWidth: 2
+ColumnLimit: 80
+
+DerivePointerAlignment: false
+PointerAlignment: Left
+
+BreakAfterReturnType: None
+PenaltyReturnTypeOnItsOwnLine: 100000
+PenaltyBreakBeforeFirstCallParameter: 0
+
+AlignAfterOpenBracket: BlockIndent
+BinPackParameters: false
+AllowAllParametersOfDeclarationOnNextLine: false
+Cpp11BracedListStyle: false
+
+BinPackArguments: false
+AllowAllArgumentsOnNextLine: false
