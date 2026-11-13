@@ -8,13 +8,22 @@ parser = argparse.ArgumentParser(
 )
 
 # opts
-# - view N last readings
-# - view N last readings from sensor
+# - view N last readings (optional)
+# - view N last readings from sensor (optional)
 # - parse automation
+#   - validate (sth like terraform plan)
+#   - apply
 # - view capabilities of the device
+# - list devices
 # - disconnect device
 # - welcome the device
-# -
+# - ignore(revert) the device
+
+parser.add_argument("-p", "--parse-automation")
+
+args = parser.parse_args()
+
+print(args)
 
 with (
     open("examples/mvp-normalized.yaml", "r") as yaml_in,
