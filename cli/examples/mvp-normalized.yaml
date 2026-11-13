@@ -1,0 +1,105 @@
+---
+- id: 42e40ec4-71d9-426c-9fe5-f6eda4f52928
+  name: Another Automation
+  triggers:
+    - sensor-crossed:
+        deviceName: foolhardy-blackbird083758
+        sensorName: env_temp_sensor
+        value: "25"
+        topBottom: false
+  conditions: []
+  actions:
+    - device-call:
+        deviceName: foolhardy-blackbird083758
+        functionName: set_led_green
+        value: "50"
+
+- id: 42e40ec4-71d9-426c-90e5-f5eda4f52928
+  name: Another Automation
+  triggers:
+    - sensor-crossed:
+        deviceName: foolhardy-blackbird083758
+        sensorName: env_temp_sensor
+        value: "25"
+        topBottom: true
+  conditions: []
+  actions:
+    - device-call:
+        deviceName: foolhardy-blackbird083758
+        functionName: set_led_green
+        value: "0"
+
+- id: 42e40ec4-71d9-426c-90e5-f7eda4f52921
+  name: Another Automation
+  triggers:
+    - sensor-crossed:
+        deviceName: foolhardy-blackbird083758
+        sensorName: env_temp_sensor
+        value: "27"
+        topBottom: false
+  conditions: []
+  actions:
+    - device-call:
+        deviceName: foolhardy-blackbird083758
+        functionName: set_led_yellow
+        value: "50"
+
+- id: 42e4aec4-71d9-426c-90e5-f6eda4f52921
+  name: Another Automation
+  triggers:
+    - sensor-crossed:
+        deviceName: foolhardy-blackbird083758
+        sensorName: env_temp_sensor
+        value: "27"
+        topBottom: true
+  conditions: []
+  actions:
+    - device-call:
+        deviceName: foolhardy-blackbird083758
+        functionName: set_led_yellow
+        value: "0"
+
+- id: 42d40ec4-71d9-426c-90e5-f6eda4f52921
+  name: Another Automation
+  triggers:
+    - sensor-crossed:
+        deviceName: foolhardy-blackbird083758
+        sensorName: env_temp_sensor
+        value: "30"
+        topBottom: false
+  conditions: []
+  actions:
+    - device-call:
+        deviceName: foolhardy-blackbird083758
+        functionName: set_led_red
+        value: "50"
+
+- id: 42e40ec4-77d9-426c-90e5-f6eda4f52921
+  name: Another Automation
+  triggers:
+    - sensor-crossed:
+        deviceName: foolhardy-blackbird083758
+        sensorName: env_temp_sensor
+        value: "30"
+        topBottom: true
+  conditions: []
+  actions:
+    - device-call:
+        deviceName: foolhardy-blackbird083758
+        functionName: set_led_red
+        value: "0"
+
+- id: 42e70ec4-71d9-426c-90e5-f6eda4f52929
+  name: Disable all
+  triggers:
+    - sensor-crossed:
+        deviceName: foolhardy-blackbird083758
+        sensorName: env_temp_sensor
+        value: "25"
+        topBottom: true
+  conditions: []
+  actions:
+    - device-call:
+        deviceName: foolhardy-blackbird083758
+        functionName: beep_msecs
+        value: "5000"
