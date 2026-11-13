@@ -42,7 +42,7 @@
   antenna_gain=2
 
   # Public LoRaWAN network.
-  lorawan_public=false
+  lorawan_public=true
 
   # Region.
   #
