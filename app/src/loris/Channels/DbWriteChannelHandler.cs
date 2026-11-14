@@ -42,7 +42,7 @@ public class DbWriteChannelHandler(
 
         using var ctx = await _ctxFactory.CreateDbContextAsync(stoppingToken);
 
-        if (!await ctx.TryBumpDeviceAsync(devEui, datetime, stoppingToken))
+        if (await ctx.TryBumpDeviceAsync(devEui, datetime, stoppingToken))
         {
             return;
         }
