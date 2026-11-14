@@ -5,13 +5,13 @@ namespace Loris.Channels;
 
 public class EventChannelHandler(
     ILogger<EventChannelHandler> logger,
-    AutomationIndex index,
-    StateCache stateCache
+    IAutomationIndex index,
+    IStateCache stateCache
 ) : IEventChannelHandler
 {
     private readonly ILogger<EventChannelHandler> _logger = logger;
-    private readonly AutomationIndex _index = index;
-    private readonly StateCache _stateCache = stateCache;
+    private readonly IAutomationIndex _index = index;
+    private readonly IStateCache _stateCache = stateCache;
 
     public async Task HandleAsync(IEventMessage message, CancellationToken stoppingToken)
     {
