@@ -15,26 +15,6 @@ public class AutomationsController(
     private readonly IAutomationService _service = service;
     private readonly ILogger<AutomationsController> _logger = logger;
 
-    // // GET: api/<AutomationRulesController>
-    // [HttpGet]
-    // public IEnumerable<string> Get()
-    // {
-    //     return new string[] { "value1", "value2" };
-    // }
-    //
-    // // GET api/<AutomationRulesController>/5
-    // [HttpGet("{id}")]
-    // public string Get(int id)
-    // {
-    //     return "value";
-    // }
-    // // TODO: Test no cancell
-    // [HttpPost]
-    // public async Task TestNoCancell([FromBody] IReadOnlyList<AutomationDto> rules)
-    // {
-    //     var automations = await _service.CompileAutomationsAsync(rules);
-    // }
-
     [HttpPost]
     public async Task<IActionResult> Validate(
         [FromBody] IReadOnlyList<AutomationDto> rules,
@@ -86,12 +66,4 @@ public class AutomationsController(
             extensions: new Dictionary<string, object?> { ["invalidRules"] = groupedErrors }
         );
     }
-
-    // // PUT api/<AutomationRulesController>/5
-    // [HttpPut]
-    // public void Put(int id, [FromBody] string value) { }
-    //
-    // // DELETE api/<AutomationRulesController>/5
-    // [HttpDelete("{id}")]
-    // public void Delete(int id) { }
 }
