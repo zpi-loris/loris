@@ -48,5 +48,15 @@ public sealed class StateCache : IStateCache
     public void UpdateSensors(DevEui devEui, SensorReading model) =>
         _sensorsCache[(devEui, model.SensorId)] = (model.ToReport(), model.Time);
 
-    public void UpdateDevices(DevEui devEui) => _devices.Add(devEui);
+    public void UpdateDevices(DevEui devEui, bool accepted = true)
+    {
+        if (accepted)
+        {
+            _devices.Add(devEui);
+        }
+        else
+        {
+            _devices.Remove(devEui);
+        }
+    }
 }
