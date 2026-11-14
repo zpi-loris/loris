@@ -15,7 +15,5 @@ public class DeviceEntityConfiguration : IEntityTypeConfiguration<Device>
         // Unique indexes
         builder.HasIndex(e => e.DevEui).IsUnique();
         builder.HasIndex(e => e.FriendlyName).IsUnique();
-
-        // TODO: add LastSeen value auto updating
     }
 }

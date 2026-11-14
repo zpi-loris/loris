@@ -5,4 +5,5 @@ public enum DeviceStatus
     PENDING,
     BLOCKED,
     ACTIVE,
+    DISCONNECTED,
 }

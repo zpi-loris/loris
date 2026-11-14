@@ -16,6 +16,9 @@ public class FunctionEntityConfiguration : IEntityTypeConfiguration<Function>
         // AND WE DON'T WANT THAT HERE
         builder.Property(e => e.FunctionId).ValueGeneratedNever();
 
+        // Unique index
+        builder.HasIndex(e => e.Name).IsUnique();
+
         // relationship [p]rincipal - [d]ependant
         builder
             .HasOne(d => d.Device)
