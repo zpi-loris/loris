@@ -17,9 +17,6 @@ builder.Services.AddDbContextFactory<LorisDbContext>(options =>
     options.UseNpgsql(connectionString)
 );
 
-// add scoped second, because it can use singleton options in the scoped
-builder.Services.AddDbContext<LorisDbContext>(options => options.UseNpgsql(connectionString));
-
 // Global state
 builder.Services.AddSingleton<IAutomationIndex, AutomationIndex>();
 builder.Services.AddSingleton<IStateCache, StateCache>();
