@@ -163,7 +163,6 @@ public sealed class AutomationService(
     )
         where TBlock : IAutomationBlock
     {
-        var ruleId = rule.Id.ToString();
         for (int i = 0; i < results.Count; i++)
         {
             var result = results[i];
@@ -176,7 +175,7 @@ public sealed class AutomationService(
             foreach (var error in result.Errors)
             {
                 yield return new(
-                    ruleId,
+                    rule.Id,
                     rule.Name,
                     $"{prefix}.{error.Field}",
                     error.Value,
