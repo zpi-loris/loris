@@ -210,6 +210,83 @@ components:
           format: password
         role:
           type: string
+    Function:
+      type: object
+      required:
+        - devEui
+        - functionId
+        - name
+        - description
+        - argType
+      properties:
+        devEui:
+          type: string
+        functionId:
+          type: integer
+          format: int32
+        name:
+          type: string
+        description:
+          type: string
+        argType:
+          type: string
+    Sensor:
+      type: object
+      required:
+        - devEui
+        - sensorId
+        - name
+        - description
+        - valueType
+        - semantics
+      properties:
+        devEui:
+          type: string
+        sensorId:
+          type: integer
+          format: int32
+        name:
+          type: string
+        description:
+          type: string
+        unit:
+          type: string
+        valueType:
+          type: string
+        semantics:
+          type: string
+    Device:
+      type: object
+      required:
+        - deviceId
+        - devEui
+        - deviceName
+        - friendlyName
+        - lastSeen
+        - deviceStatus
+        - functions
+        - sensors
+      properties:
+        deviceId:
+          type: string
+          format: uuid
+        devEui:
+          type: string
+        deviceName:
+          type: string
+        friendlyName:
+          type: string
+        lastSeen:
+          type: string
+          format: date-time
+        deviceStatus:
+          type: string
+        functions:
+          type: array
+          items:
+        sensors:
+          type: array
+          items:
     Error:
       type: object
       properties:
