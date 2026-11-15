@@ -19,6 +19,8 @@ tags:
     description: Device listing and lifecycle management
   - name: Functions
     description: Function invocation
+  - name: Sensor readings
+    description: Retrieving readings from sensors
 
 paths:
   /auth/login:
@@ -207,6 +209,54 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+  /devices/{devEui}/sensors/{sensorId}/readings:
+    get:
+      tags:
+        - Sensor readings
+      summary: Retrieve sensor readings from a selected time range
+      operationId: getSensorReadings
+      parameters:
+        - name: devEui
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: sensorId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: from
+          in: query
+          required: true
+          description: Start of the time range (inclusive) in UTC
+          schema:
+            type: string
+            format: date-time
+          example: '2026-01-01T00:00:00Z'
+        - name: to
+          in: query
+          required: true
+          description: End of the time range (inclusive) in UTC
+          schema:
+            type: string
+            format: date-time
+          example: '2026-01-01T23:59:59Z'
+      responses:
+        '200':
+          description: List of sensor readings ordered by time (ascending)
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/SensorReading"
+        '404':
+          description: Sensor not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
 
 components:
   schemas:
@@ -364,6 +414,20 @@ components:
             - type: integer
             - type: number
             - type: string
+    SensorReading:
+      type: object
+      properties:
+        time:
+          type: string
+          format: date-time
+        value:
+          oneOf:
+            - type: integer
+              format: int32
+            - type: number
+              format: float
+            - type: string
+            - type: boolean
     Error:
       type: object
       properties:
