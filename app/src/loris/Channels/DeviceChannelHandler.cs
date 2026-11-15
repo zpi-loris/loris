@@ -1,6 +1,7 @@
 using System.Threading.Channels;
 using Loris.Data;
 using Loris.Events;
+using Loris.Logging;
 using Loris.Messages.Database;
 using Loris.Messages.Device;
 using Loris.Messages.Event;
@@ -53,13 +54,14 @@ public class DeviceChannelHandler(
         // early drop if not accepted
         if (!_stateCache.IsDeviceAccepted(devEui))
         {
-            // TODO: rewrite to static log expression
-            _logger.LogWarning("Device was not accepted before, but sends reports");
+            _logger.DeviceNotAccepted(devEui, "Report");
             return;
         }
 
         var report = uplinkMessage.Payload.Report;
         var time = uplinkMessage.DateTime;
+
+        _logger.ReportReceived(devEui, time);
 
         // write new event
         await _eventChannelWriter.WriteAsync(
@@ -103,13 +105,14 @@ public class DeviceChannelHandler(
         // early drop if already accepted (contrary to report)
         if (_stateCache.IsDeviceAccepted(devEui))
         {
-            // TODO: rewrite to static log expression
-            _logger.LogWarning("Device is already accepted");
+            _logger.DeviceAlreadyAccepted(devEui);
             return;
         }
 
         var capabilities = uplinkMessage.Payload.Capabilities;
         var time = uplinkMessage.DateTime;
+
+        _logger.CapabilitiesReceived(devEui, time);
 
         // write to database
         await _dbWriteChannel.WriteAsync(
@@ -130,16 +133,15 @@ public class DeviceChannelHandler(
         // early drop if not accepted
         if (!_stateCache.IsDeviceAccepted(devEui))
         {
-            // TODO: rewrite to static log expression
-            _logger.LogWarning("Device was not accepted before, but sends pings");
+            _logger.DeviceNotAccepted(devEui, "Ping");
             return;
         }
 
-        var time = uplinkMessage.DateTime;
+        _logger.PingReceived(devEui, uplinkMessage.DateTime);
 
         // write to database
         await _dbWriteChannel.WriteAsync(
-            new PingWriteMessage() { DevEui = devEui, DateTime = time },
+            new PingWriteMessage() { DevEui = devEui, DateTime = uplinkMessage.DateTime },
             stoppingToken
         );
     }
