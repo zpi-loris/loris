@@ -74,6 +74,15 @@ public class DeviceService(
                 _logger.DownlinkTimeout(device.DevEui, ex.Message);
                 return Result<Device>.Failure(DownlinkErrors.DeadlineExceeded());
             }
+            else if (ex.StatusCode == StatusCode.Unauthenticated)
+            {
+                // TODO: apparently chirpstack is sending unauthenticated, even
+                // when the token is valid, but it can't find any device with the given DevEUI.
+                // This is a bug in chirpstack and i don't know how to handle it yet.
+                //
+                _logger.DownlinkFailed(device.DevEui, ex.Message);
+                return Result<Device>.Failure(DownlinkErrors.Failed(ex.Message));
+            }
             else
             {
                 _logger.DownlinkFailed(device.DevEui, ex.Message);
@@ -157,6 +166,15 @@ public class DeviceService(
             {
                 _logger.DownlinkTimeout(device.DevEui, ex.Message);
                 return Result<Device>.Failure(DownlinkErrors.DeadlineExceeded());
+            }
+            else if (ex.StatusCode == StatusCode.Unauthenticated)
+            {
+                // TODO: apparently chirpstack is sending unauthenticated, even
+                // when the token is valid, but it can't find any device with the given DevEUI.
+                // This is a bug in chirpstack and i don't know how to handle it yet.
+                //
+                _logger.DownlinkFailed(device.DevEui, ex.Message);
+                return Result<Device>.Failure(DownlinkErrors.Failed(ex.Message));
             }
             else
             {
