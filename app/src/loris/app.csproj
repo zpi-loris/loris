@@ -52,7 +52,7 @@
     <Protobuf Include="..\..\proto\chirpstack\integration\integration.proto" AdditionalImportDirs="..\..\proto\chirpstack\" Link="Protos\integration.proto">
       <SourceUrl>https://raw.githubusercontent.com/chirpstack/chirpstack/refs/heads/master/api/proto/integration/integration.proto</SourceUrl>
     </Protobuf>
-    <Protobuf Include="..\..\..\protocol\v1\protocol.proto" Link="Protos\protocol.proto" />
+    <Protobuf Include="..\..\..\protocol\v1\protocol.proto" ProtoRoot="../../../protocol/v1" Link="Protos\protocol.proto" />
+    <Protobuf Include="..\..\..\protocol\v1\nanopb.proto" ProtoRoot="../../../protocol/v1" Link="Protos\nanopb.proto" />
   </ItemGroup>
 </Project>
-
