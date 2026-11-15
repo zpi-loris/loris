@@ -15,6 +15,8 @@ tags:
     description: Logging into the account
   - name: Users
     description: User account management
+  - name: Devices
+    description: Device listing and lifecycle management
 
 paths:
   /auth/login:
@@ -140,7 +142,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-
+  /devices/active:
+    get:
+      tags:
+        - Devices
+      summary: List all active devices
+      operationId: getActiveDevices
 
 components:
   schemas:
@@ -284,9 +291,11 @@ components:
         functions:
           type: array
           items:
+            $ref: "#/components/schemas/Function"
         sensors:
           type: array
           items:
+            $ref: "#/components/schemas/Sensor"
     Error:
       type: object
       properties:
