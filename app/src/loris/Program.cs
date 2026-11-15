@@ -37,6 +37,7 @@ builder.Services.AddSingleton<IEventChannelHandler, EventChannelHandler>();
 builder.Services.AddAutomationsCompilers();
 
 builder.Services.AddScoped<IAutomationService, AutomationService>();
+builder.Services.AddScoped<IDeviceService, DeviceService>();
 
 // Add chirpstack integration background task with handler implementation
 builder.Services.AddChirpstackIntegration<ChirpstackIntegrationHandler>(builder.Configuration);
