@@ -59,4 +59,7 @@ public sealed class StateCache : IStateCache
             _devices.Remove(devEui);
         }
     }
+
+    public void UpdateDevices(Device device, bool accepted = true) =>
+        UpdateDevices(device.DevEui, accepted);
 }
