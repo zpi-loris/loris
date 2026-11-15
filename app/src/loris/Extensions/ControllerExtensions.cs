@@ -53,7 +53,7 @@ public static class ControllerExtensions
                 InvalidRules = [.. duplicates.Select(r => new InvalidRule(r.Id, r.Name))],
             };
 
-            return new ObjectResult(problem)
+            return new ObjectResult(automationProblem)
             {
                 StatusCode = StatusCodes.Status400BadRequest,
                 ContentTypes = { "application/problem+json" },
@@ -89,7 +89,7 @@ public static class ControllerExtensions
                 ],
             };
 
-            return new ObjectResult(problem)
+            return new ObjectResult(automationProblem)
             {
                 StatusCode = StatusCodes.Status400BadRequest,
                 ContentTypes = { "application/problem+json" },
