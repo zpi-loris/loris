@@ -201,6 +201,12 @@ paths:
       responses:
         '202':
           description: Function invocation request accepted
+        '404':
+          description: Function not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
 
 components:
   schemas:
