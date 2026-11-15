@@ -57,7 +57,7 @@ paths:
           format: uuid
     patch:
       tags:
-        - users
+        - Users
       summary: Update a User
       description: Partially updates the user's display name, password and/or role (changes only the provided fields). Any combination of fields can be provided, at least one is required.
       operationId: updateUser
