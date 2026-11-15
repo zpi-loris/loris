@@ -11,10 +11,44 @@ security:
   - bearerAuth: []
 
 tags:
+  - name: Authentication
+    description: Logging into the account
   - name: Users
     description: User account management
 
 paths:
+  /auth/login:
+    post:
+      tags:
+        - Authentication
+      security: []
+      summary: Log into the account
+      operationId: login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
   /users:
     post:
       tags:
@@ -110,6 +144,33 @@ paths:
 
 components:
   schemas:
+    LoginRequest:
+      type: object
+      required:
+        - displayName
+        - password
+      properties:
+        displayName:
+          type: string
+        password:
+          type: string
+          format: password
+    LoginResponse:
+      type: object
+      required:
+        - accessToken
+        - tokenType
+        - expiresIn
+      properties:
+        accessToken:
+          type: string
+          description: Signed JWT access token.
+        tokenType:
+          type: string
+          example: Bearer
+        expiresIn:
+          type: integer
+          example: 3600
     User:
       type: object
       required:
