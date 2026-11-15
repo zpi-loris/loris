@@ -1,209 +1,64 @@
-using Chirpstack.Api;
-using Grpc.Core;
-using Loris.Data;
+using System.ComponentModel;
 using Loris.Extensions;
-using Loris.Protocol;
+using Loris.Models;
+using Loris.Services;
 using Loris.Types;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using Device = Loris.Models.Device;
-using DeviceStatus = Loris.Models.DeviceStatus;
 
 namespace Loris.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class DevicesController(
-    ILogger<DevicesController> logger,
-    LorisDbContext ctx,
-    IStateCache stateCache,
-    DeviceService.DeviceServiceClient client,
-    [FromKeyedServices("chirpstack-api-token")] Metadata authToken
-) : ControllerBase
+[Produces("application/json")]
+[ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
+[ProducesResponseType<ProblemDetails>(StatusCodes.Status409Conflict)]
+public class DevicesController(IDeviceService deviceService) : ControllerBase
 {
-    private readonly ILogger<DevicesController> _logger = logger;
-    private readonly LorisDbContext _ctx = ctx;
-    private readonly IStateCache _stateCache = stateCache;
-    private readonly DeviceService.DeviceServiceClient _client = client;
-    private readonly Metadata _authToken = authToken;
+    private readonly IDeviceService _service = deviceService;
 
-    [Route("by-name/{name}/[action]")]
-    [HttpPost()]
-    public async Task<ActionResult<Device>> Accept(string name, CancellationToken ct)
-    {
-        var device = await _ctx.Devices.SingleOrDefaultAsync(d => d.FriendlyName == name, ct);
+    // ACCEPT AMIGOS
 
-        if (device is null)
-        {
-            return NotFound();
-        }
+    [HttpPost("by-name/{name}/accept")]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status502BadGateway)]
+    public async Task<ActionResult<Device>> AcceptByName(string name, CancellationToken ct) =>
+        this.ToActionResult(await _service.AcceptAsync(name, ct));
 
-        return await HandleAcceptAsync(device, ct);
-    }
+    [HttpPost("by-eui/{devEui}/accept")]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status502BadGateway)]
+    public async Task<ActionResult<Device>> AcceptByEui(DevEui devEui, CancellationToken ct) =>
+        this.ToActionResult(await _service.AcceptAsync(devEui, ct));
 
-    [Route("by-eui/{devEui}/[action]")]
-    [HttpPost()]
-    public async Task<ActionResult<Device>> Accept(DevEui devEui, CancellationToken ct)
-    {
-        var device = await _ctx.Devices.SingleOrDefaultAsync(d => d.DevEui == devEui, ct);
+    // IGNORE AMIGOS
 
-        if (device is null)
-        {
-            return NotFound();
-        }
-
-        return await HandleAcceptAsync(device, ct);
-    }
-
-    [Route("by-name/{name}/[action]")]
-    [HttpPost()]
-    public async Task<ActionResult<Device>> Ignore(
+    [HttpPost("by-name/{name}/ignore")]
+    public async Task<ActionResult<Device>> IgnoreByName(
         string name,
-        [FromQuery] bool revert,
+        [DefaultValue(false)] [FromQuery] bool revert,
         CancellationToken ct
-    )
-    {
-        var device = await _ctx.Devices.SingleOrDefaultAsync(d => d.FriendlyName == name, ct);
+    ) => this.ToActionResult(await _service.ToggleIgnoreAsync(name, ignore: !revert, ct));
 
-        if (device is null)
-        {
-            return NotFound();
-        }
-
-        return await HandleIgnoreAsync(device, revert, ct);
-    }
-
-    [Route("by-eui/{devEui}/[action]")]
-    [HttpPost()]
-    public async Task<ActionResult<Device>> Ignore(
+    [HttpPost("by-eui/{devEui}/ignore")]
+    public async Task<ActionResult<Device>> IgnoreByEui(
         DevEui devEui,
-        [FromQuery] bool revert,
+        [DefaultValue(false)] [FromQuery] bool revert,
         CancellationToken ct
-    )
-    {
-        var device = await _ctx.Devices.SingleOrDefaultAsync(d => d.DevEui == devEui, ct);
+    ) => this.ToActionResult(await _service.ToggleIgnoreAsync(devEui, ignore: !revert, ct));
 
-        if (device is null)
-        {
-            return NotFound();
-        }
+    // DISCONNECT AMIGOS
 
-        return await HandleIgnoreAsync(device, revert, ct);
-    }
+    [HttpPost("by-name/{name}/disconnect")]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status502BadGateway)]
+    public async Task<ActionResult<Device>> DisconnectByName(
+        string name,
+        [DefaultValue(false)] [FromQuery] bool force,
+        CancellationToken ct
+    ) => this.ToActionResult(await _service.DisconnectAsync(name, force, ct));
 
-    [Route("by-eui/{devEui}/[action]")]
-    [HttpPost()]
-    public async Task<ActionResult<Device>> Disconnect(
+    [HttpPost("by-eui/{devEui}/disconnect")]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status502BadGateway)]
+    public async Task<ActionResult<Device>> DisconnectByEui(
         DevEui devEui,
-        CancellationToken ct,
-        [FromQuery] bool force = false
-    )
-    {
-        var device = await _ctx.Devices.SingleOrDefaultAsync(d => d.DevEui == devEui, ct);
-        if (device is null)
-        {
-            return NotFound();
-        }
-
-        return await HandleDisconnectAsync(device, ct);
-    }
-
-    [Route("by-name/{name}/[action]")]
-    [HttpPost()]
-    public async Task<ActionResult<Device>> Disconnect(string name, CancellationToken ct)
-    {
-        var device = await _ctx.Devices.SingleOrDefaultAsync(d => d.FriendlyName == name, ct);
-        if (device is null)
-        {
-            return NotFound();
-        }
-        return await HandleDisconnectAsync(device, ct);
-    }
-
-    private async Task<ActionResult<Device>> HandleDisconnectAsync(
-        Device device,
+        [DefaultValue(false)] [FromQuery] bool force,
         CancellationToken ct
-    )
-    {
-        return device.DeviceStatus switch
-        {
-            DeviceStatus.ACTIVE => await DisconnectAsync(device, ct),
-            DeviceStatus.PENDING => Conflict("Device is not yet connected"),
-            DeviceStatus.BLOCKED => Conflict("Device is not yet connected"),
-            DeviceStatus.DISCONNECTED => Conflict("Device already disconnected"),
-            _ => Conflict("Device status is unknown"),
-        };
-    }
-
-    private async Task<ActionResult<Device>> DisconnectAsync(Device device, CancellationToken ct)
-    {
-        throw new NotImplementedException();
-        // device.DeviceStatus = DeviceStatus.DISCONNECTED;
-        // var downlink = new Downlink() { Ping = new DownPing { Type = DownPingType.Disconnect } };
-        //
-        // var downlinkTask = _client.EnqueueDownlinkAsync(downlink, device.DevEui, _authToken, ct);
-        // var dbTask = _ctx.SaveChangesAsync(ct);
-        //
-        // // State cache remove from ACCEPTED
-        // _stateCache.UpdateDevices(device.DevEui, accepted: false);
-        //
-        // return Ok();
-    }
-
-    private async Task<ActionResult<Device>> HandleIgnoreAsync(
-        Device device,
-        bool revert,
-        CancellationToken ct
-    )
-    {
-        return (device.DeviceStatus, revert) switch
-        {
-            (DeviceStatus.BLOCKED, true) => await ToggleIgnoreDeviceAsync(
-                device,
-                DeviceStatus.PENDING,
-                ct
-            ),
-            (DeviceStatus.PENDING, false) => await ToggleIgnoreDeviceAsync(
-                device,
-                DeviceStatus.BLOCKED,
-                ct
-            ),
-            (DeviceStatus.PENDING, true) => Conflict("Device is pending"),
-            (DeviceStatus.BLOCKED, false) => Conflict("Device is alredy ignored"),
-            (DeviceStatus.ACTIVE, _) => Conflict("Device is already accepted"),
-            (DeviceStatus.DISCONNECTED, _) => Conflict("Device disconnected"),
-            _ => Conflict("Device status is unknown"),
-        };
-    }
-
-    private async Task<ActionResult<Device>> ToggleIgnoreDeviceAsync(
-        Device device,
-        DeviceStatus status,
-        CancellationToken ct
-    )
-    {
-        device.DeviceStatus = status;
-        await _ctx.SaveChangesAsync(ct);
-        return Ok(device);
-    }
-
-    private async Task<ActionResult<Device>> HandleAcceptAsync(Device device, CancellationToken ct)
-    {
-        return device.DeviceStatus switch
-        {
-            DeviceStatus.PENDING => await AcceptDeviceAsync(device, ct),
-            DeviceStatus.ACTIVE => Conflict("Device is already active"),
-            DeviceStatus.BLOCKED => Conflict("Device is blocked"),
-            DeviceStatus.DISCONNECTED => Conflict("Device is disconnected"),
-            _ => Conflict("Device status is unknown"),
-        };
-    }
-
-    private async Task<ActionResult<Device>> AcceptDeviceAsync(Device device, CancellationToken ct)
-    {
-        device.DeviceStatus = DeviceStatus.ACTIVE;
-        _stateCache.UpdateDevices(device.DevEui);
-        await _ctx.SaveChangesAsync(ct);
-        return Ok(device);
-    }
+    ) => this.ToActionResult(await _service.DisconnectAsync(devEui, force, ct));
 }
