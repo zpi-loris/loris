@@ -157,6 +157,21 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/Device"
+  /devices/pending:
+    get:
+      tags:
+        - Devices
+      summary: List all pending devices
+      operationId: getPendingDevices
+      responses:
+        "200":
+          description: List of pending devices
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Device"
 
 components:
   schemas:
