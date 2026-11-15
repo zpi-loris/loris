@@ -8,12 +8,13 @@ namespace Loris.Extensions;
 
 public static class ChirpstackDeviceServiceClientExtensions
 {
+    public const int REQUEST_DEADLINE_SEC = 5;
+
     extension(DeviceService.DeviceServiceClient client)
     {
         public AsyncUnaryCall<EnqueueDeviceQueueItemResponse> EnqueueDownlinkAsync(
             Downlink downlink,
             DevEui devEui,
-            Metadata headers,
             CancellationToken ct = default
         )
         {
@@ -27,7 +28,11 @@ public static class ChirpstackDeviceServiceClientExtensions
                 },
             };
 
-            return client.EnqueueAsync(req, headers: headers, cancellationToken: ct);
+            return client.EnqueueAsync(
+                req,
+                cancellationToken: ct,
+                deadline: DateTime.UtcNow.AddSeconds(REQUEST_DEADLINE_SEC)
+            );
         }
     }
 }

@@ -2,6 +2,8 @@ using Chirpstack.Api;
 using Google.Protobuf;
 using Grpc.Core;
 using Loris.Data;
+using Loris.Extensions;
+using Loris.Logging;
 using Loris.Protocol;
 using Loris.Types;
 using Microsoft.EntityFrameworkCore;
@@ -9,14 +11,14 @@ using Microsoft.EntityFrameworkCore;
 namespace Loris.Automations.Actions.DeviceCall;
 
 public class DeviceCallActionCompiler(
+    ILogger<DeviceCallActionCompiler> logger,
     IDbContextFactory<LorisDbContext> ctxFactory,
-    DeviceService.DeviceServiceClient client,
-    [FromKeyedServices("chirpstack-api-token")] Metadata authToken
+    DeviceService.DeviceServiceClient client
 ) : ActionCompilerBase<DeviceCallActionDto>
 {
+    private readonly ILogger<DeviceCallActionCompiler> _logger = logger;
     private readonly IDbContextFactory<LorisDbContext> _ctxFactory = ctxFactory;
     private readonly DeviceService.DeviceServiceClient _downlinkClient = client;
-    private readonly Metadata _authToken = authToken;
 
     // lookups
     private const string FUNCTION_ID = "FunctionId";
@@ -131,28 +133,13 @@ public class DeviceCallActionCompiler(
         CancellationToken cancellationToken
     )
     {
-        var req = new EnqueueDeviceQueueItemRequest()
-        {
-            QueueItem = new DeviceQueueItem()
-            {
-                Confirmed = false,
-                Data = message.ToByteString(),
-                DevEui = devEui.ToString(),
-                FPort = 10,
-            },
-        };
-
         try
         {
-            await _downlinkClient.EnqueueAsync(
-                req,
-                headers: _authToken,
-                cancellationToken: cancellationToken
-            );
+            await _downlinkClient.EnqueueDownlinkAsync(message, devEui, cancellationToken);
         }
-        catch
+        catch (RpcException ex)
         {
-            // LOG FAILURE OF ACTION
+            _logger.DownlinkFailed(devEui, ex.Message);
         }
     }
 }

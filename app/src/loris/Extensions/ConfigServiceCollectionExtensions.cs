@@ -117,15 +117,17 @@ public static class ConfigServiceCollectionExtensions
                 .ConfigureChannel(options =>
                 {
                     options.Credentials = ChannelCredentials.Insecure;
-                });
-
-            // TODO: add some initial service checking the validity of the token
-
-            // register chirpstack api token for requests
-            services.AddKeyedSingleton(
-                "chirpstack-api-token",
-                new Metadata { { "Authorization", "Bearer " + token } }
-            );
+                    options.MaxRetryAttempts = 3;
+                    options.InitialReconnectBackoff = TimeSpan.FromMilliseconds(500);
+                })
+                .AddCallCredentials(
+                    (context, metadata) =>
+                    {
+                        // apply authorization to all method calls
+                        metadata.Add("Authorization", $"Bearer {token}");
+                        return Task.CompletedTask;
+                    }
+                );
 
             return services;
         }
