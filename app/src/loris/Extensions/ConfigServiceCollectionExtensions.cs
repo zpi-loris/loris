@@ -116,7 +116,10 @@ public static class ConfigServiceCollectionExtensions
                 })
                 .ConfigureChannel(options =>
                 {
+                    // TODO: ADD TLS SUPPORT
+                    options.UnsafeUseInsecureChannelCallCredentials = true;
                     options.Credentials = ChannelCredentials.Insecure;
+
                     options.MaxRetryAttempts = 3;
                     options.InitialReconnectBackoff = TimeSpan.FromMilliseconds(500);
                 })
