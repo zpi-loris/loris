@@ -7,3 +7,84 @@ servers:
   - url: http://localhost:5158/api/v1
     description: Local development server
 
+security:
+  - bearerAuth: []
+
+tags:
+  - name: Users
+    description: User account management
+
+paths:
+  /users:
+    post:
+      tags:
+        - Users
+      summary: Create a new user
+      operationId: createUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateUserRequest'
+      responses:
+        '201':
+          description: User created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '400':
+          description: Invalid input field(s)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Display name already taken
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+components:
+  schemas:
+    User:
+      type: object
+      required:
+        - displayName
+        - role
+      properties:
+        displayName:
+          type: string
+        role:
+          type: string
+    CreateUserRequest:
+      type: object
+      required:
+        - displayName
+        - password
+        - role
+      properties:
+        displayName:
+          type: string
+        password:
+          type: string
+          format: password
+        role:
+          type: string
+    Error:
+      type: object
+      properties:
+        code:
+          type: string
+        description:
+          type: string
+      required:
+        - code
+        - description
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
