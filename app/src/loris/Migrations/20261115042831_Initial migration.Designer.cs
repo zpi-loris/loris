@@ -14,8 +14,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Loris.Migrations
 {
     [DbContext(typeof(LorisDbContext))]
-    [Migration("20261113034959_Add missing name indexes")]
-    partial class Addmissingnameindexes
+    [Migration("20261115042831_Initial migration")]
+    partial class Initialmigration
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -25,7 +25,7 @@ namespace Loris.Migrations
                 .HasAnnotation("ProductVersion", "10.0.14")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
-            NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "device_status", new[] { "active", "blocked", "pending" });
+            NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "device_status", new[] { "active", "disconnected", "ignored", "pending" });
             NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "func_arg_type", new[] { "bool", "float", "int", "string", "unspecified", "void" });
             NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "sensor_semantics", new[] { "aqi", "area", "battery", "co2", "current", "data_rate", "data_size", "distance", "duration", "energy", "frequency", "humidity", "illuminance", "moisture", "nitrogen", "ph", "phosphorus", "pm1", "pm10", "pm25", "pm4", "potassium", "pressure", "signal_strength", "temperature", "universal", "unspecified", "uptime", "voltage", "water", "weight", "wind_speed" });
             NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "sensor_value_type", new[] { "bool", "float", "int", "text", "unspecified" });
@@ -109,10 +109,6 @@ namespace Loris.Migrations
                     b.HasKey("DevEui", "FunctionId")
                         .HasName("pk_functions");
 
-                    b.HasIndex("Name")
-                        .IsUnique()
-                        .HasDatabaseName("ix_functions_name");
-
                     b.ToTable("functions", null, t =>
                         {
                             t.HasComment("Devices functions exposed via capabilities ");
@@ -153,10 +149,6 @@ namespace Loris.Migrations
 
                     b.HasKey("DevEui", "SensorId")
                         .HasName("pk_sensors");
-
-                    b.HasIndex("Name")
-                        .IsUnique()
-                        .HasDatabaseName("ix_sensors_name");
 
                     b.ToTable("sensors", null, t =>
                         {

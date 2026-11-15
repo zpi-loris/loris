@@ -14,7 +14,7 @@ namespace Loris.Migrations
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.AlterDatabase()
-                .Annotation("Npgsql:Enum:device_status", "active,blocked,pending")
+                .Annotation("Npgsql:Enum:device_status", "active,disconnected,ignored,pending")
                 .Annotation("Npgsql:Enum:func_arg_type", "bool,float,int,string,unspecified,void")
                 .Annotation("Npgsql:Enum:sensor_semantics", "aqi,area,battery,co2,current,data_rate,data_size,distance,duration,energy,frequency,humidity,illuminance,moisture,nitrogen,ph,phosphorus,pm1,pm10,pm25,pm4,potassium,pressure,signal_strength,temperature,universal,unspecified,uptime,voltage,water,weight,wind_speed")
                 .Annotation("Npgsql:Enum:sensor_value_type", "bool,float,int,text,unspecified");
@@ -110,7 +110,7 @@ namespace Loris.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("pk_sensor_readings", x => new { x.sensor_id, x.dev_eui, x.time });
+                    table.PrimaryKey("pk_sensor_readings", x => new { x.dev_eui, x.sensor_id, x.time });
                     table.ForeignKey(
                         name: "fk_sensor_readings_sensors_dev_eui_sensor_id",
                         columns: x => new { x.dev_eui, x.sensor_id },
@@ -131,11 +131,6 @@ namespace Loris.Migrations
                 table: "devices",
                 column: "friendly_name",
                 unique: true);
-
-            migrationBuilder.CreateIndex(
-                name: "ix_sensor_readings_dev_eui_sensor_id",
-                table: "sensor_readings",
-                columns: new[] { "dev_eui", "sensor_id" });
 
             migrationBuilder.CreateIndex(
                 name: "ix_users_display_name",

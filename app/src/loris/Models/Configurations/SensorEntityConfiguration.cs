@@ -14,9 +14,6 @@ public class SensorEntityConfiguration : IEntityTypeConfiguration<Sensor>
         // AND WE DON'T WANT THAT HERE
         builder.Property(e => e.SensorId).ValueGeneratedNever();
 
-        // Unique index
-        builder.HasIndex(e => e.Name).IsUnique();
-
         // relationship [p]rincipal - [d]ependant
         builder
             .HasOne(d => d.Device)

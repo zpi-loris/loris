@@ -106,10 +106,6 @@ namespace Loris.Migrations
                     b.HasKey("DevEui", "FunctionId")
                         .HasName("pk_functions");
 
-                    b.HasIndex("Name")
-                        .IsUnique()
-                        .HasDatabaseName("ix_functions_name");
-
                     b.ToTable("functions", null, t =>
                         {
                             t.HasComment("Devices functions exposed via capabilities ");
@@ -150,10 +146,6 @@ namespace Loris.Migrations
 
                     b.HasKey("DevEui", "SensorId")
                         .HasName("pk_sensors");
-
-                    b.HasIndex("Name")
-                        .IsUnique()
-                        .HasDatabaseName("ix_sensors_name");
 
                     b.ToTable("sensors", null, t =>
                         {
