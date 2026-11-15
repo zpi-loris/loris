@@ -1,9 +1,7 @@
 using Loris.Automations;
-using Loris.Automations.Models;
 using Loris.Extensions;
 using Loris.Results;
 using Loris.Services;
-using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Loris.Controllers;
