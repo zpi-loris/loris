@@ -22,7 +22,7 @@ namespace Loris.Migrations
                 .HasAnnotation("ProductVersion", "10.0.14")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
-            NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "device_status", new[] { "active", "blocked", "pending" });
+            NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "device_status", new[] { "active", "disconnected", "ignored", "pending" });
             NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "func_arg_type", new[] { "bool", "float", "int", "string", "unspecified", "void" });
             NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "sensor_semantics", new[] { "aqi", "area", "battery", "co2", "current", "data_rate", "data_size", "distance", "duration", "energy", "frequency", "humidity", "illuminance", "moisture", "nitrogen", "ph", "phosphorus", "pm1", "pm10", "pm25", "pm4", "potassium", "pressure", "signal_strength", "temperature", "universal", "unspecified", "uptime", "voltage", "water", "weight", "wind_speed" });
             NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "sensor_value_type", new[] { "bool", "float", "int", "text", "unspecified" });

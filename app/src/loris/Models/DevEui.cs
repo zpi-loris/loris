@@ -1,5 +1,6 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace Loris.Types;
 
@@ -42,5 +43,11 @@ public readonly record struct DevEui(ulong Value) : IParsable<DevEui>
         }
         result = default;
         return false;
+    }
+
+    public class Converter : ValueConverter<DevEui, byte[]>
+    {
+        public Converter()
+            : base(v => v.ToBytes(), v => Parse(v)) { }
     }
 }

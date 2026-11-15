@@ -6,17 +6,17 @@ using Loris.Automations.Triggers;
 using Loris.Data;
 using Loris.Events;
 using Loris.Logging;
-using Loris.Messages;
+using Loris.Messages.Event;
 
 namespace Loris.Services;
 
 public sealed class AutomationService(
     ILogger<AutomationService> logger,
     IServiceProvider provider,
-    AutomationIndex index
+    IAutomationIndex index
 ) : IAutomationService
 {
-    private readonly AutomationIndex _index = index;
+    private readonly IAutomationIndex _index = index;
     private readonly IServiceProvider _provider = provider;
     private readonly ILogger<AutomationService> _logger = logger;
 
@@ -163,7 +163,6 @@ public sealed class AutomationService(
     )
         where TBlock : IAutomationBlock
     {
-        var ruleId = rule.Id.ToString();
         for (int i = 0; i < results.Count; i++)
         {
             var result = results[i];
@@ -176,7 +175,7 @@ public sealed class AutomationService(
             foreach (var error in result.Errors)
             {
                 yield return new(
-                    ruleId,
+                    rule.Id,
                     rule.Name,
                     $"{prefix}.{error.Field}",
                     error.Value,
@@ -226,7 +225,7 @@ public sealed class AutomationService(
         }
     }
 
-    private Func<StateCache, bool> CompileCondition(
+    private Func<IStateCache, bool> CompileCondition(
         AutomationDto rule,
         IConditionDto dto,
         LookupContext? lookup
@@ -259,7 +258,11 @@ public sealed class AutomationService(
         }
     }
 
-    private Action CompileAction(AutomationDto rule, IActionDto dto, LookupContext? lookup)
+    private Func<CancellationToken, Task> CompileAction(
+        AutomationDto rule,
+        IActionDto dto,
+        LookupContext? lookup
+    )
     {
         _logger.CompilingBlock("Action", dto.ServiceKey, rule.Name, rule.Id);
 

@@ -1,9 +1,5 @@
-using Chirpstack.Api;
-using Grpc.Core;
-using Loris.Automations;
-using Loris.Automations.Actions;
-using Loris.Automations.Conditions;
-using Loris.Automations.Triggers;
+using Loris.Channels;
+using Loris.Consumers;
 using Loris.Data;
 using Loris.Extensions;
 using Loris.MQTT.Client;
@@ -15,28 +11,46 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 
 string? connectionString = builder.Configuration.GetConnectionString("Timescale");
-builder.Services.AddDbContext<LorisDbContext>(options => options.UseNpgsql(connectionString));
+
+// add factory first because it's singleton, thus options will inherit singleton
+builder.Services.AddDbContextFactory<LorisDbContext>(options =>
+    options.UseNpgsql(connectionString)
+);
+
+// Global state
+builder.Services.AddSingleton<IAutomationIndex, AutomationIndex>();
+builder.Services.AddSingleton<IStateCache, StateCache>();
 
 // Configure channels for the ingestion subsystem
 builder.Services.AddChannels();
 
-builder.Services.AddSingleton<AutomationIndex>();
+// Configure consumers for each channel
+builder.Services.AddHostedService<DeviceChannelConsumer>();
+builder.Services.AddHostedService<DbWriteChannelConsumer>();
+builder.Services.AddHostedService<EventChannelConsumer>();
 
-builder.Services.AddChirpstackDeviceService(builder.Configuration);
+// Configure handlers for each channel consumer
+builder.Services.AddSingleton<IDeviceChannelHandler, DeviceChannelHandler>();
+builder.Services.AddSingleton<IDbWriteChannelHandler, DbWriteChannelHandler>();
+builder.Services.AddSingleton<IEventChannelHandler, EventChannelHandler>();
+
+builder.Services.AddAutomationsCompilers();
+
+builder.Services.AddScoped<IAutomationService, AutomationService>();
+builder.Services.AddScoped<IDeviceService, DeviceService>();
 
 // Add chirpstack integration background task with handler implementation
 builder.Services.AddChirpstackIntegration<ChirpstackIntegrationHandler>(builder.Configuration);
+
+// Add chirpstack grpc device service client factory
+builder.Services.AddChirpstackDeviceService(builder.Configuration);
 
 builder.Services.AddControllers();
 
 builder.Services.AddProblemDetails();
 
-builder.Services.AddAutomationsCompilers();
-
-builder.Services.AddScoped<IAutomationService, AutomationService>();
-
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-builder.Services.AddOpenApi();
+builder.Services.AddOpenApiDocument();
 
 var app = builder.Build();
 
@@ -46,11 +60,9 @@ var app = builder.Build();
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
-    app.UseSwaggerUi(options =>
-    {
-        options.DocumentPath = "/openapi/v1.json";
-    });
-    app.MapOpenApi();
+    app.UseOpenApi();
+
+    app.UseSwaggerUi();
 }
 
 // app.UseHttpsRedirection();

@@ -2,7 +2,7 @@ using System.Collections.Frozen;
 using System.Threading.Channels;
 using Google.Protobuf;
 using Loris.Logging;
-using Loris.Messages;
+using Loris.Messages.Device;
 using Loris.Protocol;
 using Loris.Types;
 //

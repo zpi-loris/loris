@@ -5,7 +5,7 @@ using Loris.Events;
 
 namespace Loris.Data;
 
-public sealed class AutomationIndex
+public sealed class AutomationIndex : IAutomationIndex
 {
     private FrozenDictionary<IEvent, List<Automation>> _index = FrozenDictionary<
         IEvent,

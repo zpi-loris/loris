@@ -1,7 +1,7 @@
 namespace Loris.Automations;
 
 public record AutomationError(
-    string Id,
+    Guid Id,
     string Name,
     string Pointer,
     string Value,

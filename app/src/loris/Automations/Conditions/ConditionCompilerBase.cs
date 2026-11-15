@@ -5,7 +5,7 @@ namespace Loris.Automations.Conditions;
 public abstract class ConditionCompilerBase<TDto> : IConditionCompiler
     where TDto : IConditionDto
 {
-    public Func<StateCache, bool> Compile(IConditionDto dto, LookupContext? lookup)
+    public Func<IStateCache, bool> Compile(IConditionDto dto, LookupContext? lookup)
     {
         var typedDto = EnsureTyped(dto, nameof(dto));
         return Compile(typedDto, lookup);
@@ -20,7 +20,7 @@ public abstract class ConditionCompilerBase<TDto> : IConditionCompiler
         return ValidateAsync(typedDto, cancellationToken);
     }
 
-    protected abstract Func<StateCache, bool> Compile(TDto dto, LookupContext? lookup);
+    protected abstract Func<IStateCache, bool> Compile(TDto dto, LookupContext? lookup);
 
     protected abstract Task<ValidationResult> ValidateAsync(
         TDto dto,

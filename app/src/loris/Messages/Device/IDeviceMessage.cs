@@ -1,4 +1,4 @@
-namespace Loris.Messages;
+namespace Loris.Messages.Device;
 
 /// <summary>
 /// Marker interface for messages received

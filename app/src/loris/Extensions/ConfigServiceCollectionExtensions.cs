@@ -1,7 +1,9 @@
 using System.Threading.Channels;
 using Chirpstack.Api;
 using Grpc.Core;
-using Loris.Messages;
+using Loris.Messages.Database;
+using Loris.Messages.Device;
+using Loris.Messages.Event;
 using Loris.MQTT.Client;
 //
 // resolve ambiguity with Grpc.Channel with alias
@@ -114,16 +116,21 @@ public static class ConfigServiceCollectionExtensions
                 })
                 .ConfigureChannel(options =>
                 {
+                    // TODO: ADD TLS SUPPORT
+                    options.UnsafeUseInsecureChannelCallCredentials = true;
                     options.Credentials = ChannelCredentials.Insecure;
-                });
 
-            // TODO: add some initial service checking the validity of the token
-
-            // register chirpstack api token for requests
-            services.AddKeyedSingleton(
-                "chirpstack-api-token",
-                new Metadata { { "Authorization", "Bearer " + token } }
-            );
+                    options.MaxRetryAttempts = 3;
+                    options.InitialReconnectBackoff = TimeSpan.FromMilliseconds(500);
+                })
+                .AddCallCredentials(
+                    (context, metadata) =>
+                    {
+                        // apply authorization to all method calls
+                        metadata.Add("Authorization", $"Bearer {token}");
+                        return Task.CompletedTask;
+                    }
+                );
 
             return services;
         }

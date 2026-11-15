@@ -43,6 +43,6 @@ public partial class LorisDbContext : DbContext
 
     protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
     {
-        configurationBuilder.Properties<DevEui>().HaveConversion<DevEuiConverter>();
+        configurationBuilder.Properties<DevEui>().HaveConversion<DevEui.Converter>();
     }
 }

@@ -1,6 +1,6 @@
 using Loris.Data;
 using Loris.Events;
-using Loris.Messages;
+using Loris.Messages.Event;
 
 namespace Loris.Automations.Models;
 
@@ -9,6 +9,6 @@ public record Automation(
     string Name,
     IEvent Trigger,
     Func<IEventMessage, bool> TriggerFilter,
-    IReadOnlyList<Func<StateCache, bool>> Conditions,
-    IReadOnlyList<Action> Actions
+    IReadOnlyList<Func<IStateCache, bool>> Conditions,
+    IReadOnlyList<Func<CancellationToken, Task>> Actions
 ) { }

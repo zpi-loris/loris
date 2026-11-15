@@ -1,6 +1,7 @@
 using Chirpstack.Api;
 using Google.Protobuf;
 using Grpc.Core;
+using Loris.Extensions;
 using Loris.Protocol;
 using Loris.Types;
 using Microsoft.AspNetCore.Mvc;
@@ -9,34 +10,30 @@ namespace Loris.Controllers;
 
 [Route("api/[controller]/[action]")]
 [ApiController]
-public class ExampleDownlinkController(
-    DeviceService.DeviceServiceClient client,
-    [FromKeyedServices("chirpstack-api-token")] Metadata authToken
-) : ControllerBase
+public class ExampleDownlinkController(DeviceService.DeviceServiceClient client) : ControllerBase
 {
     private readonly DeviceService.DeviceServiceClient _client = client;
     private readonly JsonParser _protoParser = JsonParser.Default;
-    private readonly Metadata _authToken = authToken;
 
     [HttpPost("{devEui}")]
-    public async Task<ActionResult<string>> Hello(DevEui devEui)
+    public async Task<ActionResult<string>> Hello(DevEui devEui, CancellationToken ct)
     {
         var message = new Downlink { Ping = new DownPing { Type = DownPingType.Hello } };
-        return await RequestDownlink(devEui, message);
+        return await RequestDownlink(devEui, message, ct);
     }
 
     [HttpPost("{devEui}")]
-    public async Task<ActionResult<string>> Disconnect(DevEui devEui)
+    public async Task<ActionResult<string>> Disconnect(DevEui devEui, CancellationToken ct)
     {
         var message = new Downlink { Ping = new DownPing { Type = DownPingType.Disconnect } };
-        return await RequestDownlink(devEui, message);
+        return await RequestDownlink(devEui, message, ct);
     }
 
     [HttpPost("{devEui}")]
-    public async Task<ActionResult<string>> Call(DevEui devEui)
+    public async Task<ActionResult<string>> Call(DevEui devEui, CancellationToken ct)
     {
         using var reader = new StreamReader(Request.Body);
-        var json = await reader.ReadToEndAsync();
+        var json = await reader.ReadToEndAsync(ct);
 
         Downlink message;
         try
@@ -57,32 +54,27 @@ public class ExampleDownlinkController(
             return BadRequest();
         }
 
-        return await RequestDownlink(devEui, message);
+        return await RequestDownlink(devEui, message, ct);
     }
 
-    private async Task<ActionResult<string>> RequestDownlink(DevEui devEui, Downlink message)
+    private async Task<ActionResult<string>> RequestDownlink(
+        DevEui devEui,
+        Downlink message,
+        CancellationToken cancellationToken = default
+    )
     {
-        var req = new EnqueueDeviceQueueItemRequest()
-        {
-            QueueItem = new DeviceQueueItem()
-            {
-                Confirmed = false,
-                Data = message.ToByteString(),
-                DevEui = devEui.ToString(),
-                FPort = 10, // TODO: ask team for this
-            },
-        };
-
-        EnqueueDeviceQueueItemResponse resp;
         try
         {
-            resp = await _client.EnqueueAsync(req, headers: _authToken);
+            await _client.EnqueueDownlinkAsync(message, devEui, cancellationToken);
         }
-        catch
+        catch (RpcException e)
         {
+            Console.WriteLine(
+                $"Error while requesting downlink for device {devEui}: {e.Status.Detail}"
+            );
             return NotFound();
         }
 
-        return Ok(resp.Id);
+        return Ok();
     }
 }

@@ -1,4 +1,7 @@
-namespace Loris.Types;
+namespace Loris.Results;
+
+// Adapted from "Result Pattern in .NET" by Mukesh Murugan
+// Source: https://codewithmukesh.com/blog/result-pattern-dotnet/
 
 public readonly record struct Result<TValue>
 {
