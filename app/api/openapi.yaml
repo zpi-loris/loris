@@ -17,6 +17,8 @@ tags:
     description: User account management
   - name: Devices
     description: Device listing and lifecycle management
+  - name: Functions
+    description: Function invocation
 
 paths:
   /auth/login:
@@ -172,6 +174,33 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/Device"
+  /devices/{devEui}/functions/{functionId}/invoke:
+    parameters:
+      - name: devEui
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: functionId
+        in: path
+        required: true
+        schema:
+          type: string
+    post:
+      tags:
+        - Functions
+      summary: Invoke a function
+      description: Argument type must be the same as function's argType. Empty request body should be sent when function does not take an argument.
+      operationId: invokeFunction
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CallFunctionRequest"
+      responses:
+        '202':
+          description: Function invocation request accepted
 
 components:
   schemas:
@@ -320,6 +349,15 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/Sensor"
+    CallFunctionRequest:
+      type: object
+      properties:
+        arg:
+          oneOf:
+            - type: boolean
+            - type: integer
+            - type: number
+            - type: string
     Error:
       type: object
       properties:
