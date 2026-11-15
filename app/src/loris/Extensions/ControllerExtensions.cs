@@ -1,11 +1,10 @@
 using Loris.Automations;
 using Loris.Results;
-using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Loris.Extensions;
 
-public static class ErrorExtensions
+public static class ControllerExtensions
 {
     extension(ControllerBase controller)
     {
@@ -18,6 +17,10 @@ public static class ErrorExtensions
                 ErrorType.Conflict => (StatusCodes.Status409Conflict, "Conflict"),
                 ErrorType.Forbidden => (StatusCodes.Status403Forbidden, "Forbidden"),
                 ErrorType.Upstream => (StatusCodes.Status502BadGateway, "Upstream service failed"),
+                ErrorType.Timeout => (
+                    StatusCodes.Status504GatewayTimeout,
+                    "Upstream service timeout"
+                ),
                 _ => (StatusCodes.Status500InternalServerError, "An error occurred"),
             };
 
@@ -28,11 +31,31 @@ public static class ErrorExtensions
                 detail: error.Description
             );
 
-            problem.Extensions["errorCode"] = error.Code;
+            var resultProblem = new ResultProblemDetails(problem) { ErrorCode = error.Code };
+
+            return new ObjectResult(resultProblem)
+            {
+                StatusCode = status,
+                ContentTypes = { "application/problem+json" },
+            };
+        }
+
+        public ObjectResult DuplicateProblem(IEnumerable<AutomationDto> duplicates)
+        {
+            var problem = controller.ProblemDetailsFactory.CreateProblemDetails(
+                controller.HttpContext,
+                statusCode: StatusCodes.Status400BadRequest,
+                title: "Validation failed",
+                detail: "There are rules with duplicate ID"
+            );
+            var automationProblem = new AutomationProblemDetails(problem)
+            {
+                InvalidRules = [.. duplicates.Select(r => new InvalidRule(r.Id, r.Name))],
+            };
 
             return new ObjectResult(problem)
             {
-                StatusCode = status,
+                StatusCode = StatusCodes.Status400BadRequest,
                 ContentTypes = { "application/problem+json" },
             };
         }
@@ -46,14 +69,25 @@ public static class ErrorExtensions
                 detail: "One or more automation rules failed validation for its fields"
             );
 
-            problem.Extensions["invalidRules"] = errors
-                .GroupBy(e => (e.Id, e.Name))
-                .Select(g => new InvalidRuleGroup(
-                    g.Key.Id,
-                    g.Key.Name,
-                    [.. g.Select(v => new AutomationFieldError(v.Pointer, v.Value, v.Details))]
-                ))
-                .ToList();
+            var automationProblem = new AutomationProblemDetails(problem)
+            {
+                InvalidRules =
+                [
+                    .. errors
+                        .GroupBy(e => (e.Id, e.Name))
+                        .Select(g => new InvalidRule(
+                            g.Key.Id,
+                            g.Key.Name,
+                            [
+                                .. g.Select(v => new AutomationFieldError(
+                                    v.Pointer,
+                                    v.Value,
+                                    v.Details
+                                )),
+                            ]
+                        )),
+                ],
+            };
 
             return new ObjectResult(problem)
             {

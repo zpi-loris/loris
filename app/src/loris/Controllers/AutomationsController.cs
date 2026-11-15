@@ -8,8 +8,11 @@ namespace Loris.Controllers;
 
 [Route("api/[controller]/[action]")]
 [ApiController]
-[ProducesResponseType(StatusCodes.Status200OK)]
-[ProducesResponseType<AutomationProblemDetails>(StatusCodes.Status400BadRequest)]
+[ProducesResponseType(StatusCodes.Status200OK, Description = "Success")]
+[ProducesResponseType<AutomationProblemDetails>(
+    StatusCodes.Status400BadRequest,
+    Description = "Validation errors"
+)]
 public class AutomationsController(IAutomationService service) : ControllerBase
 {
     private readonly IAutomationService _service = service;
@@ -20,11 +23,18 @@ public class AutomationsController(IAutomationService service) : ControllerBase
         CancellationToken ct
     )
     {
+        var duplicateIds = rules.GroupBy(r => r.Id).Where(g => g.Count() > 1);
+        if (duplicateIds.Any())
+        {
+            return this.DuplicateProblem(duplicateIds.SelectMany(s => s));
+        }
+
         var errors = await _service.ValidateAsync(rules, ct);
         if (errors.Count > 0)
         {
             return this.ErrorProblem(errors);
         }
+
         return Ok();
     }
 
@@ -34,11 +44,18 @@ public class AutomationsController(IAutomationService service) : ControllerBase
         CancellationToken ct
     )
     {
+        var duplicateIds = rules.GroupBy(r => r.Id).Where(g => g.Count() > 1);
+        if (duplicateIds.Any())
+        {
+            return this.DuplicateProblem(duplicateIds.SelectMany(s => s));
+        }
+
         var errors = await _service.ApplyAsync(rules, ct);
         if (errors.Count > 0)
         {
             return this.ErrorProblem(errors);
         }
+
         return Ok();
     }
 }
