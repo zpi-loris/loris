@@ -1,8 +1,8 @@
 using Loris.Data;
 using Loris.Extensions;
+using Loris.Logging;
 using Loris.Messages.Database;
 using Loris.Models;
-using Loris.Protocol;
 using Microsoft.EntityFrameworkCore;
 using Moniker;
 
@@ -13,7 +13,6 @@ public class DbWriteChannelHandler(
     IDbContextFactory<LorisDbContext> ctxFactory
 ) : IDbWriteChannelHandler
 {
-    // TODO: add logging
     private readonly ILogger<DbWriteChannelHandler> _logger = logger;
     private readonly IDbContextFactory<LorisDbContext> _ctxFactory = ctxFactory;
 
@@ -44,6 +43,7 @@ public class DbWriteChannelHandler(
 
         if (await ctx.TryBumpDeviceAsync(devEui, datetime, stoppingToken))
         {
+            _logger.DeviceAlreadyExists(devEui, datetime);
             return;
         }
 
@@ -58,13 +58,15 @@ public class DbWriteChannelHandler(
 
         foreach (var sensor in capabilities.Sensors)
         {
-            newDevice.Sensors.Add(Models.Sensor.FromProto(devEui, sensor));
+            newDevice.Sensors.Add(Sensor.FromProto(devEui, sensor));
         }
 
         foreach (var function in capabilities.Functions)
         {
-            newDevice.Functions.Add(Models.Function.FromProto(devEui, function));
+            newDevice.Functions.Add(Function.FromProto(devEui, function));
         }
+
+        _logger.NewDeviceAdded(devEui, newDevice.Sensors.Count, newDevice.Functions.Count);
 
         ctx.Devices.Add(newDevice);
         await ctx.SaveChangesAsync(stoppingToken);
@@ -76,6 +78,7 @@ public class DbWriteChannelHandler(
 
         if (!await ctx.TryBumpDeviceAsync(message.DevEui, message.DateTime, stoppingToken))
         {
+            _logger.DeviceNotFound(message.DevEui, message.DateTime);
             return;
         }
 
@@ -88,6 +91,9 @@ public class DbWriteChannelHandler(
     private async Task HandlePing(PingWriteMessage message, CancellationToken stoppingToken)
     {
         using var ctx = await _ctxFactory.CreateDbContextAsync(stoppingToken);
+
+        _logger.ReceivedPing(message.DevEui, message.DateTime);
+
         await ctx.TryBumpDeviceAsync(message.DevEui, message.DateTime, stoppingToken);
     }
 }
