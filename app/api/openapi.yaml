@@ -80,6 +80,18 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '409':
           description: Display name already taken
           content:
@@ -120,6 +132,18 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '404':
           description: User not found
           content:
@@ -140,6 +164,18 @@ paths:
       responses:
         '204':
           description: User deleted successfully
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '404':
           description: User not found
           content:
@@ -153,7 +189,7 @@ paths:
       summary: List all active devices
       operationId: getActiveDevices
       responses:
-        "200":
+        '200':
           description: List of active devices
           content:
             application/json:
@@ -161,6 +197,12 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/Device"
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
   /devices/pending:
     get:
       tags:
@@ -168,7 +210,7 @@ paths:
       summary: List all pending devices
       operationId: getPendingDevices
       responses:
-        "200":
+        '200':
           description: List of pending devices
           content:
             application/json:
@@ -176,6 +218,12 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/Device"
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
   /devices/{devEui}/functions/{functionId}/invoke:
     parameters:
       - name: devEui
@@ -203,6 +251,18 @@ paths:
       responses:
         '202':
           description: Function invocation request accepted
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '404':
           description: Function not found
           content:
@@ -251,6 +311,12 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/SensorReading"
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '404':
           description: Sensor not found
           content:
