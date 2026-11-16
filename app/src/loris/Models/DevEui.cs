@@ -2,7 +2,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
-namespace Loris.Types;
+namespace Loris.Models;
 
 // TODO: write tests for devEUI
 public readonly record struct DevEui(ulong Value) : IParsable<DevEui>

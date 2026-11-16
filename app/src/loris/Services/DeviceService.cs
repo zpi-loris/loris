@@ -6,7 +6,6 @@ using Loris.Models;
 using Loris.Protocol;
 using Loris.Results;
 using Loris.Results.Errors;
-using Loris.Types;
 using Microsoft.EntityFrameworkCore;
 using DownlinkServiceClient = Chirpstack.Api.DeviceService.DeviceServiceClient;
 

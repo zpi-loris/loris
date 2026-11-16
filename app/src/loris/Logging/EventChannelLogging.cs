@@ -1,5 +1,4 @@
 using Loris.Messages.Event;
-using Loris.Types;
 
 namespace Loris.Logging;
 

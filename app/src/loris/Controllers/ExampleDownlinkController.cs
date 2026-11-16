@@ -2,8 +2,8 @@ using Chirpstack.Api;
 using Google.Protobuf;
 using Grpc.Core;
 using Loris.Extensions;
+using Loris.Models;
 using Loris.Protocol;
-using Loris.Types;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Loris.Controllers;

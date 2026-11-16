@@ -1,6 +1,4 @@
-﻿using Loris.Protocol;
-using Loris.Types;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 
 namespace Loris.Models;
 

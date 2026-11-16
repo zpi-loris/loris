@@ -1,7 +1,6 @@
 ﻿using CmdScale.EntityFrameworkCore.TimescaleDB;
 using Loris.Models;
 using Loris.Protocol;
-using Loris.Types;
 using Microsoft.EntityFrameworkCore;
 
 namespace Loris.Data;

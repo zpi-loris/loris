@@ -1,10 +1,9 @@
-using System.Collections.Frozen;
 using System.Threading.Channels;
 using Google.Protobuf;
 using Loris.Logging;
 using Loris.Messages.Device;
+using Loris.Models;
 using Loris.Protocol;
-using Loris.Types;
 //
 // It is by design to alias to not confuse our events
 // with chirpstack integration events

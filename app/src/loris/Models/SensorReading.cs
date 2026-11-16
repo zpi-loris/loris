@@ -1,6 +1,5 @@
 ﻿using System.ComponentModel;
 using Loris.Protocol;
-using Loris.Types;
 using Microsoft.EntityFrameworkCore;
 
 namespace Loris.Models;

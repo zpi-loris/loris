@@ -2,6 +2,7 @@ using Loris.Channels;
 using Loris.Consumers;
 using Loris.Data;
 using Loris.Extensions;
+using Loris.Models;
 using Loris.MQTT.Client;
 using Loris.Services;
 using Microsoft.EntityFrameworkCore;

@@ -1,7 +1,6 @@
 using System.Diagnostics.CodeAnalysis;
 using Loris.Models;
 using Loris.Protocol;
-using Loris.Types;
 
 namespace Loris.Data;
 

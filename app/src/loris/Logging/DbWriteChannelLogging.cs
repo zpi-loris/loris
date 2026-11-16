@@ -1,4 +1,4 @@
-using Loris.Types;
+using Loris.Models;
 
 namespace Loris.Logging;
 

@@ -3,7 +3,6 @@ using Loris.Extensions;
 using Loris.Models;
 using Loris.Results;
 using Loris.Services;
-using Loris.Types;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Loris.Controllers;
