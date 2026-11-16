@@ -1,0 +1,500 @@
+openapi: 3.2.0
+info:
+  title: Loris web API
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:5158/api/v1
+    description: Local development server
+
+security:
+  - bearerAuth: []
+
+tags:
+  - name: Authentication
+    description: Logging into the account
+  - name: Users
+    description: User account management
+  - name: Devices
+    description: Device listing and lifecycle management
+  - name: Functions
+    description: Function invocation
+  - name: Sensor readings
+    description: Retrieving readings from sensors
+
+paths:
+  /auth/login:
+    post:
+      tags:
+        - Authentication
+      security: []
+      summary: Log into the account
+      operationId: login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /users:
+    post:
+      tags:
+        - Users
+      summary: Create a new user
+      operationId: createUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateUserRequest'
+      responses:
+        '201':
+          description: User created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '400':
+          description: Invalid input field(s)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Display name already taken
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /users/{userId}:
+    parameters:
+      - name: userId
+        in: path
+        required: true
+        description: Unique identifier of the user
+        schema:
+          type: string
+          format: uuid
+    patch:
+      tags:
+        - Users
+      summary: Update a User
+      description: Partially updates the user's display name, password and/or role (changes only the provided fields). Any combination of fields can be provided, at least one is required.
+      operationId: updateUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateUserRequest'
+      responses:
+        '200':
+          description: User updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '400':
+          description: Invalid input field(s)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Display name already taken
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    delete:
+      tags:
+        - Users
+      summary: Delete a user
+      operationId: deleteUser
+      responses:
+        '204':
+          description: User deleted successfully
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /devices:
+    get:
+      tags:
+        - Devices
+      summary: List all devices
+      description: Can be filtered by the status of the device.
+      operationId: getDevices
+      parameters:
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+          example: ACTIVE
+      responses:
+        '200':
+          description: List of devices
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Device"
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /functions/{id}/invoke:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    post:
+      tags:
+        - Functions
+      summary: Invoke a function
+      description: Argument type must be the same as function's argType. Empty request body should be sent when function does not take an argument.
+      operationId: invokeFunction
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CallFunctionRequest"
+      responses:
+        '202':
+          description: Function invocation request accepted
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Function not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /sensors/{id}/readings:
+    get:
+      tags:
+        - Sensor readings
+      summary: Retrieve sensor readings from a selected time range
+      operationId: getSensorReadings
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: from
+          in: query
+          required: true
+          description: Start of the time range (inclusive) in UTC
+          schema:
+            type: string
+            format: date-time
+          example: '2026-01-01T00:00:00Z'
+        - name: to
+          in: query
+          required: true
+          description: End of the time range (inclusive) in UTC
+          schema:
+            type: string
+            format: date-time
+          example: '2026-01-01T23:59:59Z'
+      responses:
+        '200':
+          description: List of sensor readings ordered by time (ascending)
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/SensorReading"
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Sensor not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+components:
+  schemas:
+    LoginRequest:
+      type: object
+      required:
+        - displayName
+        - password
+      properties:
+        displayName:
+          type: string
+        password:
+          type: string
+          format: password
+    LoginResponse:
+      type: object
+      required:
+        - accessToken
+        - tokenType
+        - expiresIn
+      properties:
+        accessToken:
+          type: string
+          description: Signed JWT access token.
+        tokenType:
+          type: string
+          examples: 
+            - Bearer
+        expiresIn:
+          type: integer
+          examples: 
+            - 3600
+    User:
+      type: object
+      required:
+        - userId
+        - displayName
+        - role
+      properties:
+        userId:
+          type: string
+          format: uuid
+        displayName:
+          type: string
+        role:
+          type: string
+    CreateUserRequest:
+      type: object
+      required:
+        - displayName
+        - password
+        - role
+      properties:
+        displayName:
+          type: string
+        password:
+          type: string
+          format: password
+        role:
+          type: string
+    UpdateUserRequest:
+      type: object
+      minProperties: 1
+      properties:
+        displayName:
+          type: string
+        password:
+          type: string
+          format: password
+        role:
+          type: string
+    Function:
+      type: object
+      required:
+        - id
+        - devEui
+        - functionId
+        - name
+        - description
+        - argType
+      properties:
+        id:
+          type: string
+          format: uuid
+        devEui:
+          type: string
+        functionId:
+          type: integer
+          format: int32
+        name:
+          type: string
+        description:
+          type: string
+        argType:
+          type: string
+    Sensor:
+      type: object
+      required:
+        - id
+        - devEui
+        - sensorId
+        - name
+        - description
+        - valueType
+        - semantics
+      properties:
+        id:
+          type: string
+          format: uuid
+        devEui:
+          type: string
+        sensorId:
+          type: integer
+          format: int32
+        name:
+          type: string
+        description:
+          type: string
+        unit:
+          type: string
+        valueType:
+          type: string
+        semantics:
+          type: string
+    Device:
+      type: object
+      required:
+        - deviceId
+        - devEui
+        - deviceName
+        - friendlyName
+        - lastSeen
+        - deviceStatus
+        - functions
+        - sensors
+      properties:
+        deviceId:
+          type: string
+          format: uuid
+        devEui:
+          type: string
+        deviceName:
+          type: string
+        friendlyName:
+          type: string
+        lastSeen:
+          type: string
+          format: date-time
+        deviceStatus:
+          type: string
+        functions:
+          type: array
+          items:
+            $ref: "#/components/schemas/Function"
+        sensors:
+          type: array
+          items:
+            $ref: "#/components/schemas/Sensor"
+    CallFunctionRequest:
+      type: object
+      properties:
+        arg:
+          oneOf:
+            - type: boolean
+            - type: integer
+            - type: number
+            - type: string
+    SensorReading:
+      type: object
+      properties:
+        time:
+          type: string
+          format: date-time
+        value:
+          oneOf:
+            - type: integer
+              format: int32
+            - type: number
+              format: float
+            - type: string
+            - type: boolean
+    Error:
+      type: object
+      properties:
+        code:
+          type: string
+        description:
+          type: string
+      required:
+        - code
+        - description
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
