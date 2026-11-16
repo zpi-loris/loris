@@ -1,4 +1,4 @@
-﻿using Loris.Protocol;
+﻿using System.Text.Json.Serialization;
 using Loris.Protocol;
 using Microsoft.EntityFrameworkCore;
 
@@ -17,16 +17,20 @@ public partial class Sensor
 
     public string? Unit { get; set; }
 
+    [JsonConverter(typeof(JsonStringEnumConverter))]
     public SensorValueType ValueType { get; set; }
 
+    [JsonConverter(typeof(JsonStringEnumConverter))]
     public SensorSemantics Semantics { get; set; }
 
     //
     // REFERENCES
     //
 
+    [JsonIgnore]
     public Device Device { get; set; } = null!;
 
+    [JsonIgnore]
     public ICollection<SensorReading> SensorReadings { get; } = [];
 
     //

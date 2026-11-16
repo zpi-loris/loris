@@ -1,10 +1,12 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace Loris.Models;
 
-// TODO: write tests for devEUI
+[JsonConverter(typeof(JsonConverter))]
 public readonly record struct DevEui(ulong Value) : IParsable<DevEui>
 {
     public static DevEui Parse(string hex) => Parse(hex, null);
@@ -45,9 +47,24 @@ public readonly record struct DevEui(ulong Value) : IParsable<DevEui>
         return false;
     }
 
-    public class Converter : ValueConverter<DevEui, byte[]>
+    public class ValueConverter : ValueConverter<DevEui, byte[]>
     {
-        public Converter()
+        public ValueConverter()
             : base(v => v.ToBytes(), v => Parse(v)) { }
+    }
+
+    public class JsonConverter : JsonConverter<DevEui>
+    {
+        public override DevEui Read(
+            ref Utf8JsonReader reader,
+            Type typeToConvert,
+            JsonSerializerOptions options
+        ) => Parse(reader.GetString() ?? "");
+
+        public override void Write(
+            Utf8JsonWriter writer,
+            DevEui value,
+            JsonSerializerOptions options
+        ) => writer.WriteStringValue(value.ToString());
     }
 }

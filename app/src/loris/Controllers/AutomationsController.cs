@@ -8,7 +8,7 @@ namespace Loris.Controllers;
 
 [Route("api/[controller]/[action]")]
 [ApiController]
-[ProducesResponseType(StatusCodes.Status200OK, Description = "Success")]
+[ProducesResponseType(StatusCodes.Status204NoContent, Description = "Success")]
 [ProducesResponseType<AutomationProblemDetails>(
     StatusCodes.Status400BadRequest,
     Description = "Validation errors"
@@ -18,6 +18,10 @@ public class AutomationsController(IAutomationService service) : ControllerBase
     private readonly IAutomationService _service = service;
 
     [HttpPost]
+    [EndpointDescription(
+        @"Validates a list of automation rules, returning any validation errors found.
+        This does not apply the rules yet"
+    )]
     public async Task<IActionResult> Validate(
         [FromBody] IReadOnlyList<AutomationDto> rules,
         CancellationToken ct
@@ -35,10 +39,14 @@ public class AutomationsController(IAutomationService service) : ControllerBase
             return this.ErrorProblem(errors);
         }
 
-        return Ok();
+        return NoContent();
     }
 
     [HttpPost]
+    [EndpointDescription(
+        @"Applies a list of automation rules, returning any validation errors found.
+        This will apply the rules to the system if they are valid"
+    )]
     public async Task<IActionResult> Apply(
         [FromBody] IReadOnlyList<AutomationDto> rules,
         CancellationToken ct
@@ -56,6 +64,6 @@ public class AutomationsController(IAutomationService service) : ControllerBase
             return this.ErrorProblem(errors);
         }
 
-        return Ok();
+        return NoContent();
     }
 }

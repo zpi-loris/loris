@@ -1,4 +1,4 @@
-﻿using Loris.Protocol;
+﻿using System.Text.Json.Serialization;
 using Loris.Protocol;
 using Microsoft.EntityFrameworkCore;
 
@@ -15,12 +15,14 @@ public partial class Function
 
     public string Description { get; set; } = null!;
 
+    [JsonConverter(typeof(JsonStringEnumConverter))]
     public FuncArgType ArgType { get; set; }
 
     //
     // REFERENCES
     //
 
+    [JsonIgnore]
     public Device Device { get; set; } = null!;
 
     //
