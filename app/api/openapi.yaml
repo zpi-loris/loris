@@ -224,18 +224,14 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-  /devices/{devEui}/functions/{functionId}/invoke:
+  /functions/{id}/invoke:
     parameters:
-      - name: devEui
+      - name: id
         in: path
         required: true
         schema:
           type: string
-      - name: functionId
-        in: path
-        required: true
-        schema:
-          type: string
+          format: uuid
     post:
       tags:
         - Functions
@@ -397,12 +393,16 @@ components:
     Function:
       type: object
       required:
+        - id
         - devEui
         - functionId
         - name
         - description
         - argType
       properties:
+        id:
+          type: string
+          format: uuid
         devEui:
           type: string
         functionId:
