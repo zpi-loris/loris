@@ -349,10 +349,12 @@ components:
           description: Signed JWT access token.
         tokenType:
           type: string
-          example: Bearer
+          examples: 
+            - Bearer
         expiresIn:
           type: integer
-          example: 3600
+          examples: 
+            - 3600
     User:
       type: object
       required:
