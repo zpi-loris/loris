@@ -2,9 +2,9 @@ using Loris.Data;
 using Loris.Events;
 using Loris.Messages.Event;
 
-namespace Loris.Automations.Models;
+namespace Loris.Automations;
 
-public record Automation(
+public record CompiledAutomation(
     Guid Id,
     string Name,
     IEvent Trigger,

@@ -1,7 +1,6 @@
 using Loris.Automations;
 using Loris.Automations.Actions;
 using Loris.Automations.Conditions;
-using Loris.Automations.Models;
 using Loris.Automations.Triggers;
 using Loris.Data;
 using Loris.Events;
@@ -53,7 +52,7 @@ public sealed class AutomationService(
         if (errors.Count > 0)
             return errors;
 
-        List<Automation> automations = [];
+        List<CompiledAutomation> automations = [];
         foreach (var (rule, validation) in rules.Zip(validationResults))
         {
             var triggers = rule
@@ -69,7 +68,7 @@ public sealed class AutomationService(
                 .ToList();
 
             automations.AddRange(
-                triggers.Select(trigger => new Automation(
+                triggers.Select(trigger => new CompiledAutomation(
                     rule.Id,
                     rule.Name,
                     trigger.Event,
@@ -80,10 +79,10 @@ public sealed class AutomationService(
             );
         }
 
-        Dictionary<IEvent, List<Automation>> index = [];
+        Dictionary<IEvent, List<CompiledAutomation>> index = [];
         foreach (var val in automations)
         {
-            List<Automation>? list;
+            List<CompiledAutomation>? list;
             if (!index.TryGetValue(val.Trigger, out list))
             {
                 list = [];

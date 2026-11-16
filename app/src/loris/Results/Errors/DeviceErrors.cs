@@ -1,6 +1,6 @@
 using Loris.Types;
 
-namespace Loris.Results;
+namespace Loris.Results.Errors;
 
 public static class DeviceErrors
 {

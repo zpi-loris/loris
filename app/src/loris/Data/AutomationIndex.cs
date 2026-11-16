@@ -1,25 +1,28 @@
 using System.Collections.Frozen;
 using System.Diagnostics.CodeAnalysis;
-using Loris.Automations.Models;
+using Loris.Automations;
 using Loris.Events;
 
 namespace Loris.Data;
 
 public sealed class AutomationIndex : IAutomationIndex
 {
-    private FrozenDictionary<IEvent, List<Automation>> _index = FrozenDictionary<
+    private FrozenDictionary<IEvent, List<CompiledAutomation>> _index = FrozenDictionary<
         IEvent,
-        List<Automation>
+        List<CompiledAutomation>
     >.Empty;
 
-    public bool TryGet(IEvent key, [MaybeNullWhen(false)] out IReadOnlyList<Automation> automations)
+    public bool TryGet(
+        IEvent key,
+        [MaybeNullWhen(false)] out IReadOnlyList<CompiledAutomation> automations
+    )
     {
-        var hit = _index.TryGetValue(key, out List<Automation>? list);
+        var hit = _index.TryGetValue(key, out List<CompiledAutomation>? list);
         automations = list;
         return hit;
     }
 
-    public void Update(Dictionary<IEvent, List<Automation>> index)
+    public void Update(Dictionary<IEvent, List<CompiledAutomation>> index)
     {
         _index = index.ToFrozenDictionary();
     }

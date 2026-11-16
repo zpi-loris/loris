@@ -17,7 +17,7 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
-    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="11.0.0" />
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.15" />
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.14" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.14">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
@@ -27,8 +27,9 @@
     <PackageReference Include="MQTTnet" Version="5.2.0.1603" />
     <PackageReference Include="MQTTnet.Extensions.TopicTemplate" Version="5.2.0.1603" />
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.3" />
-    <PackageReference Include="NSwag.AspNetCore" Version="14.8.0" />
+    <PackageReference Include="Scalar.AspNetCore" Version="2.21.0" />
     <PackageReference Include="Scrutor" Version="7.0.0" />
+    <PackageReference Include="Swashbuckle.AspNetCore.SwaggerUI" Version="10.3.1" />
   </ItemGroup>
   <ItemGroup>
     <RuntimeHostConfigurationOption Include="System.Text.Json.Serialization.RespectRequiredConstructorParametersDefault" Value="true" />

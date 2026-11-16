@@ -5,6 +5,7 @@ using Loris.Extensions;
 using Loris.MQTT.Client;
 using Loris.Services;
 using Microsoft.EntityFrameworkCore;
+using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -50,7 +51,12 @@ builder.Services.AddControllers();
 builder.Services.AddProblemDetails();
 
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-builder.Services.AddOpenApiDocument();
+builder.Services.AddOpenApi();
+
+builder.Services.Configure<RouteOptions>(options =>
+{
+    options.LowercaseUrls = true;
+});
 
 var app = builder.Build();
 
@@ -60,9 +66,12 @@ var app = builder.Build();
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
-    app.UseOpenApi();
-
-    app.UseSwaggerUi();
+    app.MapOpenApi();
+    app.MapScalarApiReference();
+    app.UseSwaggerUI(options =>
+    {
+        options.SwaggerEndpoint("/openapi/v1.json", "v1");
+    });
 }
 
 // app.UseHttpsRedirection();
