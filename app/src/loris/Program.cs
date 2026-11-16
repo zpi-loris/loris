@@ -1,3 +1,4 @@
+using System.Net.Sockets;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Loris.Channels;
@@ -7,10 +8,36 @@ using Loris.Extensions;
 using Loris.Jobs;
 using Loris.MQTT.Client;
 using Loris.Services;
+using Microsoft.AspNetCore.Connections;
+using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
+
+var socketPath = Path.Combine(Path.GetTempPath(), "test.sock");
+
+builder.WebHost.ConfigureKestrel(serverOptions =>
+{
+    serverOptions.ListenLocalhost(5158);
+    serverOptions.ListenUnixSocket(
+        socketPath,
+        listenOptions =>
+        {
+            listenOptions.Protocols = HttpProtocols.Http1AndHttp2;
+            listenOptions.Use(
+                async (context, next) =>
+                {
+                    if (context.LocalEndPoint is UnixDomainSocketEndPoint unixEndPoint)
+                    {
+                        context.Items["UnixSocketPath"] = unixEndPoint.ToString();
+                    }
+                    await next(context);
+                }
+            );
+        }
+    );
+});
 
 // Add services to the container.
 
@@ -91,6 +118,17 @@ if (app.Environment.IsDevelopment())
         options.SwaggerEndpoint("/openapi/v1.json", "v1");
     });
 }
+
+app.Use(
+    (context, next) =>
+    {
+        if (context.Items.TryGetValue("UnixSocketPath", out var socketPath))
+        {
+            context.Response.Headers.Add("X-Forwarded-For", socketPath?.ToString());
+        }
+        return next();
+    }
+);
 
 // app.UseHttpsRedirection();
 
