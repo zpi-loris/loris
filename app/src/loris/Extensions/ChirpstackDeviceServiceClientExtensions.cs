@@ -25,6 +25,7 @@ public static class ChirpstackDeviceServiceClientExtensions
                     Confirmed = false,
                     Data = downlink.ToByteString(),
                     DevEui = devEui.ToString(),
+                    FPort = 1,
                 },
             };
 
