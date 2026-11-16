@@ -265,23 +265,19 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-  /devices/{devEui}/sensors/{sensorId}/readings:
+  /sensors/{id}/readings:
     get:
       tags:
         - Sensor readings
       summary: Retrieve sensor readings from a selected time range
       operationId: getSensorReadings
       parameters:
-        - name: devEui
+        - name: id
           in: path
           required: true
           schema:
             type: string
-        - name: sensorId
-          in: path
-          required: true
-          schema:
-            type: string
+            format: uuid
         - name: from
           in: query
           required: true
@@ -417,6 +413,7 @@ components:
     Sensor:
       type: object
       required:
+        - id
         - devEui
         - sensorId
         - name
@@ -424,6 +421,9 @@ components:
         - valueType
         - semantics
       properties:
+        id:
+          type: string
+          format: uuid
         devEui:
           type: string
         sensorId:
