@@ -182,36 +182,23 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-  /devices/active:
+  /devices:
     get:
       tags:
         - Devices
-      summary: List all active devices
-      operationId: getActiveDevices
+      summary: List all devices
+      description: Can be filtered by the status of the device.
+      operationId: getDevices
+      parameters:
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+          example: ACTIVE
       responses:
         '200':
-          description: List of active devices
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/Device"
-        '401':
-          description: Unauthorized
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-  /devices/pending:
-    get:
-      tags:
-        - Devices
-      summary: List all pending devices
-      operationId: getPendingDevices
-      responses:
-        '200':
-          description: List of pending devices
+          description: List of devices
           content:
             application/json:
               schema:
