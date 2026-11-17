@@ -1,9 +1,8 @@
-using System.Text.Json;
-using System.Text.Json.Serialization;
 using Loris.Channels;
 using Loris.Consumers;
 using Loris.Data;
 using Loris.Extensions;
+using Loris.Models;
 using Loris.MQTT.Client;
 using Loris.Services;
 using Microsoft.EntityFrameworkCore;
@@ -15,8 +14,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 string? connectionString = builder.Configuration.GetConnectionString("Timescale");
 
-// add factory dbContext. It will serve as an entry point for factory retrieval
-// as well as single, scoped DbContext instance for each request.
+// add factory first because it's singleton, thus options will inherit singleton
 builder.Services.AddDbContextFactory<LorisDbContext>(options =>
     options.UseNpgsql(connectionString)
 );
@@ -38,28 +36,22 @@ builder.Services.AddSingleton<IDeviceChannelHandler, DeviceChannelHandler>();
 builder.Services.AddSingleton<IDbWriteChannelHandler, DbWriteChannelHandler>();
 builder.Services.AddSingleton<IEventChannelHandler, EventChannelHandler>();
 
-// Register all custom automations blocks compilers
 builder.Services.AddAutomationsCompilers();
 
-// Services for controller
 builder.Services.AddScoped<IAutomationService, AutomationService>();
 builder.Services.AddScoped<IDeviceService, DeviceService>();
 
-// Chirpstacks integration background service and device grpc downlink service
+// Add chirpstack integration background task with handler implementation
 builder.Services.AddChirpstackIntegration<ChirpstackIntegrationHandler>(builder.Configuration);
+
+// Add chirpstack grpc device service client factory
 builder.Services.AddChirpstackDeviceService(builder.Configuration);
 
-builder
-    .Services.AddControllers()
-    .AddJsonOptions(options =>
-    {
-        options.JsonSerializerOptions.Converters.Add(
-            new JsonStringEnumConverter(JsonNamingPolicy.CamelCase)
-        );
-    });
+builder.Services.AddControllers();
 
 builder.Services.AddProblemDetails();
 
+// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddLorisOpenApi();
 
 builder.Services.Configure<RouteOptions>(options =>
@@ -69,7 +61,10 @@ builder.Services.Configure<RouteOptions>(options =>
 
 var app = builder.Build();
 
-// development open api and docs serving
+// app.UseExceptionHandler();
+// app.UseStatusCodePages();
+
+// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
