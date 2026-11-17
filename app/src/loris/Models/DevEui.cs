@@ -12,10 +12,7 @@ public readonly record struct DevEui(ulong Value) : IParsable<DevEui>
 {
     public static DevEui Parse(string hex) => Parse(hex, null);
 
-    public static DevEui Parse(byte[] bytes)
-    {
-        return new DevEui(BinaryPrimitives.ReadUInt64BigEndian(bytes));
-    }
+    public static DevEui Parse(byte[] bytes) => new(BinaryPrimitives.ReadUInt64BigEndian(bytes));
 
     public override string ToString() => Value.ToString("X16");
 

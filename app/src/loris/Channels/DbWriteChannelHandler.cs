@@ -49,6 +49,7 @@ public class DbWriteChannelHandler(
             // update the device status to PENDING if it was previously DISCONNECTED
             var updatedRows = await ctx
                 .Devices.Where(d => d.DevEui == devEui)
+                .Where(d => d.DeviceStatus == DeviceStatus.DISCONNECTED)
                 .ExecuteUpdateAsync(
                     setter => setter.SetProperty(p => p.DeviceStatus, DeviceStatus.PENDING),
                     stoppingToken
