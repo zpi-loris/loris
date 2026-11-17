@@ -1,3 +1,4 @@
+using System.Buffers.Binary;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Text.Json;
@@ -11,11 +12,19 @@ public readonly record struct DevEui(ulong Value) : IParsable<DevEui>
 {
     public static DevEui Parse(string hex) => Parse(hex, null);
 
-    public static DevEui Parse(byte[] bytes) => new(BitConverter.ToUInt64(bytes));
+    public static DevEui Parse(byte[] bytes)
+    {
+        return new DevEui(BinaryPrimitives.ReadUInt64BigEndian(bytes));
+    }
 
     public override string ToString() => Value.ToString("X16");
 
-    public byte[] ToBytes() => BitConverter.GetBytes(Value);
+    public byte[] ToBytes()
+    {
+        var bytes = new byte[8];
+        BinaryPrimitives.WriteUInt64BigEndian(bytes, Value);
+        return bytes;
+    }
 
     //
     // IParsable<DebEui> interface implementation

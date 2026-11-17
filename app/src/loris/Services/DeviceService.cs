@@ -198,7 +198,7 @@ public class DeviceService(
 
     public async Task<Result<Device>> ToggleIgnoreAsync(
         DevEui devEui,
-        bool ignore = true,
+        bool ignore,
         CancellationToken ct = default
     )
     {
@@ -210,7 +210,7 @@ public class DeviceService(
 
     public async Task<Result<Device>> ToggleIgnoreAsync(
         string name,
-        bool ignore = true,
+        bool ignore,
         CancellationToken ct = default
     )
     {
