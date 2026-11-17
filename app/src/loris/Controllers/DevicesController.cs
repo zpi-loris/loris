@@ -20,7 +20,7 @@ public class DevicesController(IDeviceService deviceService) : ControllerBase
     /// Get all devices
     /// </summary>
     /// <remarks>
-    /// Get all devices with sensors and functions.
+    /// Fetches all devices with sensors and functions attached.
     /// </remarks>
     /// <param name="status">
     /// Optionally, filter by device status. Accepts unions.
@@ -35,7 +35,8 @@ public class DevicesController(IDeviceService deviceService) : ControllerBase
     /// Get device by id
     /// </summary>
     /// <remarks>
-    /// Get a device with sensors and functions by its id.
+    /// Fetches a device identified by its unique ID
+    /// with definitions for sensors and functions attached.
     /// </remarks>
     [HttpGet("by-id/{id}")]
     [ProducesSensorNotFound]
@@ -46,7 +47,8 @@ public class DevicesController(IDeviceService deviceService) : ControllerBase
     /// Get device by devEui
     /// </summary>
     /// <remarks>
-    /// Get a device with sensors and functions by its devEUI.
+    /// Fetches a device identified by its unique LoraWAN devEUI address
+    /// with definitions for sensors and functions attached.
     /// </remarks>
     [HttpGet("by-eui/{devEui}")]
     [ProducesSensorNotFound]
@@ -57,7 +59,8 @@ public class DevicesController(IDeviceService deviceService) : ControllerBase
     /// Get device by name
     /// </summary>
     /// <remarks>
-    /// Get a device with sensors and functions by its name.
+    /// Fetches a device identified by its unique friendly name
+    /// with definitions for sensors and functions attached.
     /// </remarks>
     [HttpGet("by-name/{name}")]
     [ProducesSensorNotFound]
