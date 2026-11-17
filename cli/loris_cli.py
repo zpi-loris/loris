@@ -12,15 +12,6 @@ parser = argparse.ArgumentParser(
 )
 
 base_url = "http://localhost:5158/api"
-# opts
-# - parse automation
-#   - validate (sth like terraform plan)
-#   - apply
-# - view capabilities of the device
-# - list devices
-# - disconnect device
-# - welcome the device
-# - ignore(revert) the device
 
 
 def convert_yaml(yaml_object):
@@ -88,7 +79,7 @@ def accept(args):
                 f"Request failed with status code {r.status_code}: {details}",
                 file=sys.stderr,
             )
-        except (ValueError, AttributeError):
+        except Exception:
             print(f"Request failed with status code {r.status_code}.", file=sys.stderr)
 
         sys.exit(1)
@@ -115,7 +106,7 @@ def disconnect(args):
                 f"Request failed with status code {r.status_code}: {details}",
                 file=sys.stderr,
             )
-        except (ValueError, AttributeError):
+        except Exception:
             print(f"Request failed with status code {r.status_code}.", file=sys.stderr)
 
         sys.exit(1)
@@ -147,7 +138,7 @@ def ignore(args):
                 f"Request failed with status code {r.status_code}: {details}",
                 file=sys.stderr,
             )
-        except (ValueError, AttributeError):
+        except Exception:
             print(f"Request failed with status code {r.status_code}.", file=sys.stderr)
 
         sys.exit(1)
@@ -158,34 +149,57 @@ def ignore(args):
         print(f"Device {args.device} ignored")
 
 
-# def list_devices():
-#     request_url = f"{base_url}/devices/by-eui/{args.device}/accept"
-#
-#     if args.pending:
-#         pass
-#     elif args.accepted:
-#         pass
-#     elif args.ignored:
-#         pass
-#     elif args.blocked:
-#         pass
-#     else:
-#         pass
-#
-#     r = requests.post(request_url)
-#     if r.status_code != 200:
-#         print(f"ERROR: Status Code {r.status_code}")
-#         return
-#
-#
-# def device(args):
-#     request_url = f"{base_url}/devices/by-eui/{args.device}/accept"
-#
-#     r = requests.post(request_url)
-#     if r.status_code != 200:
-#         print(f"ERROR: Status Code {r.status_code}")
-#         return
-#     print(r.content)
+def list_devices():
+    headers = {"Accept": "application/json"}
+
+    request_url = f"{base_url}/devices"
+    params = ""
+    if args.pending:
+        params = "pending=true"
+    elif args.accepted:
+        params = "accepted=true"
+    elif args.ignored:
+        params = "ignored=true"
+    elif args.blocked:
+        params = "blocked=true"
+
+    r = requests.get(request_url, headers=headers, params=params)
+
+    if not r.ok:
+        try:
+            details = r.json().get("detail")
+            print(
+                f"Request failed with status code {r.status_code}: {details}",
+                file=sys.stderr,
+            )
+        except Exception:
+            print(f"Request failed with status code {r.status_code}.", file=sys.stderr)
+
+        sys.exit(1)
+
+    # TODO: show the results - I'll do it once the endpoint is ready, because it'll be easier then
+
+
+def device(args):
+    headers = {"Accept": "application/json"}
+    if args.by_eui:
+        request_url = f"{base_url}/devices/by-eui/{args.device}"
+    else:
+        request_url = f"{base_url}/devices/by-name/{args.device}"
+
+    r = requests.get(request_url, headers=headers)
+
+    if not r.ok:
+        try:
+            details = r.json().get("detail")
+            print(
+                f"Request failed with status code {r.status_code}: {details}",
+                file=sys.stderr,
+            )
+        except Exception:
+            print(f"Request failed with status code {r.status_code}.", file=sys.stderr)
+
+    # TODO: show the results - I'll do it once the endpoint is ready, because it'll be easier then
 
 
 def apply(args):
@@ -212,7 +226,7 @@ def apply(args):
                     print_invalid_rule(invalid_rule)
             elif "errors" in data:
                 print_syntax_error(data["errors"])
-        except (ValueError, AttributeError):
+        except Exception:
             print(f"Request failed with status code {r.status_code}.", file=sys.stderr)
         sys.exit(1)
 
@@ -243,7 +257,7 @@ def validate(args):
                     print_invalid_rule(invalid_rule)
             elif "errors" in data:
                 print_syntax_error(data["errors"])
-        except (ValueError, AttributeError):
+        except Exception:
             print(f"Request failed with status code {r.status_code}.", file=sys.stderr)
         sys.exit(1)
 
@@ -290,7 +304,7 @@ ignore_subparser.set_defaults(func=ignore)
 
 # List devices
 list_subparser = subparsers.add_parser("list", help="List devices")
-# list_subparser.set_defaults(func=list_devices)
+list_subparser.set_defaults(func=list_devices)
 list_subparser.add_argument(
     "-p", "--pending", help="List pending devices", action="store_true"
 )
@@ -303,7 +317,7 @@ list_subparser.add_argument(
 list_subparser.add_argument(
     "-b", "--blocked", help="List blocked devices", action="store_true"
 )
-# list_subparser.set_defaults(func=list_devices)
+list_subparser.set_defaults(func=list_devices)
 
 # Device info
 device_subparser = subparsers.add_parser(
