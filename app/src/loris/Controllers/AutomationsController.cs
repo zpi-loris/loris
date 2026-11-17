@@ -23,6 +23,7 @@ public class AutomationsController(IAutomationService service) : ControllerBase
     [HttpPost("validate")]
     [ProducesSuccessNoContent]
     [ProducesAutomationValidationError]
+    [ProducesUnauthorized]
     public async Task<IActionResult> Validate(
         [FromBody] IReadOnlyList<AutomationDto> rules,
         CancellationToken ct
@@ -53,6 +54,7 @@ public class AutomationsController(IAutomationService service) : ControllerBase
     [HttpPost("apply")]
     [ProducesSuccessNoContent]
     [ProducesAutomationValidationError]
+    [ProducesUnauthorized]
     public async Task<IActionResult> Apply(
         [FromBody] IReadOnlyList<AutomationDto> rules,
         CancellationToken ct
