@@ -1,7 +1,10 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Loris.Controllers.Requests;
 using Loris.Models;
+using Loris.OpenApi;
 using Microsoft.AspNetCore.Http.Json;
+using Microsoft.OpenApi;
 
 namespace Loris.Extensions;
 
@@ -27,20 +30,46 @@ public static class OpenApiServiceCollectionExtension
 
                 // add schema transformer
                 options.AddSchemaTransformer(
-                    (schema, context, _) =>
+                    async (schema, context, ct) =>
                     {
                         // Custom schema for DevEui type
                         // NOTE: KEEP IN SYNC WITH DevEuiJsonConverter
                         //
                         if (context.JsonTypeInfo.Type == typeof(DevEui))
                         {
-                            schema.Type = Microsoft.OpenApi.JsonSchemaType.String;
+                            schema.Type = JsonSchemaType.String;
                             schema.MaxLength = 16;
                             schema.MinLength = 16;
                             schema.Pattern = "^[0-9a-fA-F]{16}$";
                         }
 
-                        return Task.CompletedTask;
+                        // Specificaly created for CallFunctionRequest
+                        // and it's oneof arg type
+                        var attr = context
+                            .JsonPropertyInfo?.AttributeProvider?.GetCustomAttributes(
+                                typeof(OneOfTypesAttribute),
+                                false
+                            )
+                            .OfType<OneOfTypesAttribute>()
+                            .FirstOrDefault();
+
+                        if (attr is not null)
+                        {
+                            schema.Type = null;
+                            schema.OneOf = [];
+
+                            foreach (var type in attr.Types)
+                            {
+                                var subSchema = await context.GetOrCreateSchemaAsync(
+                                    type,
+                                    null,
+                                    ct
+                                );
+                                schema.OneOf.Add(subSchema);
+                            }
+                        }
+
+                        return;
                     }
                 );
             });

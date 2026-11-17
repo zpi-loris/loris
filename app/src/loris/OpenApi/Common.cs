@@ -15,6 +15,17 @@ public sealed class ProducesUnauthenticatedAttribute
 }
 
 [AttributeUsage(AttributeTargets.Method | AttributeTargets.Class)]
+public sealed class ProducesUnauthorizedAttribute
+    : ProducesResponseTypeAttribute<ResultProblemDetails>
+{
+    public ProducesUnauthorizedAttribute()
+        : base(StatusCodes.Status403Forbidden)
+    {
+        Description = "Not authorized to request";
+    }
+}
+
+[AttributeUsage(AttributeTargets.Method | AttributeTargets.Class)]
 public sealed class ProducesSuccessNoContentAttribute : ProducesResponseTypeAttribute
 {
     public ProducesSuccessNoContentAttribute()
