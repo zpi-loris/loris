@@ -15,7 +15,6 @@ public partial class Function
 
     public string Description { get; set; } = null!;
 
-    [JsonConverter(typeof(JsonStringEnumConverter))]
     public FuncArgType ArgType { get; set; }
 
     //

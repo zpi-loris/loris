@@ -17,10 +17,8 @@ public partial class Sensor
 
     public string? Unit { get; set; }
 
-    [JsonConverter(typeof(JsonStringEnumConverter))]
     public SensorValueType ValueType { get; set; }
 
-    [JsonConverter(typeof(JsonStringEnumConverter))]
     public SensorSemantics Semantics { get; set; }
 
     //

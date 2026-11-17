@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel;
+using System.Text.Json.Serialization;
 using Loris.Protocol;
 using Microsoft.EntityFrameworkCore;
 
@@ -25,6 +26,7 @@ public class SensorReading
     // REFERENCES
     //
 
+    [JsonIgnore]
     public Sensor Sensor { get; set; } = null!;
 
     //
