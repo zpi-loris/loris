@@ -1,3 +1,7 @@
+import socket
+from requests.adapters import HTTPAdapter
+from urllib3.connectionpool import HTTPConnectionPool
+from urllib3.connection import HTTPConnection
 from pprint import pprint
 import sys
 import re
@@ -6,12 +10,38 @@ import yaml
 import json
 import requests
 
+
+class LorisConnection(HTTPConnection):
+    def __init__(self):
+        super().__init__("localhost")
+
+    def connect(self):
+        self.sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        self.sock.connect("/tmp/loris.sock")
+
+
+class LorisConnectionPool(HTTPConnectionPool):
+    def __init__(self):
+        super().__init__("localhost")
+
+    def _new_conn(self):
+        return LorisConnection()
+
+
+class LorisAdapter(HTTPAdapter):
+    def get_connection_with_tls_context(self, request, verify, proxies=None, cert=None):
+        return LorisConnectionPool()
+
+
+session = requests.Session()
+session.mount("http://loris/", LorisAdapter())
+
 parser = argparse.ArgumentParser(
     prog="loris",
     description="Use this tool to communicate with the running loris client.",
 )
 
-base_url = "http://localhost:5158/api"
+base_url = "http://loris/api"
 
 
 def convert_yaml(yaml_object):
@@ -70,7 +100,7 @@ def accept(args):
     else:
         request_url = f"{base_url}/devices/by-name/{args.device}/accept"
 
-    r = requests.post(request_url, headers=headers)
+    r = session.post(request_url, headers=headers)
 
     if not r.ok:
         try:
@@ -95,9 +125,9 @@ def disconnect(args):
         request_url = f"{base_url}/devices/by-name/{args.device}/disconnect"
 
     if args.force:
-        r = requests.post(request_url, params="force=true", headers=headers)
+        r = session.post(request_url, params="force=true", headers=headers)
     else:
-        r = requests.post(request_url, headers=headers)
+        r = session.post(request_url, headers=headers)
 
     if not r.ok:
         try:
@@ -119,17 +149,17 @@ def ignore(args):
     if args.by_eui:
         if args.revert:
             request_url = f"{base_url}/devices/by-eui/{args.device}/ignore"
-            r = requests.post(request_url, params="revert=true", headers=headers)
+            r = session.post(request_url, params="revert=true", headers=headers)
         else:
             request_url = f"{base_url}/devices/by-eui/{args.device}/ignore"
-            r = requests.post(request_url, headers=headers)
+            r = session.post(request_url, headers=headers)
     else:
         if args.revert:
             request_url = f"{base_url}/devices/by-name/{args.device}/ignore"
-            r = requests.post(request_url, params="revert=true", headers=headers)
+            r = session.post(request_url, params="revert=true", headers=headers)
         else:
             request_url = f"{base_url}/devices/by-name/{args.device}/ignore"
-            r = requests.post(request_url, headers=headers)
+            r = session.post(request_url, headers=headers)
 
     if not r.ok:
         try:
@@ -163,7 +193,7 @@ def list_devices():
     elif args.blocked:
         params = "blocked=true"
 
-    r = requests.get(request_url, headers=headers, params=params)
+    r = session.get(request_url, headers=headers, params=params)
 
     if not r.ok:
         try:
@@ -187,7 +217,7 @@ def device(args):
     else:
         request_url = f"{base_url}/devices/by-name/{args.device}"
 
-    r = requests.get(request_url, headers=headers)
+    r = session.get(request_url, headers=headers)
 
     if not r.ok:
         try:
@@ -215,7 +245,7 @@ def apply(args):
 
     json_string = json.dumps(yaml_object, default=str)
 
-    r = requests.post(request_url, data=json_string, headers=headers)
+    r = session.post(request_url, data=json_string, headers=headers)
     if not r.ok:
         try:
             print(f"Request failed with status code {r.status_code}", file=sys.stderr)
@@ -246,7 +276,7 @@ def validate(args):
 
     json_string = json.dumps(yaml_object, default=str)
 
-    r = requests.post(request_url, data=json_string, headers=headers)
+    r = session.post(request_url, data=json_string, headers=headers)
     if not r.ok:
         try:
             print(f"Request failed with status code {r.status_code}", file=sys.stderr)
