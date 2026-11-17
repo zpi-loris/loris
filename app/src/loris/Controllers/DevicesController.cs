@@ -22,9 +22,14 @@ public class DevicesController(IDeviceService deviceService) : ControllerBase
     /// <remarks>
     /// Get all devices with sensors and functions.
     /// </remarks>
+    /// <param name="status">
+    /// Optionally, filter by device status. Accepts unions.
+    /// </param>
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<Device>>> GetAll(CancellationToken ct) =>
-        throw new NotImplementedException();
+    public async Task<ActionResult<IEnumerable<Device>>> GetAll(
+        [DefaultValue(null)] [FromQuery] DeviceStatus[] status,
+        CancellationToken ct
+    ) => throw new NotImplementedException();
 
     /// <summary>
     /// Get device by id
@@ -33,7 +38,7 @@ public class DevicesController(IDeviceService deviceService) : ControllerBase
     /// Get a device with sensors and functions by its id.
     /// </remarks>
     [HttpGet("by-id/{id}")]
-    [ProducesDeviceNotFound]
+    [ProducesSensorNotFound]
     public async Task<ActionResult<Device>> GetById(Guid id, CancellationToken ct) =>
         throw new NotImplementedException();
 
@@ -44,7 +49,7 @@ public class DevicesController(IDeviceService deviceService) : ControllerBase
     /// Get a device with sensors and functions by its devEUI.
     /// </remarks>
     [HttpGet("by-eui/{devEui}")]
-    [ProducesDeviceNotFound]
+    [ProducesSensorNotFound]
     public async Task<ActionResult<Device>> GetByEui(DevEui devEui, CancellationToken ct) =>
         throw new NotImplementedException();
 
@@ -55,7 +60,7 @@ public class DevicesController(IDeviceService deviceService) : ControllerBase
     /// Get a device with sensors and functions by its name.
     /// </remarks>
     [HttpGet("by-name/{name}")]
-    [ProducesDeviceNotFound]
+    [ProducesSensorNotFound]
     public async Task<ActionResult<Device>> GetByName(string name, CancellationToken ct) =>
         throw new NotImplementedException();
 
@@ -68,7 +73,7 @@ public class DevicesController(IDeviceService deviceService) : ControllerBase
     [HttpPost("by-name/{name}/accept")]
     [ProducesLoraWanGatewayErrors]
     [ProducesDeviceConflict]
-    [ProducesDeviceNotFound]
+    [ProducesSensorNotFound]
     public async Task<ActionResult<Device>> AcceptByName(string name, CancellationToken ct) =>
         this.ToActionResult(await _service.AcceptAsync(name, ct));
 
@@ -81,7 +86,7 @@ public class DevicesController(IDeviceService deviceService) : ControllerBase
     [HttpPost("by-eui/{devEui}/accept")]
     [ProducesLoraWanGatewayErrors]
     [ProducesDeviceConflict]
-    [ProducesDeviceNotFound]
+    [ProducesSensorNotFound]
     public async Task<ActionResult<Device>> AcceptByEui(DevEui devEui, CancellationToken ct) =>
         this.ToActionResult(await _service.AcceptAsync(devEui, ct));
 
@@ -96,7 +101,7 @@ public class DevicesController(IDeviceService deviceService) : ControllerBase
     /// </param>
     [HttpPost("by-name/{name}/ignore")]
     [ProducesDeviceConflict]
-    [ProducesDeviceNotFound]
+    [ProducesSensorNotFound]
     public async Task<ActionResult<Device>> IgnoreByName(
         string name,
         [DefaultValue(false)] [FromQuery] bool revert,
@@ -114,7 +119,7 @@ public class DevicesController(IDeviceService deviceService) : ControllerBase
     /// </param>
     [HttpPost("by-eui/{devEui}/ignore")]
     [ProducesDeviceConflict]
-    [ProducesDeviceNotFound]
+    [ProducesSensorNotFound]
     public async Task<ActionResult<Device>> IgnoreByEui(
         DevEui devEui,
         [DefaultValue(false)] [FromQuery] bool revert,
@@ -133,7 +138,7 @@ public class DevicesController(IDeviceService deviceService) : ControllerBase
     [HttpPost("by-name/{name}/disconnect")]
     [ProducesLoraWanGatewayErrors]
     [ProducesDeviceConflict]
-    [ProducesDeviceNotFound]
+    [ProducesSensorNotFound]
     public async Task<ActionResult<Device>> DisconnectByName(
         string name,
         [DefaultValue(false)] [FromQuery] bool force,
@@ -152,7 +157,7 @@ public class DevicesController(IDeviceService deviceService) : ControllerBase
     [HttpPost("by-eui/{devEui}/disconnect")]
     [ProducesLoraWanGatewayErrors]
     [ProducesDeviceConflict]
-    [ProducesDeviceNotFound]
+    [ProducesSensorNotFound]
     public async Task<ActionResult<Device>> DisconnectByEui(
         DevEui devEui,
         [DefaultValue(false)] [FromQuery] bool force,
