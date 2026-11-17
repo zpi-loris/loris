@@ -86,12 +86,12 @@ extern void ul_thread(void* capabilities, void* unused1, void* unused2) {
   LOG_DBG("Uplink thread started successfully!");
   while (1) {
     if (device_connected) {
-      LOG_DBG("Woke up at: %d\n", (int)k_uptime_get());
 
       min_heap_pop(&sensors_heap, &st);
-      st.timestamp += (st.sensor->wake_interval_sec * 1000);
       if (st.timestamp < k_uptime_get()) {
-        st.timestamp += k_uptime_get();
+        st.timestamp = k_uptime_get() + st.sensor->wake_interval_sec * 1000;
+      } else {
+        st.timestamp += (st.sensor->wake_interval_sec * 1000);
       }
       min_heap_push(&sensors_heap, &st);
 
@@ -134,7 +134,6 @@ extern void ul_thread(void* capabilities, void* unused1, void* unused2) {
                              .payload_type = UPLINK_PAYLOAD_TYPE_REPORT };
       k_msgq_put(&ul_q, &report_ul, K_NO_WAIT);
 
-      LOG_DBG("Going to sleep at: %d\n", (int)k_uptime_get());
       int64_t sleep_time =
           ((sensor_time_t*)min_heap_peek(&sensors_heap))->timestamp -
           k_uptime_get();
