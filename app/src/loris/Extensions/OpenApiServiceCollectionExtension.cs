@@ -47,10 +47,10 @@ public static class OpenApiServiceCollectionExtension
                         // and it's oneof arg type
                         var attr = context
                             .JsonPropertyInfo?.AttributeProvider?.GetCustomAttributes(
-                                typeof(OneOfTypesAttribute),
+                                typeof(JsonOneOfTypesAttribute),
                                 false
                             )
-                            .OfType<OneOfTypesAttribute>()
+                            .OfType<JsonOneOfTypesAttribute>()
                             .FirstOrDefault();
 
                         if (attr is not null)

@@ -26,6 +26,16 @@ public sealed class ProducesUnauthorizedAttribute
 }
 
 [AttributeUsage(AttributeTargets.Method | AttributeTargets.Class)]
+public sealed class ProducesNotFoundAttribute : ProducesResponseTypeAttribute<ResultProblemDetails>
+{
+    public ProducesNotFoundAttribute(string entity)
+        : base(StatusCodes.Status404NotFound)
+    {
+        Description = $"The {entity} was not found";
+    }
+}
+
+[AttributeUsage(AttributeTargets.Method | AttributeTargets.Class)]
 public sealed class ProducesSuccessNoContentAttribute : ProducesResponseTypeAttribute
 {
     public ProducesSuccessNoContentAttribute()
@@ -42,5 +52,15 @@ public sealed class ProducesSuccessAttribute : ProducesResponseTypeAttribute
         : base(StatusCodes.Status200OK)
     {
         Description = "Success";
+    }
+}
+
+public sealed class ProducesBadRequestAttribute
+    : ProducesResponseTypeAttribute<ResultProblemDetails>
+{
+    public ProducesBadRequestAttribute()
+        : base(StatusCodes.Status400BadRequest)
+    {
+        Description = "Invalid request";
     }
 }

@@ -1,4 +1,4 @@
-using Loris.Controllers.Requests;
+using Loris.Controllers.Responses;
 using Loris.OpenApi;
 using Microsoft.AspNetCore.Mvc;
 
@@ -24,7 +24,7 @@ public class SensorsController : ControllerBase
     /// <param name="to">The end datetime for filtering sensor readings.</param>
     [HttpGet("{id}/readings")]
     [ProducesSensorNotFound]
-    public Task<IEnumerable<SensorReadingDto>> GetReadings(
+    public Task<IEnumerable<SensorReadingResponse>> GetReadings(
         Guid id,
         [FromQuery] DateTime from,
         [FromQuery] DateTime to
