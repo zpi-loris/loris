@@ -1,7 +1,7 @@
 using System.ComponentModel;
 using Loris.Extensions;
 using Loris.Models;
-using Loris.Results;
+using Loris.OpenApi;
 using Loris.Services;
 using Microsoft.AspNetCore.Mvc;
 
@@ -10,112 +10,149 @@ namespace Loris.Controllers;
 [ApiController]
 [Route("api/[controller]")]
 [Produces("application/json")]
-[ProducesResponseType<Device>(StatusCodes.Status200OK, Description = "Success")]
-[ProducesResponseType<ResultProblemDetails>(
-    StatusCodes.Status404NotFound,
-    Description = "The device was not found"
-)]
-[ProducesResponseType<ResultProblemDetails>(
-    StatusCodes.Status409Conflict,
-    Description = "The device is in a state that does not allow the requested operation"
-)]
+[ProducesUnauthenticated]
+[ProducesSuccess]
 public class DevicesController(IDeviceService deviceService) : ControllerBase
 {
-    private readonly IDeviceService _service = deviceService;
+    protected readonly IDeviceService _service = deviceService;
 
-    private const string BadGatewayDescription =
-        "The LoraWAN server returned an error when trying to perform the requested operation";
-    private const string GatewayTimeoutDescription =
-        "The LoraWAN server did not respond in time when trying to perform the requested operation";
+    /// <summary>
+    /// Get all devices
+    /// </summary>
+    /// <remarks>
+    /// Get all devices with sensors and functions.
+    /// </remarks>
+    [HttpGet]
+    public async Task<ActionResult<IEnumerable<Device>>> GetAll(CancellationToken ct) =>
+        throw new NotImplementedException();
 
-    private const string AcceptDescription =
-        @"Accepts a device, which will force a device to send reports
-        instead of capabilities. It will mark a device as accepted
-        and it will be able to send reports until it is disconnected.";
+    /// <summary>
+    /// Get device by id
+    /// </summary>
+    /// <remarks>
+    /// Get a device with sensors and functions by its id.
+    /// </remarks>
+    [HttpGet("by-id/{id}")]
+    [ProducesDeviceNotFound]
+    public async Task<ActionResult<Device>> GetById(Guid id, CancellationToken ct) =>
+        throw new NotImplementedException();
 
-    private const string DisconnectDescription =
-        @"Disconnects a device, which will force a device to send capabilities
-        instead of reports. It will mark a device as disconnected,
-        and it will not be able to send reports until it is accepted again.";
+    /// <summary>
+    /// Get device by devEui
+    /// </summary>
+    /// <remarks>
+    /// Get a device with sensors and functions by its devEUI.
+    /// </remarks>
+    [HttpGet("by-eui/{devEui}")]
+    [ProducesDeviceNotFound]
+    public async Task<ActionResult<Device>> GetByEui(DevEui devEui, CancellationToken ct) =>
+        throw new NotImplementedException();
 
-    private const string IgnoreDescription =
-        @"Ignores a device, which will mark the device as ignored in the application.
-        The operation has no effect on the device itself, and it will continue to send capabilities";
+    /// <summary>
+    /// Get device by name
+    /// </summary>
+    /// <remarks>
+    /// Get a device with sensors and functions by its name.
+    /// </remarks>
+    [HttpGet("by-name/{name}")]
+    [ProducesDeviceNotFound]
+    public async Task<ActionResult<Device>> GetByName(string name, CancellationToken ct) =>
+        throw new NotImplementedException();
 
-    // ACCEPT AMIGOS
-
+    /// <summary>
+    /// Accept device by name
+    /// </summary>
+    /// <remarks>
+    /// Accepts a device, forcing it to send reports instead of capabilities until disconnected.
+    /// </remarks>
     [HttpPost("by-name/{name}/accept")]
-    [ProducesResponseType<ResultProblemDetails>(
-        StatusCodes.Status502BadGateway,
-        Description = BadGatewayDescription
-    )]
-    [ProducesResponseType<ResultProblemDetails>(
-        StatusCodes.Status504GatewayTimeout,
-        Description = GatewayTimeoutDescription
-    )]
-    [EndpointDescription(AcceptDescription)]
+    [ProducesLoraWanGatewayErrors]
+    [ProducesDeviceConflict]
+    [ProducesDeviceNotFound]
     public async Task<ActionResult<Device>> AcceptByName(string name, CancellationToken ct) =>
         this.ToActionResult(await _service.AcceptAsync(name, ct));
 
+    /// <summary>
+    /// Accept device by devEui
+    /// </summary>
+    /// <remarks>
+    /// Accepts a device, forcing it to send reports instead of capabilities until disconnected.
+    /// </remarks>
     [HttpPost("by-eui/{devEui}/accept")]
-    [ProducesResponseType<ResultProblemDetails>(
-        StatusCodes.Status502BadGateway,
-        Description = BadGatewayDescription
-    )]
-    [ProducesResponseType<ResultProblemDetails>(
-        StatusCodes.Status504GatewayTimeout,
-        Description = GatewayTimeoutDescription
-    )]
-    [EndpointDescription(AcceptDescription)]
+    [ProducesLoraWanGatewayErrors]
+    [ProducesDeviceConflict]
+    [ProducesDeviceNotFound]
     public async Task<ActionResult<Device>> AcceptByEui(DevEui devEui, CancellationToken ct) =>
         this.ToActionResult(await _service.AcceptAsync(devEui, ct));
 
-    // IGNORE AMIGOS
-
+    /// <summary>
+    /// Ignore device by name
+    /// </summary>
+    /// <remarks>
+    /// Marks the device as ignored in the application without affecting the device itself.
+    /// </remarks>
+    /// <param name="revert">
+    /// If true, the device will be un-ignored.
+    /// </param>
     [HttpPost("by-name/{name}/ignore")]
-    [EndpointDescription(IgnoreDescription)]
+    [ProducesDeviceConflict]
+    [ProducesDeviceNotFound]
     public async Task<ActionResult<Device>> IgnoreByName(
         string name,
         [DefaultValue(false)] [FromQuery] bool revert,
         CancellationToken ct
     ) => this.ToActionResult(await _service.ToggleIgnoreAsync(name, ignore: !revert, ct));
 
+    /// <summary>
+    /// Ignore device by devEui
+    /// </summary>
+    /// <remarks>
+    /// Marks the device as ignored in the application without affecting the device itself.
+    /// </remarks>
+    /// <param name="revert">
+    /// If true, the device will be un-ignored.
+    /// </param>
     [HttpPost("by-eui/{devEui}/ignore")]
-    [EndpointDescription(IgnoreDescription)]
+    [ProducesDeviceConflict]
+    [ProducesDeviceNotFound]
     public async Task<ActionResult<Device>> IgnoreByEui(
         DevEui devEui,
         [DefaultValue(false)] [FromQuery] bool revert,
         CancellationToken ct
     ) => this.ToActionResult(await _service.ToggleIgnoreAsync(devEui, ignore: !revert, ct));
 
-    // DISCONNECT AMIGOS
-
+    /// <summary>
+    /// Disconnect device by name
+    /// </summary>
+    /// <remarks>
+    /// Disconnects a device, forcing it to send capabilities instead of reports until the next uplink.
+    /// </remarks>
+    /// <param name="force">
+    /// If true, the device will be disconnected even if it is not accepted.
+    /// </param>
     [HttpPost("by-name/{name}/disconnect")]
-    [ProducesResponseType<ResultProblemDetails>(
-        StatusCodes.Status502BadGateway,
-        Description = BadGatewayDescription
-    )]
-    [ProducesResponseType<ResultProblemDetails>(
-        StatusCodes.Status504GatewayTimeout,
-        Description = GatewayTimeoutDescription
-    )]
-    [EndpointDescription(DisconnectDescription)]
+    [ProducesLoraWanGatewayErrors]
+    [ProducesDeviceConflict]
+    [ProducesDeviceNotFound]
     public async Task<ActionResult<Device>> DisconnectByName(
         string name,
         [DefaultValue(false)] [FromQuery] bool force,
         CancellationToken ct
     ) => this.ToActionResult(await _service.DisconnectAsync(name, force, ct));
 
+    /// <summary>
+    /// Disconnect device by devEui
+    /// </summary>
+    /// <remarks>
+    /// Disconnects a device, forcing it to send capabilities instead of reports until the next uplink.
+    /// </remarks>
+    /// <param name="force">
+    /// If true, the device will be disconnected even if it is not accepted.
+    /// </param>
     [HttpPost("by-eui/{devEui}/disconnect")]
-    [ProducesResponseType<ResultProblemDetails>(
-        StatusCodes.Status502BadGateway,
-        Description = "The LoraWAN server returned an error when trying to disconnect the device"
-    )]
-    [ProducesResponseType<ResultProblemDetails>(
-        StatusCodes.Status504GatewayTimeout,
-        Description = "The LoraWAN server did not respond in time when trying to disconnect the device"
-    )]
-    [EndpointDescription(DisconnectDescription)]
+    [ProducesLoraWanGatewayErrors]
+    [ProducesDeviceConflict]
+    [ProducesDeviceNotFound]
     public async Task<ActionResult<Device>> DisconnectByEui(
         DevEui devEui,
         [DefaultValue(false)] [FromQuery] bool force,
