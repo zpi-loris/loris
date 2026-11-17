@@ -76,18 +76,16 @@ def disconnect(args):
 def ignore(args):
     if args.by_eui:
         if args.revert:
-            request_url = f"{base_url}/devices/by-eui/{args.device}/ignore"
-            r = requests.post(request_url, "revert=true")
+            request_url = f"{base_url}/devices/by-eui/{args.device}/ignore?revert=true"
         else:
             request_url = f"{base_url}/devices/by-eui/{args.device}/ignore"
-            r = requests.post(request_url)
+        r = requests.post(request_url)
     else:
         if args.revert:
-            request_url = f"{base_url}/devices/by-name/{args.device}/ignore"
-            r = requests.post(request_url, "revert=true")
+            request_url = f"{base_url}/devices/by-name/{args.device}/ignore?revert=true"
         else:
-            request_url = f"{base_url}/devices/by-eui/{args.device}/accept"
-            r = requests.post(request_url)
+            request_url = f"{base_url}/devices/by-name/{args.device}/ignore"
+        r = requests.post(request_url)
 
     if not r.ok:
         try:
@@ -102,9 +100,9 @@ def ignore(args):
         sys.exit(1)
 
     if args.revert:
-        print(f"Device {args.device} ignored")
-    else:
         print(f"Device {args.device} is no longer being ignored")
+    else:
+        print(f"Device {args.device} ignored")
 
 
 # def list_devices():
@@ -138,24 +136,30 @@ def ignore(args):
 
 
 def apply(args):
+    headers = {"Content-Type": "application/json"}
     request_url = f"{base_url}/automations/apply"
 
     with open(args.filepath, "r") as yaml_in:
         yaml_object = yaml.safe_load(yaml_in)
     json_string = json.dumps(yaml_object, default=str)
-    print(json_string)
+    pprint(json_string)
 
-    r = requests.post(request_url, json_string)
+    r = requests.post(request_url, json_string, headers=headers)
     if not r.ok:
-        print(
-            f"Request failed with status code {r.status_code}. {r.json().get('detail')}",
-            file=sys.stderr,
-        )
-        pprint(r.json().get("InvalidRules", file=sys.stderr))
+        try:
+            details = r.json().get("detail")
+            print(
+                f"Request failed with status code {r.status_code}: {details}",
+                file=sys.stderr,
+            )
+        except ValueError:
+            print(f"Request failed with status code {r.status_code}.", file=sys.stderr)
+
         sys.exit(1)
 
 
 def validate(args):
+    headers = {"Content-Type": "application/json"}
     request_url = f"{base_url}/automations/Validate"
 
     with open(args.filepath, "r") as yaml_in:
