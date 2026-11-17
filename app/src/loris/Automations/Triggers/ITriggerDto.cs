@@ -10,4 +10,8 @@ namespace Loris.Automations.Triggers;
     typeof(SensorCrossedTriggerDto),
     typeDiscriminator: SensorCrossedTriggerDto.Discriminator
 )]
-public interface ITriggerDto : IAutomationBlock { }
+public interface ITriggerDto : IAutomationBlock
+{
+    [JsonIgnore]
+    public new string ServiceKey { get; }
+}

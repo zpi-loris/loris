@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace Loris.Automations.Triggers.SensorCrossed;
 
 public record SensorCrossedTriggerDto(
@@ -8,5 +10,7 @@ public record SensorCrossedTriggerDto(
 ) : ITriggerDto
 {
     public const string Discriminator = "sensor-crossed";
+
+    [JsonIgnore]
     public string ServiceKey => Discriminator;
 }
