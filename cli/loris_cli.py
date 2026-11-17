@@ -1,5 +1,6 @@
 from pprint import pprint
 import sys
+import re
 import argparse
 import yaml
 import json
@@ -12,8 +13,6 @@ parser = argparse.ArgumentParser(
 
 base_url = "http://localhost:5158/api"
 # opts
-# - view N last readings (optional)
-# - view N last readings from sensor (optional)
 # - parse automation
 #   - validate (sth like terraform plan)
 #   - apply
@@ -24,13 +23,63 @@ base_url = "http://localhost:5158/api"
 # - ignore(revert) the device
 
 
+def convert_yaml(yaml_object):
+    for automation in yaml_object:
+        for command, a_values in automation.items():
+            if command in ("triggers", "conditions", "actions"):
+                new_params = []
+                for c_values in a_values:
+                    for c_type, params in c_values.items():
+                        params = {"$type": c_type, **params}
+                        new_params.append(params)
+                automation[command] = new_params
+
+    with open("saved.yaml", "w") as f:
+        yaml.safe_dump(yaml_object, f, sort_keys=False)
+
+
+def print_invalid_rule(invalid_rule):
+    print(f"Invalid automation: {invalid_rule.get('name')}", file=sys.stderr)
+    print(f"Automation ID: {invalid_rule.get('id')}", file=sys.stderr)
+
+    errors = invalid_rule.get("errors")
+
+    for i, err in enumerate(errors, 1):
+        pointer = err.get("pointer")
+        value = err.get("value")
+        details = err.get("details")
+
+        print(f"     {i}. Field:  {pointer}", file=sys.stderr)
+        print(f"        Value:  '{value}'", file=sys.stderr)
+        print(f"        Detail: {details}", file=sys.stderr)
+
+
+def print_syntax_error(error):
+    code = list(error.keys())[1]
+    print(code)
+    pattern = r"\$\[(\d+)\]\.(\w+)\[(\d+)\]"
+
+    match = re.search(pattern, code)
+
+    if match:
+        automation_idx = int(match.group(1))
+        command = match.group(2).strip()
+        command_idx = int(match.group(3))
+
+        print(
+            f"Syntax error in automation number {automation_idx}, in command {command}, block {command_idx}",
+            file=sys.stderr,
+        )
+
+
 def accept(args):
+    headers = {"Accept": "application/json"}
     if args.by_eui:
         request_url = f"{base_url}/devices/by-eui/{args.device}/accept"
     else:
         request_url = f"{base_url}/devices/by-name/{args.device}/accept"
 
-    r = requests.post(request_url)
+    r = requests.post(request_url, headers=headers)
 
     if not r.ok:
         try:
@@ -39,7 +88,7 @@ def accept(args):
                 f"Request failed with status code {r.status_code}: {details}",
                 file=sys.stderr,
             )
-        except ValueError:
+        except (ValueError, AttributeError):
             print(f"Request failed with status code {r.status_code}.", file=sys.stderr)
 
         sys.exit(1)
@@ -48,15 +97,16 @@ def accept(args):
 
 
 def disconnect(args):
+    headers = {"Accept": "application/json"}
     if args.by_eui:
         request_url = f"{base_url}/devices/by-eui/{args.device}/disconnect"
     else:
         request_url = f"{base_url}/devices/by-name/{args.device}/disconnect"
 
     if args.force:
-        r = requests.post(request_url, "force=true")
+        r = requests.post(request_url, params="force=true", headers=headers)
     else:
-        r = requests.post(request_url)
+        r = requests.post(request_url, headers=headers)
 
     if not r.ok:
         try:
@@ -65,7 +115,7 @@ def disconnect(args):
                 f"Request failed with status code {r.status_code}: {details}",
                 file=sys.stderr,
             )
-        except ValueError:
+        except (ValueError, AttributeError):
             print(f"Request failed with status code {r.status_code}.", file=sys.stderr)
 
         sys.exit(1)
@@ -74,18 +124,21 @@ def disconnect(args):
 
 
 def ignore(args):
+    headers = {"Accept": "application/json"}
     if args.by_eui:
         if args.revert:
-            request_url = f"{base_url}/devices/by-eui/{args.device}/ignore?revert=true"
+            request_url = f"{base_url}/devices/by-eui/{args.device}/ignore"
+            r = requests.post(request_url, params="revert=true", headers=headers)
         else:
             request_url = f"{base_url}/devices/by-eui/{args.device}/ignore"
-        r = requests.post(request_url)
+            r = requests.post(request_url, headers=headers)
     else:
         if args.revert:
-            request_url = f"{base_url}/devices/by-name/{args.device}/ignore?revert=true"
+            request_url = f"{base_url}/devices/by-name/{args.device}/ignore"
+            r = requests.post(request_url, params="revert=true", headers=headers)
         else:
             request_url = f"{base_url}/devices/by-name/{args.device}/ignore"
-        r = requests.post(request_url)
+            r = requests.post(request_url, headers=headers)
 
     if not r.ok:
         try:
@@ -94,7 +147,7 @@ def ignore(args):
                 f"Request failed with status code {r.status_code}: {details}",
                 file=sys.stderr,
             )
-        except ValueError:
+        except (ValueError, AttributeError):
             print(f"Request failed with status code {r.status_code}.", file=sys.stderr)
 
         sys.exit(1)
@@ -136,40 +189,65 @@ def ignore(args):
 
 
 def apply(args):
-    headers = {"Content-Type": "application/json"}
+    headers = {"Accept": "application/json", "Content-Type": "application/json"}
     request_url = f"{base_url}/automations/apply"
 
     with open(args.filepath, "r") as yaml_in:
         yaml_object = yaml.safe_load(yaml_in)
-    json_string = json.dumps(yaml_object, default=str)
-    pprint(json_string)
+        convert_yaml(yaml_object)
 
-    r = requests.post(request_url, json_string, headers=headers)
+    # with open("saved.json", "w") as f:
+    #    json.dump(yaml_object, f, indent=2, default=dict)
+
+    json_string = json.dumps(yaml_object, default=str)
+
+    r = requests.post(request_url, data=json_string, headers=headers)
     if not r.ok:
         try:
-            details = r.json().get("detail")
-            print(
-                f"Request failed with status code {r.status_code}: {details}",
-                file=sys.stderr,
-            )
-        except ValueError:
-            print(f"Request failed with status code {r.status_code}.", file=sys.stderr)
+            print(f"Request failed with status code {r.status_code}", file=sys.stderr)
+            data = r.json()
 
+            if "invalidRules" in data:
+                for invalid_rule in data["invalidRules"]:
+                    print_invalid_rule(invalid_rule)
+            elif "errors" in data:
+                print_syntax_error(data["errors"])
+        except (ValueError, AttributeError):
+            print(f"Request failed with status code {r.status_code}.", file=sys.stderr)
         sys.exit(1)
+
+    print("Automation applied successfully!")
 
 
 def validate(args):
-    headers = {"Content-Type": "application/json"}
-    request_url = f"{base_url}/automations/Validate"
+    headers = {"Accept": "application/json", "Content-Type": "application/json"}
+    request_url = f"{base_url}/automations/validate"
 
     with open(args.filepath, "r") as yaml_in:
         yaml_object = yaml.safe_load(yaml_in)
+        convert_yaml(yaml_object)
+
+    # with open("saved.json", "w") as f:
+    #    json.dump(yaml_object, f, indent=2, default=dict)
+
     json_string = json.dumps(yaml_object, default=str)
 
-    r = requests.post(request_url, json_string)
-    if r.status_code != 200:
-        print(f"ERROR: Status Code {r.status_code}")
-        return
+    r = requests.post(request_url, data=json_string, headers=headers)
+    if not r.ok:
+        try:
+            print(f"Request failed with status code {r.status_code}", file=sys.stderr)
+            data = r.json()
+
+            if "invalidRules" in data:
+                for invalid_rule in data["invalidRules"]:
+                    print_invalid_rule(invalid_rule)
+            elif "errors" in data:
+                print_syntax_error(data["errors"])
+        except (ValueError, AttributeError):
+            print(f"Request failed with status code {r.status_code}.", file=sys.stderr)
+        sys.exit(1)
+
+    print("Validation was successful!")
 
 
 subparsers = parser.add_subparsers(help="Subcommand help")
