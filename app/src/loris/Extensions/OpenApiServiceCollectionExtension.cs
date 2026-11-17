@@ -1,4 +1,7 @@
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using Loris.Models;
+using Microsoft.AspNetCore.Http.Json;
 
 namespace Loris.Extensions;
 
@@ -10,6 +13,7 @@ public static class OpenApiServiceCollectionExtension
         {
             services.AddOpenApi(options =>
             {
+                // add document info
                 options.AddDocumentTransformer(
                     (document, _, _) =>
                     {
@@ -20,11 +24,14 @@ public static class OpenApiServiceCollectionExtension
                         return Task.CompletedTask;
                     }
                 );
+
+                // add schema transformer
                 options.AddSchemaTransformer(
                     (schema, context, _) =>
                     {
                         // Custom schema for DevEui type
                         // NOTE: KEEP IN SYNC WITH DevEuiJsonConverter
+                        //
                         if (context.JsonTypeInfo.Type == typeof(DevEui))
                         {
                             schema.Type = Microsoft.OpenApi.JsonSchemaType.String;
@@ -37,6 +44,18 @@ public static class OpenApiServiceCollectionExtension
                     }
                 );
             });
+
+            // This is for open api reference only. Unfortunately,
+            // json serialization options defined for controllers have no respect
+            // in open api, according to docs:
+            // https://learn.microsoft.com/en-us/aspnet/core/fundamentals/openapi/include-metadata?view=aspnetcore-10.0&tabs=minimal-apis#mvc-json-options-and-global-json-options
+            services.Configure<JsonOptions>(options =>
+            {
+                options.SerializerOptions.Converters.Add(
+                    new JsonStringEnumConverter(JsonNamingPolicy.CamelCase)
+                );
+            });
+
             return services;
         }
     }
