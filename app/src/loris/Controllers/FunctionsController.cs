@@ -11,13 +11,13 @@ namespace Loris.Controllers;
 [Route("api/[controller]")]
 [Produces("application/json")]
 [ProducesUnauthenticated]
-[ProducesSuccess]
+[ProducesSensorNotFound]
 public class FunctionsController : ControllerBase
 {
     [HttpPost("{id}/invoke")]
     [ProducesUnauthorized]
-    [ProducesSensorNotFound]
-    public Task<IEnumerable<SensorReading>> CallFunction(
+    [ProducesSuccessNoContent]
+    public Task<IActionResult> CallFunction(
         Guid id,
         [FromBody(EmptyBodyBehavior = EmptyBodyBehavior.Allow)] CallFunctionRequest request,
         CancellationToken ct
