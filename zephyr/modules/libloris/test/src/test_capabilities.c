@@ -14,11 +14,11 @@ ZTEST_SUITE(capabilities, NULL, NULL, NULL, NULL, NULL);
 
 capabilities_t cap;
 
-report_t report_func(struct sensor* t) {
-  report_t rep = { .sensor_id = t->id,
-                   .value = { 2 },
-                   .which_value = REPORT_VALUE_INT };
-  return rep;
+result_t report_func(report_t* out, struct sensor* t) {
+  *out = (report_t){ .sensor_id = t->id,
+                     .value = { 2 },
+                     .which_value = REPORT_VALUE_INT };
+  return OK;
 };
 
 sensor_t* get_sensor_at_idx(sys_slist_t* sensor_list, int idx) {
@@ -47,7 +47,7 @@ function_t* get_func_at_idx(sys_slist_t* func_list, int idx) {
   return NULL;
 }
 
-ZTEST(capabilities, test_add_sensors_to_the_list) {
+ZTEST(capabilities, test_add_sensors_to_capabilities) {
   capabilities_init(&cap, "capabilities_sensors", DEVICE_CLASS_A);
 
   zassert_equal(
@@ -98,23 +98,42 @@ ZTEST(capabilities, test_add_sensors_to_the_list) {
   }
 }
 
-ZTEST(capabilities, test_check_read_function_from_capabilities) {
+ZTEST(capabilities, test_report_functions_callback) {
   sensor_t* fst_sensor = get_sensor_at_idx(&cap.sensors, 0);
   sensor_t* snd_sensor = get_sensor_at_idx(&cap.sensors, 1);
 
-  report_t fst_report = fst_sensor->read_func(fst_sensor);
-  report_t snd_report = snd_sensor->read_func(snd_sensor);
+  report_t fst_report;
+  report_t snd_report;
+  fst_sensor->read_func(&fst_report, fst_sensor);
+  snd_sensor->read_func(&snd_report, snd_sensor);
 
   zassert_equal(fst_report.value.int_val, snd_report.value.int_val);
   zassert_equal(fst_report.value.int_val, 2);
 }
 
-/*
-ZTEST(capabilities, test_add_functions_to_the_list) {
+result_t do_sth_int(void* arg) {
+  int* x = arg;
+  if (*x == 1) {
+    return OK;
+  } else {
+    return ERROR;
+  }
+}
+
+result_t do_sth_float(void* arg) {
+  float* x = arg;
+  if (*x == (float)2.5) {
+    return OK;
+  } else {
+    return ERROR;
+  }
+}
+
+ZTEST(capabilities, test_add_functions_to_capabilities) {
   zassert_equal(
       capabilities_add_function(
           &cap,
-          "do_sth_1",
+          "do_sth_int",
           "does sth 1",
           FUNC_ARG_TYPE_INT,
           &do_sth_int,
@@ -125,7 +144,7 @@ ZTEST(capabilities, test_add_functions_to_the_list) {
   zassert_equal(
       capabilities_add_function(
           &cap,
-          "do_sth_2",
+          "do_sth float",
           "does sth 2",
           FUNC_ARG_TYPE_FLOAT,
           &do_sth_float,
@@ -134,6 +153,30 @@ ZTEST(capabilities, test_add_functions_to_the_list) {
       OK
   );
 
+  str_t str1;
+  str_t str2;
+  str_from_static(&str1, "do_sth_int");
+  str_from_static(&str2, "do_sth float");
+
+  function_t* int_func = get_func_at_idx(&cap.functions, 0);
+  function_t* float_func = get_func_at_idx(&cap.functions, 1);
+
+  if (int_func != NULL) {
+    zassert_str_equal(int_func->name.ptr, str1.ptr);
+  }
+  if (float_func != NULL) {
+    zassert_str_equal(float_func->name.ptr, str2.ptr);
+  }
+
+  zassert_not_equal(sys_slist_len(&cap.functions), 0);
+  zassert_equal(sys_slist_len(&cap.functions), 2);
+
+  if (int_func != NULL && float_func != NULL) {
+    zassert_equal(int_func->node.next, &float_func->node);
+  }
+}
+
+ZTEST(capabilities, test_actuators_functions_callback) {
   function_t* int_func = get_func_at_idx(&cap.functions, 0);
   function_t* float_func = get_func_at_idx(&cap.functions, 1);
 
@@ -143,12 +186,8 @@ ZTEST(capabilities, test_add_functions_to_the_list) {
     zassert_equal(int_func->call_function(ptr), OK);
   }
   if (float_func != NULL) {
-    float b = 2;
+    float b = 2.5;
     void* ptr = &b;
     zassert_equal(float_func->call_function(ptr), OK);
   }
-  zassert_not_equal(sys_slist_len(&cap.functions), 0);
-  zassert_equal(sys_slist_len(&cap.functions), 2);
 }
-
-*/
