@@ -8,7 +8,6 @@ using Loris.Events;
 using Loris.Logging;
 using Loris.Messages.Event;
 using Loris.Models;
-using Loris.Results;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
@@ -66,7 +65,7 @@ public sealed class AutomationService(
         // is requested anytime during the method call, the rules are not replaced.
         // The dbContext should throw itself, but just to be sure I will throw (if cancelled)
         // again so the automations are not replaced in the runtime if the cancellation is requested
-        SaveToDiskAsync(rules, cancellationToken);
+        await SaveToDiskAsync(rules, cancellationToken);
         cancellationToken.ThrowIfCancellationRequested();
 
         // compile and apply rules
@@ -130,7 +129,7 @@ public sealed class AutomationService(
         return automations;
     }
 
-    private async Task<IEnumerable<AutomationValidationResult>> ValidateRulesAsync(
+    private async Task<List<AutomationValidationResult>> ValidateRulesAsync(
         IReadOnlyList<AutomationDto> rules,
         CancellationToken cancellationToken
     )
@@ -158,7 +157,8 @@ public sealed class AutomationService(
 
         return Enumerable
             .Zip(await triggersTask, await conditionsTask, await actionsTask)
-            .Select(v => new AutomationValidationResult(v.First, v.Second, v.Third));
+            .Select(v => new AutomationValidationResult(v.First, v.Second, v.Third))
+            .ToList();
     }
 
     private List<AutomationError> ExtractRuleErrors(
@@ -215,7 +215,7 @@ public sealed class AutomationService(
         }
     }
 
-    private async void SaveToDiskAsync(
+    private async Task SaveToDiskAsync(
         IReadOnlyList<AutomationDto> rules,
         CancellationToken cancellationToken = default
     )
@@ -227,7 +227,7 @@ public sealed class AutomationService(
         // we need to use transaction, to ensure automations replacement does
         // not corrupt data on failure
 
-        using var transaction = _ctx.Database.BeginTransactionAsync(cancellationToken);
+        using var transaction = await _ctx.Database.BeginTransactionAsync(cancellationToken);
 
         int deleted = 0;
         try
@@ -245,8 +245,9 @@ public sealed class AutomationService(
                 Actions = JsonSerializer.Serialize(rule.Actions, jsonSerializerOptions),
             });
             _ctx.Automations.AddRange(automationModels);
-
             await _ctx.SaveChangesAsync(cancellationToken);
+
+            await transaction.CommitAsync(cancellationToken);
         }
         catch (Exception ex)
         {

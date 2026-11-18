@@ -4,6 +4,7 @@ using Loris.Channels;
 using Loris.Consumers;
 using Loris.Data;
 using Loris.Extensions;
+using Loris.Jobs;
 using Loris.MQTT.Client;
 using Loris.Services;
 using Microsoft.EntityFrameworkCore;
@@ -21,12 +22,23 @@ builder.Services.AddDbContextFactory<LorisDbContext>(options =>
     options.UseNpgsql(connectionString)
 );
 
+//
 // Global state
+//
 builder.Services.AddSingleton<IAutomationIndex, AutomationIndex>();
 builder.Services.AddSingleton<IStateCache, StateCache>();
 
+//
 // Configure channels for the ingestion subsystem
+//
 builder.Services.AddChannels();
+
+//
+// Pre startup tasks.
+// ORDER IS IMPORTANT
+//
+builder.Services.AddHostedService<PreStartupAutomationJob>();
+builder.Services.AddHostedService<PreStartupStateCacheJob>();
 
 // Configure consumers for each channel
 builder.Services.AddHostedService<DeviceChannelConsumer>();

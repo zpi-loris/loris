@@ -13,23 +13,6 @@ public class AutomationsController(IAutomationService service) : ControllerBase
 {
     private readonly IAutomationService _service = service;
 
-    [HttpPost]
-    public async Task<IActionResult> Test(
-        [FromBody] IReadOnlyList<AutomationDto> rules,
-        CancellationToken ct
-    )
-    {
-        var duplicateIds = rules.GroupBy(r => r.Id).Where(g => g.Count() > 1);
-        if (duplicateIds.Any())
-        {
-            return this.DuplicateProblem(duplicateIds.SelectMany(s => s));
-        }
-
-        await _service.SaveToDiskAsync(rules, ct);
-
-        return Ok();
-    }
-
     /// <summary>
     /// Validate rules
     /// </summary>
