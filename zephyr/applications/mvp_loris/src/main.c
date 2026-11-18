@@ -26,15 +26,6 @@ LOG_MODULE_REGISTER(mvp_dev, LOG_LEVEL_INF);
 #define MOISTURE_SENSOR_DRY_MV 2500
 #define MOISTURE_SENSOR_WET_MV 1000
 
-report_t temp_report(sensor_t* sensor) {
-  report_t sample_report = { .sensor_id = 1,
-                             .value.int_val = 22,
-                             .which_value = REPORT_VALUE_INT };
-  return sample_report;
-}
-
-void hello_world(void* unused) { printk("Hello world! \n"); };
-
 static const struct led_dt_spec led_green =
     LED_DT_SPEC_GET(DT_ALIAS(led_green));
 static const struct led_dt_spec led_yellow =
@@ -71,22 +62,22 @@ bool read_temp(const struct device* dev, struct sensor_value* out) {
   return true;
 }
 
-report_t report_env_temp(sensor_t* sensor) {
+result_t report_env_temp(report_t* out, sensor_t* sensor) {
   LOG_INF("Reporting environment temperature");
 
   struct sensor_value sensor_value;
   float value;
   if (!read_temp(env_temp_sensor, &sensor_value)) {
     LOG_WRN("Reading environment temperature failed");
-    value = -1.0;
-  } else {
-    value = sensor_value_to_float(&sensor_value);
-    LOG_INF("Read environment temp=%f", (double)value);
+    return ERROR;
   }
-  report_t env_temp_report = { .sensor_id = sensor->id,
-                               .which_value = REPORT_VALUE_FLOAT,
-                               .value.float_val = value };
-  return env_temp_report;
+  value = sensor_value_to_float(&sensor_value);
+
+  LOG_INF("Read environment temp=%f", (double)value);
+  *out = (report_t){ .sensor_id = sensor->id,
+                     .which_value = REPORT_VALUE_FLOAT,
+                     .value.float_val = value };
+  return OK;
 }
 
 // returns a percentage
@@ -129,7 +120,7 @@ bool read_moisture(
   return true;
 }
 
-report_t report_moisture(sensor_t* sensor) {
+result_t report_moisture(report_t* out, sensor_t* sensor) {
   LOG_INF("Reporting moisture");
 
   float moisture;
@@ -140,45 +131,49 @@ report_t report_moisture(sensor_t* sensor) {
           &moisture
       )) {
     LOG_WRN("Reading moisture failed");
-    moisture = -1;
+    return ERROR;
   }
 
-  report_t moisture_report = {
+  *out = (report_t){
     .sensor_id = sensor->id,
     .which_value = REPORT_VALUE_FLOAT,
     .value.float_val = moisture,
   };
 
-  return moisture_report;
+  return OK;
 }
 
 // NOTE: === FUNCTIONS ===
-void function_buzz_beep(void* v_msecs) {
+result_t function_buzz_beep(void* v_msecs) {
   int32_t msecs = *(int32_t*)v_msecs;
   if (msecs < 0) {
     LOG_WRN("Invalid beep time: %d - smaller than 0", msecs);
-    return;
+    return ERROR;
   }
 
   buzzer_beep(buzzer, msecs);
+  return OK;
 }
 
-void function_set_led_green(void* v_brightness) {
+result_t function_set_led_green(void* v_brightness) {
   int32_t brightness = *(int32_t*)v_brightness;
   brightness = CLAMP(brightness, 0, 100);
   led_set_brightness_dt(&led_green, brightness);
+  return OK;
 }
 
-void function_set_led_yellow(void* v_brightness) {
+result_t function_set_led_yellow(void* v_brightness) {
   int32_t brightness = *(int32_t*)v_brightness;
   brightness = CLAMP(brightness, 0, 100);
   led_set_brightness_dt(&led_yellow, brightness);
+  return OK;
 }
 
-void function_set_led_red(void* v_brightness) {
+result_t function_set_led_red(void* v_brightness) {
   int32_t brightness = *(int32_t*)v_brightness;
   brightness = CLAMP(brightness, 0, 100);
   led_set_brightness_dt(&led_red, brightness);
+  return OK;
 }
 
 // NOTE: === SETUP ===

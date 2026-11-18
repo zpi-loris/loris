@@ -13,6 +13,7 @@
 #include "loris/models/report.h"
 #include "loris/models/sensor.h"
 #include "loris/models/uplink.h"
+#include "loris/result.h"
 
 #include <stdint.h>
 #include <zephyr/kernel.h>
@@ -95,44 +96,52 @@ extern void ul_thread(void* capabilities, void* unused1, void* unused2) {
       }
       min_heap_push(&sensors_heap, &st);
 
-      report_t report = st.sensor->read_func(st.sensor);
-      switch (report.which_value) {
-      case REPORT_VALUE_INT:
-        LOG_INF(
-            "Report from sensor %d, reads: %d",
-            report.sensor_id,
-            report.value.int_val
-        );
-        break;
-      case REPORT_VALUE_BOOL:
-        LOG_INF(
-            "Report from sensor %d, reads: %d",
-            report.sensor_id,
-            report.value.bool_val
-        );
-        break;
-      case REPORT_VALUE_FLOAT:
-        LOG_INF(
-            "Report from sensor %d, reads: %f",
-            report.sensor_id,
-            (double)report.value.float_val
-        );
-        break;
-      case REPORT_VALUE_STRING:
-        LOG_INF(
-            "Report from sensor %d, reads: %s",
-            report.sensor_id,
-            report.value.str_val.ptr
-        );
-        break;
-      default:
-        LOG_INF("Report from sensor %d, unspecified value", st.sensor->id);
-        break;
-      }
+      report_t report;
+      if (st.sensor->read_func(&report, st.sensor) == OK) {
+        switch (report.which_value) {
+        case REPORT_VALUE_INT:
+          LOG_INF(
+              "Report from sensor %d, reads: %d",
+              report.sensor_id,
+              report.value.int_val
+          );
+          break;
+        case REPORT_VALUE_BOOL:
+          LOG_INF(
+              "Report from sensor %d, reads: %d",
+              report.sensor_id,
+              report.value.bool_val
+          );
+          break;
+        case REPORT_VALUE_FLOAT:
+          LOG_INF(
+              "Report from sensor %d, reads: %f",
+              report.sensor_id,
+              (double)report.value.float_val
+          );
+          break;
+        case REPORT_VALUE_STRING:
+          LOG_INF(
+              "Report from sensor %d, reads: %s",
+              report.sensor_id,
+              report.value.str_val.ptr
+          );
+          break;
+        default:
+          LOG_INF("Report from sensor %d, unspecified value", st.sensor->id);
+          break;
+        }
 
-      uplink_t report_ul = { .payload.report = report,
-                             .payload_type = UPLINK_PAYLOAD_TYPE_REPORT };
-      k_msgq_put(&ul_q, &report_ul, K_NO_WAIT);
+        uplink_t report_ul = { .payload.report = report,
+                               .payload_type = UPLINK_PAYLOAD_TYPE_REPORT };
+        k_msgq_put(&ul_q, &report_ul, K_NO_WAIT);
+      } else {
+        LOG_WRN(
+            "Something went wrong in reporting from sensor ID: %d, name: %s",
+            sensor->id,
+            sensor->name.ptr
+        );
+      }
 
       int64_t sleep_time =
           ((sensor_time_t*)min_heap_peek(&sensors_heap))->timestamp -
@@ -142,7 +151,9 @@ extern void ul_thread(void* capabilities, void* unused1, void* unused2) {
       }
 
       k_msleep(sleep_time);
-    } else {
+    }
+
+    else {
       LOG_DBG("Trying to connect to loris client");
       uplink_t capabilities_ul = { .payload.capabilities = *capabilities_ptr,
                                    .payload_type =
@@ -193,7 +204,14 @@ extern void dl_thread(void* capabilities, void* unused1, void* unused2) {
                 dl_msg.payload.call.function_id,
                 func->name.ptr
             );
-            func->call_function(&dl_msg.payload.call.value);
+            result_t ret = func->call_function(&dl_msg.payload.call.value);
+            if (ret != OK) {
+              LOG_WRN(
+                  "Something went wrong while calling function ID: %d, name %s",
+                  func->id,
+                  func->name.ptr
+              );
+            }
           }
         }
       }
@@ -221,7 +239,8 @@ extern void ul_comm_thread() {
   }
 }
 
-/* Takes the inbound message, decodes it and puts it into the downlink_queue */
+/* Takes the inbound message, decodes it and puts it into the downlink_queue
+ */
 extern void dl_comm_thread() {
   LOG_DBG("Downlink communication thread started successfully!");
   while (1) {

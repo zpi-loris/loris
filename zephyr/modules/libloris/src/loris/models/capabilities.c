@@ -50,7 +50,7 @@ result_t capabilities_add_sensor(
     sensor_value_type_t value_type,
     sensor_semantics_t semantics,
     const char* unit,
-    report_t (*report_func)(struct sensor*),
+    result_t (*report_func)(report_t*, struct sensor*),
     int32_t interval_sec
 ) {
   if (capabilities == NULL) {
@@ -98,7 +98,7 @@ result_t capabilities_add_function(
     char* name,
     char* description,
     func_arg_type_t func_arg_type,
-    void (*call_func)(void*),
+    result_t (*call_func)(void*),
     int32_t wake_interval_sec
 ) {
   if (capabilities == NULL) {
