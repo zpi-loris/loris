@@ -1,5 +1,5 @@
-﻿using Loris.Protocol;
-using Loris.Types;
+﻿using System.Text.Json.Serialization;
+using Loris.Protocol;
 using Microsoft.EntityFrameworkCore;
 
 namespace Loris.Models;
@@ -21,6 +21,7 @@ public partial class Function
     // REFERENCES
     //
 
+    [JsonIgnore]
     public Device Device { get; set; } = null!;
 
     //

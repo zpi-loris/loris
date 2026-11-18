@@ -1,6 +1,6 @@
 using Loris.Events;
 using Loris.Messages.Event;
-using Loris.Types;
+using Loris.Models;
 
 namespace Loris.Automations.Triggers.Example;
 

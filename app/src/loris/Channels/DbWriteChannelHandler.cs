@@ -41,9 +41,26 @@ public class DbWriteChannelHandler(
 
         using var ctx = await _ctxFactory.CreateDbContextAsync(stoppingToken);
 
+        // check if the device already exists
         if (await ctx.TryBumpDeviceAsync(devEui, datetime, stoppingToken))
         {
             _logger.DeviceAlreadyExists(devEui, datetime);
+
+            // update the device status to PENDING if it was previously DISCONNECTED
+            var updatedRows = await ctx
+                .Devices.Where(d => d.DevEui == devEui)
+                .Where(d => d.DeviceStatus == DeviceStatus.DISCONNECTED)
+                .ExecuteUpdateAsync(
+                    setter => setter.SetProperty(p => p.DeviceStatus, DeviceStatus.PENDING),
+                    stoppingToken
+                );
+
+            if (updatedRows > 0)
+            {
+                _logger.DisconnectedIsPending(devEui);
+            }
+
+            // early return since the device already exists
             return;
         }
 

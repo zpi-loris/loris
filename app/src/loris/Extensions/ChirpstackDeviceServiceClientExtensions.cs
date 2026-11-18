@@ -1,8 +1,8 @@
 using Chirpstack.Api;
 using Google.Protobuf;
 using Grpc.Core;
+using Loris.Models;
 using Loris.Protocol;
-using Loris.Types;
 
 namespace Loris.Extensions;
 
@@ -25,6 +25,7 @@ public static class ChirpstackDeviceServiceClientExtensions
                     Confirmed = false,
                     Data = downlink.ToByteString(),
                     DevEui = devEui.ToString(),
+                    FPort = 1,
                 },
             };
 

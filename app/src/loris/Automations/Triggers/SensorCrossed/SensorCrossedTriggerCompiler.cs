@@ -1,10 +1,8 @@
-using System.Globalization;
 using Loris.Data;
 using Loris.Events;
 using Loris.Messages.Event;
 using Loris.Models;
 using Loris.Protocol;
-using Loris.Types;
 using Microsoft.EntityFrameworkCore;
 
 namespace Loris.Automations.Triggers.SensorCrossed;

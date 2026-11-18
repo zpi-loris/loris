@@ -1,6 +1,5 @@
 using Loris.Models;
 using Loris.Results;
-using Loris.Types;
 
 namespace Loris.Services;
 

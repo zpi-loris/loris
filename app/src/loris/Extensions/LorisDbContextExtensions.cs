@@ -1,5 +1,5 @@
 using Loris.Data;
-using Loris.Types;
+using Loris.Models;
 using Microsoft.EntityFrameworkCore;
 
 namespace Loris.Extensions;

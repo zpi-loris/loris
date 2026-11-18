@@ -6,7 +6,6 @@ using Loris.Models;
 using Loris.Protocol;
 using Loris.Results;
 using Loris.Results.Errors;
-using Loris.Types;
 using Microsoft.EntityFrameworkCore;
 using DownlinkServiceClient = Chirpstack.Api.DeviceService.DeviceServiceClient;
 
@@ -49,10 +48,10 @@ public class DeviceService(
                 DeviceErrors.AlreadyActive(device.FriendlyName)
             ),
             DeviceStatus.IGNORED => Result<Device>.Failure(
-                DeviceErrors.AlreadyIgnored(device.FriendlyName)
+                DeviceErrors.Ignored(device.FriendlyName)
             ),
             DeviceStatus.DISCONNECTED => Result<Device>.Failure(
-                DeviceErrors.AlreadyDisconnected(device.FriendlyName)
+                DeviceErrors.Disconnected(device.FriendlyName)
             ),
             _ => Result<Device>.Failure(DeviceErrors.UnknownStatus(device.FriendlyName)),
         };
@@ -199,7 +198,7 @@ public class DeviceService(
 
     public async Task<Result<Device>> ToggleIgnoreAsync(
         DevEui devEui,
-        bool ignore = true,
+        bool ignore,
         CancellationToken ct = default
     )
     {
@@ -211,7 +210,7 @@ public class DeviceService(
 
     public async Task<Result<Device>> ToggleIgnoreAsync(
         string name,
-        bool ignore = true,
+        bool ignore,
         CancellationToken ct = default
     )
     {
@@ -239,17 +238,17 @@ public class DeviceService(
                 DeviceStatus.PENDING,
                 ct
             ),
+            (DeviceStatus.IGNORED, true) => Result<Device>.Failure(
+                DeviceErrors.AlreadyIgnored(device.FriendlyName)
+            ),
             (DeviceStatus.ACTIVE, _) => Result<Device>.Failure(
-                DeviceErrors.AlreadyActive(device.FriendlyName)
+                DeviceErrors.Active(device.FriendlyName)
             ),
             (DeviceStatus.DISCONNECTED, _) => Result<Device>.Failure(
                 DeviceErrors.Disconnected(device.FriendlyName)
             ),
-            (DeviceStatus.IGNORED, true) => Result<Device>.Failure(
-                DeviceErrors.AlreadyIgnored(device.FriendlyName)
-            ),
             (DeviceStatus.PENDING, false) => Result<Device>.Failure(
-                DeviceErrors.AlreadyActive(device.FriendlyName)
+                DeviceErrors.Pending(device.FriendlyName)
             ),
             _ => Result<Device>.Failure(DeviceErrors.UnknownStatus(device.FriendlyName)),
         };

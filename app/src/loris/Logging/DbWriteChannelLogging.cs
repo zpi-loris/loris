@@ -1,4 +1,4 @@
-using Loris.Types;
+using Loris.Models;
 
 namespace Loris.Logging;
 
@@ -44,4 +44,11 @@ public static partial class DbWriteChannelLogging
         int sensorCount,
         int functionCount
     );
+
+    [LoggerMessage(
+        EventId = 5,
+        Level = LogLevel.Information,
+        Message = "Device {DevEui} has been disconnected but it's now pending"
+    )]
+    public static partial void DisconnectedIsPending(this ILogger logger, DevEui devEui);
 }

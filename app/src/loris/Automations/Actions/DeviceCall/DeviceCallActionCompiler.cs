@@ -1,11 +1,10 @@
 using Chirpstack.Api;
-using Google.Protobuf;
 using Grpc.Core;
 using Loris.Data;
 using Loris.Extensions;
 using Loris.Logging;
+using Loris.Models;
 using Loris.Protocol;
-using Loris.Types;
 using Microsoft.EntityFrameworkCore;
 
 namespace Loris.Automations.Actions.DeviceCall;

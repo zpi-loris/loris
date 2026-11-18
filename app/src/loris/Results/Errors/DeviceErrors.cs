@@ -1,4 +1,4 @@
-using Loris.Types;
+using Loris.Models;
 
 namespace Loris.Results.Errors;
 
@@ -18,6 +18,9 @@ public static class DeviceErrors
 
     public static Error Ignored(string device) =>
         Error.Conflict("Devices.Ignored", $"Device {device} is  ignored");
+
+    public static Error Active(string device) =>
+        Error.Conflict("Devices.Active", $"Device {device} is  active");
 
     public static Error PendingButIgnored(string device) =>
         Error.Conflict("Devices.PendingButIgnored", $"Device {device} is pending but ignored");
