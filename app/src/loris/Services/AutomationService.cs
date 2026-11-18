@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Loris.Automations;
 using Loris.Automations.Actions;
 using Loris.Automations.Conditions;
@@ -6,18 +7,27 @@ using Loris.Data;
 using Loris.Events;
 using Loris.Logging;
 using Loris.Messages.Event;
+using Loris.Models;
+using Loris.Results;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 
 namespace Loris.Services;
 
 public sealed class AutomationService(
     ILogger<AutomationService> logger,
+    LorisDbContext context,
     IServiceProvider provider,
-    IAutomationIndex index
+    IAutomationIndex index,
+    IOptions<JsonOptions> jsonOptions
 ) : IAutomationService
 {
     private readonly IAutomationIndex _index = index;
     private readonly IServiceProvider _provider = provider;
+    private readonly LorisDbContext _ctx = context;
     private readonly ILogger<AutomationService> _logger = logger;
+    private readonly IOptions<JsonOptions> _jsonOptions = jsonOptions;
 
     public async Task<IReadOnlyList<AutomationError>> ValidateAsync(
         IReadOnlyList<AutomationDto> rules,
@@ -43,6 +53,7 @@ public sealed class AutomationService(
         CancellationToken cancellationToken = default
     )
     {
+        // NOTE:: THIS IS VALIDATION PART
         var validationResults = await ValidateRulesAsync(rules, cancellationToken);
         var errors = rules
             .Zip(validationResults)
@@ -51,6 +62,7 @@ public sealed class AutomationService(
 
         if (errors.Count > 0)
             return errors;
+        // NOTE:: THIS ENDS VALIDATION PART
 
         List<CompiledAutomation> automations = [];
         foreach (var (rule, validation) in rules.Zip(validationResults))
@@ -184,12 +196,50 @@ public sealed class AutomationService(
         }
     }
 
-    public Task SaveToDiskAsync(
+    public async Task<Result> SaveToDiskAsync(
         IReadOnlyList<AutomationDto> rules,
         CancellationToken cancellationToken = default
     )
     {
-        throw new NotImplementedException();
+        // use MVC defined jsonSerializerOptions. It is the same, that is applied to
+        // the .UseControllers().AddJsonOptions(options => {})
+        var jsonSerializerOptions = _jsonOptions.Value.JsonSerializerOptions;
+
+        // we need to use transaction, to ensure automations replacement does
+        // not corrupt data on failure
+
+        using var transaction = _ctx.Database.BeginTransactionAsync(cancellationToken);
+
+        int deleted = 0;
+        try
+        {
+            // delete all rows from the table
+            deleted = await _ctx.Automations.ExecuteDeleteAsync(cancellationToken);
+
+            // serialize and track all the new rules
+            var automationModels = rules.Select(rule => new Automation
+            {
+                Name = rule.Name,
+                AutomationId = rule.Id,
+                Triggers = JsonSerializer.Serialize(rule.Triggers, jsonSerializerOptions),
+                Conditions = JsonSerializer.Serialize(rule.Conditions, jsonSerializerOptions),
+                Actions = JsonSerializer.Serialize(rule.Actions, jsonSerializerOptions),
+            });
+            _ctx.Automations.AddRange(automationModels);
+
+            await _ctx.SaveChangesAsync(cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            // At this point, this is an internal server error, not client related
+            _logger.LogError("There was an exception while replacing old rules: {ex}", ex.Message);
+            return Result.Failure(Error.None);
+        }
+
+        _logger.LogInformation("{Num} rules removed from the database", deleted);
+        _logger.LogInformation("{Num} new rules applied to the database", rules.Count);
+
+        return Result.Success();
     }
 
     // ========================================================================

@@ -1,4 +1,5 @@
 using Loris.Automations;
+using Loris.Results;
 
 namespace Loris.Services;
 
@@ -12,7 +13,7 @@ public interface IAutomationService
         IReadOnlyList<AutomationDto> rules,
         CancellationToken cancellationToken = default
     );
-    public Task SaveToDiskAsync(
+    public Task<Result> SaveToDiskAsync(
         IReadOnlyList<AutomationDto> rules,
         CancellationToken cancellationToken = default
     );
