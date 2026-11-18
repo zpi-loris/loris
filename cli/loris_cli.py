@@ -1,23 +1,29 @@
+#!/usr/bin/env python3
+
 import socket
 from requests.adapters import HTTPAdapter
 from urllib3.connectionpool import HTTPConnectionPool
 from urllib3.connection import HTTPConnection
-from pprint import pprint
 import sys
 import re
 import argparse
 import yaml
 import json
 import requests
+import os
 
 
+# HTTP adapter for sockets
 class LorisConnection(HTTPConnection):
     def __init__(self):
         super().__init__("localhost")
 
     def connect(self):
         self.sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-        self.sock.connect("/tmp/loris.sock")
+        if os.getenv("LORIS_SOCKET"):
+            self.sock.connect(os.getenv("LORIS_SOCKET"))
+        else:
+            self.sock.connect("/tmp/loris.socket")
 
 
 class LorisConnectionPool(HTTPConnectionPool):
@@ -36,6 +42,8 @@ class LorisAdapter(HTTPAdapter):
 session = requests.Session()
 session.mount("http://loris/", LorisAdapter())
 
+
+# CLI
 parser = argparse.ArgumentParser(
     prog="loris",
     description="Use this tool to communicate with the running loris client.",
@@ -240,6 +248,8 @@ def apply(args):
         yaml_object = yaml.safe_load(yaml_in)
         convert_yaml(yaml_object)
 
+    # Useful for debugging
+    #
     # with open("saved.json", "w") as f:
     #    json.dump(yaml_object, f, indent=2, default=dict)
 
@@ -271,6 +281,8 @@ def validate(args):
         yaml_object = yaml.safe_load(yaml_in)
         convert_yaml(yaml_object)
 
+    # Useful for debugging
+    #
     # with open("saved.json", "w") as f:
     #    json.dump(yaml_object, f, indent=2, default=dict)
 
