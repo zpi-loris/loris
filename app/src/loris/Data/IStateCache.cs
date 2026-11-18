@@ -22,6 +22,5 @@ public interface IStateCache
     );
     public void UpdateSensors(DevEui devEui, Report report, DateTime time);
     public void UpdateSensors(DevEui devEui, SensorReading model);
-    public void UpdateDevices(DevEui devEui, bool accepted = true);
-    public void UpdateDevices(Device device, bool accepted = true);
+    public void UpdateDevices(Device device);
 }

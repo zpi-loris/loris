@@ -47,18 +47,13 @@ public sealed class StateCache : IStateCache
     public void UpdateSensors(DevEui devEui, SensorReading model) =>
         _sensorsCache[(devEui, model.SensorId)] = (model.ToReport(), model.Time);
 
-    public void UpdateDevices(DevEui devEui, bool accepted = true)
+    public void UpdateDevices(Device device)
     {
-        if (accepted)
+        // Consider using the variable
+        var added = device.DeviceStatus switch
         {
-            _devices.Add(devEui);
-        }
-        else
-        {
-            _devices.Remove(devEui);
-        }
+            DeviceStatus.ACTIVE => _devices.Add(device.DevEui),
+            _ => _devices.Remove(device.DevEui),
+        };
     }
-
-    public void UpdateDevices(Device device, bool accepted = true) =>
-        UpdateDevices(device.DevEui, accepted);
 }
