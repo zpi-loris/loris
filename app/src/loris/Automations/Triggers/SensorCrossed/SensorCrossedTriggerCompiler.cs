@@ -17,7 +17,7 @@ public class SensorCrossedTriggerCompiler(IDbContextFactory<LorisDbContext> ctxF
     private const string DEV_EUI = "DevEui";
     private const string SENSOR_VALUE_TYPE = "SensorValueType";
 
-    protected override async Task<ValidationResult> ValidateAsync(
+    protected override async Task<BlockValidationResult> ValidateAsync(
         SensorCrossedTriggerDto dto,
         CancellationToken cancellationToken
     )
@@ -30,7 +30,7 @@ public class SensorCrossedTriggerCompiler(IDbContextFactory<LorisDbContext> ctxF
 
         if (device is null)
         {
-            return ValidationResult.Failure([
+            return BlockValidationResult.Failure([
                 new BlockError(
                     nameof(dto.DeviceName),
                     dto.DeviceName,
@@ -46,7 +46,7 @@ public class SensorCrossedTriggerCompiler(IDbContextFactory<LorisDbContext> ctxF
 
         if (sensor is null)
         {
-            return ValidationResult.Failure([
+            return BlockValidationResult.Failure([
                 new BlockError(
                     nameof(dto.SensorName),
                     dto.SensorName,
@@ -64,7 +64,7 @@ public class SensorCrossedTriggerCompiler(IDbContextFactory<LorisDbContext> ctxF
 
         if (!isSupported)
         {
-            return ValidationResult.Failure([
+            return BlockValidationResult.Failure([
                 new BlockError(
                     nameof(dto.SensorName),
                     dto.SensorName,
@@ -82,7 +82,7 @@ public class SensorCrossedTriggerCompiler(IDbContextFactory<LorisDbContext> ctxF
 
         if (!isValidValue)
         {
-            return ValidationResult.Failure([
+            return BlockValidationResult.Failure([
                 new BlockError(
                     nameof(dto.Value),
                     dto.Value,
@@ -91,7 +91,7 @@ public class SensorCrossedTriggerCompiler(IDbContextFactory<LorisDbContext> ctxF
             ]);
         }
 
-        return ValidationResult.Success(
+        return BlockValidationResult.Success(
             new Dictionary<string, object>
             {
                 { SENSOR_ID, sensor.SensorId },

@@ -11,7 +11,7 @@ public abstract class ConditionCompilerBase<TDto> : IConditionCompiler
         return Compile(typedDto, lookup);
     }
 
-    public Task<ValidationResult> ValidateAsync(
+    public Task<BlockValidationResult> ValidateAsync(
         IConditionDto dto,
         CancellationToken cancellationToken = default
     )
@@ -22,7 +22,7 @@ public abstract class ConditionCompilerBase<TDto> : IConditionCompiler
 
     protected abstract Func<IStateCache, bool> Compile(TDto dto, LookupContext? lookup);
 
-    protected abstract Task<ValidationResult> ValidateAsync(
+    protected abstract Task<BlockValidationResult> ValidateAsync(
         TDto dto,
         CancellationToken cancellationToken
     );
