@@ -55,9 +55,9 @@ namespace Loris.Migrations
                         .HasColumnName("triggers");
 
                     b.HasKey("AutomationId")
-                        .HasName("pk_automation");
+                        .HasName("pk_automations");
 
-                    b.ToTable("automation", (string)null);
+                    b.ToTable("automations", (string)null);
                 });
 
             modelBuilder.Entity("Loris.Models.Device", b =>
