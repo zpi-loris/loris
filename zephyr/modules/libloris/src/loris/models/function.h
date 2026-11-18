@@ -8,11 +8,11 @@
 #ifndef LORIS_FUNCTION_H
 #define LORIS_FUNCTION_H
 
+#include "loris/protobuf/protocol.pb.h"
+#include "loris/result.h"
+#include "loris/str.h"
 #include <inttypes.h>
 #include <zephyr/sys/slist.h>
-
-#include "loris/protobuf/protocol.pb.h"
-#include "loris/str.h"
 
 // clang-format off
 /*
@@ -40,7 +40,7 @@ typedef struct function {
   func_arg_type_t arg_type;
   // Callback to a function that makes the actuator do something
   // TODO: add different arg types (union probably)
-  void (*call_function)(void* arg);
+  result_t (*call_function)(void* arg);
   // wake_interval_sec is optional, if not present should always be set to 0
   int32_t wake_interval_sec;
 } function_t;

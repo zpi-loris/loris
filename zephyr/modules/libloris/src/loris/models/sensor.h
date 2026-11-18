@@ -86,7 +86,7 @@ typedef struct sensor {
   bool has_unit;
   // Unit is optional, if not present should always be set to LORIS_STR_NONE
   str_t unit;
-  report_t (*read_func)(struct sensor* sensor);
+  result_t (*read_func)(report_t* out, struct sensor* sensor);
   // wake_interval_sec is optional, if not present should always be set to 0
   int32_t wake_interval_sec;
 } sensor_t;
