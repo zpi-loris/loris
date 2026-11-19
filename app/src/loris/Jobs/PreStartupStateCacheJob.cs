@@ -27,6 +27,7 @@ public class PreStartupStateCacheJob(
             .Devices.Where(d => d.DeviceStatus == DeviceStatus.ACTIVE)
             .Include(d => d.Sensors)
                 .ThenInclude(d => d.SensorReadings.OrderByDescending(r => r).Take(1))
+            .AsSingleQuery()
             .ToListAsync(cancellationToken);
 
         foreach (var device in data)
