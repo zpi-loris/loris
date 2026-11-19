@@ -14,8 +14,11 @@ public class PreStartupStateCacheJob(
     private readonly ILogger<PreStartupStateCacheJob> _logger = logger;
     private readonly IStateCache _state = state;
 
+    // TODO: ADD LOGGING
     public async Task StartAsync(CancellationToken cancellationToken)
     {
+        _logger.LogInformation("{Job} started", nameof(PreStartupStateCacheJob));
+
         await using var scope = _scopeFactory.CreateAsyncScope();
 
         var ctx = scope.ServiceProvider.GetRequiredService<LorisDbContext>();
@@ -37,6 +40,8 @@ public class PreStartupStateCacheJob(
                 }
             }
         }
+
+        _logger.LogInformation("{Job} finished", nameof(PreStartupStateCacheJob));
     }
 
     public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;

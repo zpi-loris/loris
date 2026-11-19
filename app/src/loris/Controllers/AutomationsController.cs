@@ -66,7 +66,7 @@ public class AutomationsController(IAutomationService service) : ControllerBase
             return this.DuplicateProblem(duplicateIds.SelectMany(s => s));
         }
 
-        var errors = await _service.ApplyAsync(rules, ct);
+        var errors = await _service.ApplyAsync(rules, cancellationToken: ct);
         if (errors.Count > 0)
         {
             return this.ErrorProblem(errors);

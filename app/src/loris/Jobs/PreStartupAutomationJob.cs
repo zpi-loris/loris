@@ -24,6 +24,8 @@ public class PreStartupAutomationJob(
 
     public async Task StartAsync(CancellationToken cancellationToken)
     {
+        _logger.LogInformation("{Job} started", nameof(PreStartupStateCacheJob));
+
         await using var scope = _scopeFactory.CreateAsyncScope();
 
         var ctx = scope.ServiceProvider.GetRequiredService<LorisDbContext>();
@@ -33,12 +35,18 @@ public class PreStartupAutomationJob(
 
         var dtos = TransformToDtos(automations);
 
-        var errors = await service.ApplyAsync(dtos, cancellationToken);
-
+        // we want to force the application of the rules, and log the errors if any
+        var errors = await service.ApplyAsync(dtos, force: true, cancellationToken);
         if (errors.Count > 0)
         {
-            _logger.LogCritical("Automations not applied due to errors: {Errors}", errors);
+            _logger.LogCritical(
+                "{Count} Automations not applied due to errors: {Errors}",
+                errors.GroupBy(e => e.Id).Count(),
+                errors
+            );
         }
+
+        _logger.LogInformation("{Job} finished", nameof(PreStartupStateCacheJob));
     }
 
     private List<AutomationDto> TransformToDtos(IEnumerable<Automation> automations)

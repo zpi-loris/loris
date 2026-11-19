@@ -49,17 +49,28 @@ public sealed class AutomationService(
 
     public async Task<IReadOnlyList<AutomationError>> ApplyAsync(
         IReadOnlyList<AutomationDto> rules,
+        bool force = false,
         CancellationToken cancellationToken = default
     )
     {
         var validationResults = await ValidateRulesAsync(rules, cancellationToken);
         var errors = rules
             .Zip(validationResults)
-            .SelectMany(pair => ExtractRuleErrors(pair.First, pair.Second))
+            .SelectMany(ruleAndResult =>
+                ExtractRuleErrors(ruleAndResult.First, ruleAndResult.Second)
+            )
             .ToList();
 
-        if (errors.Count > 0)
+        if (errors.Count > 0 && !force)
+        {
             return errors;
+        }
+        else if (errors.Count > 0)
+        {
+            // force is true,
+            // we want to apply valid rules only
+            FilterOutErrors(ref rules, ref validationResults, errors);
+        }
 
         // saving is implemented using a transaction. If a cancellation
         // is requested anytime during the method call, the rules are not replaced.
@@ -75,6 +86,33 @@ public sealed class AutomationService(
         _logger.AutomationsApplied(rules.Count, automations.Count);
 
         return [];
+    }
+
+    private static void FilterOutErrors(
+        ref IReadOnlyList<AutomationDto> rules,
+        ref List<AutomationValidationResult> validationResults,
+        List<AutomationError> errors
+    )
+    {
+        var invalidAutomations = errors.Select(e => e.Id).ToHashSet();
+
+        var filteredRules = new List<AutomationDto>(rules.Count);
+        var filteredResults = new List<AutomationValidationResult>(rules.Count);
+
+        // filter out the rules that have errors if force is true
+        foreach (var (rule, result) in rules.Zip(validationResults))
+        {
+            if (invalidAutomations.Contains(rule.Id))
+            {
+                continue;
+            }
+
+            filteredRules.Add(rule);
+            filteredResults.Add(result);
+        }
+
+        rules = filteredRules;
+        validationResults = filteredResults;
     }
 
     private void ApplyToIndex(List<CompiledAutomation> automations)
