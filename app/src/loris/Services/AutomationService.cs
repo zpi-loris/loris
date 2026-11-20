@@ -267,11 +267,12 @@ public sealed class AutomationService(
 
         using var transaction = await _ctx.Database.BeginTransactionAsync(cancellationToken);
 
-        int deleted = 0;
+        int deleted = _ctx.Automations.Count();
+
         try
         {
             // delete all rows from the table
-            deleted = await _ctx.Automations.ExecuteDeleteAsync(cancellationToken);
+            _ctx.Automations.RemoveRange(_ctx.Automations);
 
             // serialize and track all the new rules
             var automationModels = rules.Select(rule => new Automation
