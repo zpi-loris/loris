@@ -104,9 +104,62 @@ Devices and downlink service - data _going to_ the chirpstack
 
 ## Running tests
 
-To run test use:
+> [!IMPORTANT]
+>
+> To run tests you need to have a configured podmand/docker environment. The
+> integration tests will spin up a temporary timescaledb container and run the
+> tests against it. The containers will be created for each test class and will
+> be removed after the tests are finished. The tests will fail if the container
+> cannot be created.
+>
+> **It is highly recommended to use podman instead of the docker, since podman
+> allows to run rootless, hence we can run the tests as a regular user**.
+>
+> If you are running linux,
+> [here](https://podman.io/docs/installation#installing-on-linux) is the
+> podman's documentation on installation. Remember that you need to have a
+> regisries configured, in order to successfuly resolve unqualified image names
+> referenced in the test environment, as well as be authenticated to request the
+> images from such registries. There are guides on how to configure registries
+> [from podman desktop guide](https://podman-desktop.io/docs/containers/registries)
+> or a more recommended
+> [blog on oneuptime](https://oneuptime.com/blog/post/2026-01-27-podman-registry/view).
+>
+> Generally you should be good to go after creating a file in:
+>
+> ```bash
+> /etc/containers/registries.conf # Globally OR
+> ~/.config/containers/registries.conf # for a currently logged in user
+>
+> ```
+>
+> With given content:
+>
+> ```conf
+> # Specify registries to search when pulling unqualified images
+> # (images without a registry prefix like "nginx" instead of "docker.io/library/nginx")
+> unqualified-search-registries = ["docker.io", "quay.io", "ghcr.io"]
+>
+> # Short name mode controls how Podman handles unqualified image names
+> # "enforcing" - prompt when multiple registries are configured and a TTY is available; error in non-interactive ambiguous cases
+> # "permissive" - prompt like enforcing when possible; otherwise try all configured registries
+> # "disabled" - try all configured registries without prompting
+> short-name-mode = "permisive"
+> ```
+>
+> After you create these, you can authenticate to each of the registry involed,
+> but you should bee good to go, just authenticated to `docker.io`. Use your
+> regular docker registry credentials you used during docker installation
+> (assuming you used docker before), or sign up in docker hub.
 
 ```bash
-# from app/ directory point of view
-dotnet test test/lorisTests
+# run these from app/ directory
+
+# IF YOU WANT TO USE PODMAN, BUT HAVE DOCKER INSTALLED, YOU NEED TO SET THE ENVIRONMENT VARIABLE
+export DOCKER_HOST=unix://${XDG_RUNTIME_DIR}/podman/podman.sock && \
+dotnet test && \
+unset DOCKER_HOST
+
+# IF YOU WANT TO USE DOCKER, AND YOU HAVE REQUIREMENTS FOR DOCKER, YOU CAN JUST RUN
+dotnet test
 ```
