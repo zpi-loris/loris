@@ -120,4 +120,20 @@ public static partial class AutomationLogging
         string ruleName,
         Guid ruleId
     );
+
+    [LoggerMessage(
+        EventId = 2503,
+        EventName = nameof(RulesReplacementFailed),
+        Level = LogLevel.Error,
+        Message = "Unexpected failure while replacing old rules with new rules"
+    )]
+    public static partial void RulesReplacementFailed(this ILogger logger, Exception ex);
+
+    [LoggerMessage(
+        EventId = 2504,
+        EventName = nameof(RulesReplacementSucceeded),
+        Level = LogLevel.Information,
+        Message = "Successfully replaced {Old} old rules with {New} new rules"
+    )]
+    public static partial void RulesReplacementSucceeded(this ILogger logger, int old, int @new);
 }

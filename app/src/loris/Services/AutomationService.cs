@@ -290,13 +290,13 @@ public sealed class AutomationService(
         }
         catch (Exception ex)
         {
-            // At this point, this is an internal server error, not client related
-            _logger.LogError("There was an exception while replacing old rules: {ex}", ex.Message);
+            _logger.RulesReplacementFailed(ex);
+
+            // throw for the sake of the request
             throw;
         }
 
-        _logger.LogInformation("{Num} rules removed from the database", deleted);
-        _logger.LogInformation("{Num} new rules applied to the database", rules.Count);
+        _logger.RulesReplacementSucceeded(deleted, rules.Count);
     }
 
     // ========================================================================
