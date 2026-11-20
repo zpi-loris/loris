@@ -4,6 +4,7 @@ using Loris.Automations.Actions;
 using Loris.Automations.Conditions;
 using Loris.Automations.Triggers;
 using Loris.Data;
+using Loris.Logging;
 using Loris.Models;
 using Loris.Services;
 using Microsoft.AspNetCore.Http.Json;
@@ -24,7 +25,7 @@ public class PreStartupAutomationJob(
 
     public async Task StartAsync(CancellationToken cancellationToken)
     {
-        _logger.LogInformation("{Job} started", nameof(PreStartupStateCacheJob));
+        _logger.JobStarted(nameof(PreStartupAutomationJob));
 
         await using var scope = _scopeFactory.CreateAsyncScope();
 
@@ -39,14 +40,10 @@ public class PreStartupAutomationJob(
         var errors = await service.ApplyAsync(dtos, force: true, cancellationToken);
         if (errors.Count > 0)
         {
-            _logger.LogCritical(
-                "{Count} Automations not applied due to errors: {Errors}",
-                errors.GroupBy(e => e.Id).Count(),
-                errors
-            );
+            _logger.AutomationErrors(errors.Count, errors);
         }
 
-        _logger.LogInformation("{Job} finished", nameof(PreStartupStateCacheJob));
+        _logger.JobFinished(nameof(PreStartupAutomationJob));
     }
 
     private List<AutomationDto> TransformToDtos(IEnumerable<Automation> automations)
@@ -60,11 +57,7 @@ public class PreStartupAutomationJob(
             }
             catch (Exception ex)
             {
-                _logger.LogCritical(
-                    ex,
-                    "Automation {Id} failed deserialization",
-                    automation.AutomationId
-                );
+                _logger.AutomationDeserializationError(ex, automation.AutomationId);
             }
         }
         return list;

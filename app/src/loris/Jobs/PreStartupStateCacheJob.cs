@@ -1,4 +1,5 @@
 using Loris.Data;
+using Loris.Logging;
 using Loris.Models;
 using Microsoft.EntityFrameworkCore;
 
@@ -17,7 +18,7 @@ public class PreStartupStateCacheJob(
     // TODO: ADD LOGGING
     public async Task StartAsync(CancellationToken cancellationToken)
     {
-        _logger.LogInformation("{Job} started", nameof(PreStartupStateCacheJob));
+        _logger.JobStarted(nameof(PreStartupStateCacheJob));
 
         await using var scope = _scopeFactory.CreateAsyncScope();
 
@@ -42,7 +43,7 @@ public class PreStartupStateCacheJob(
             }
         }
 
-        _logger.LogInformation("{Job} finished", nameof(PreStartupStateCacheJob));
+        _logger.JobFinished(nameof(PreStartupStateCacheJob));
     }
 
     public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;
