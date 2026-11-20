@@ -11,16 +11,13 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
-using Xunit.Internal;
 
 namespace loris.IntegrationTests.Jobs;
 
-public sealed class PreStartupAutomationJobTests(
-    TimescaleDbApplicationFactory<Program> postgresApplicationFactory
-) : IClassFixture<TimescaleDbApplicationFactory<Program>>
+public sealed class PreStartupAutomationJobTests(TimescaleDbApplicationFactory<Program> appFactory)
+    : IClassFixture<TimescaleDbApplicationFactory<Program>>
 {
-    private readonly TimescaleDbApplicationFactory<Program> _appFactory =
-        postgresApplicationFactory;
+    private readonly TimescaleDbApplicationFactory<Program> _appFactory = appFactory;
 
     [Fact]
     public async Task StartAsync_PreStartupAutomationJob_InitializesAllValidAutomations()
@@ -60,7 +57,7 @@ public sealed class PreStartupAutomationJobTests(
         Assert.True(
             index.TryGet(
                 new SensorEvent { DevEui = DevEui.Parse("1122AABBCCDDEEFF"), SensorID = 1 },
-                out IReadOnlyList<CompiledAutomation> validAutomations
+                out var validAutomations
             )
         );
         // there are 2 automations that trigger on such event key
@@ -105,7 +102,7 @@ public sealed class PreStartupAutomationJobTests(
         Assert.True(
             index.TryGet(
                 new SensorEvent { DevEui = DevEui.Parse("1122AABBCCDDEEFF"), SensorID = 1 },
-                out IReadOnlyList<CompiledAutomation> validAutomations
+                out var validAutomations
             )
         );
         // there is 1 automation that trigger on such event key
