@@ -1,11 +1,15 @@
 namespace Loris.Automations;
 
-public readonly record struct ValidationResult
+public readonly record struct BlockValidationResult
 {
     private readonly LookupContext? _lookup;
     private readonly IReadOnlyList<BlockError>? _errors;
 
-    private ValidationResult(LookupContext? lookup, bool isValid, IReadOnlyList<BlockError>? errors)
+    private BlockValidationResult(
+        LookupContext? lookup,
+        bool isValid,
+        IReadOnlyList<BlockError>? errors
+    )
     {
         _lookup = lookup;
         _errors = errors;
@@ -27,11 +31,11 @@ public readonly record struct ValidationResult
                 "Cannot read the value of a failed validation result"
             );
 
-    public static ValidationResult Success() => new(default, true, default);
+    public static BlockValidationResult Success() => new(default, true, default);
 
-    public static ValidationResult Success(Dictionary<string, object> lookup) =>
+    public static BlockValidationResult Success(Dictionary<string, object> lookup) =>
         new(LookupContext.FromDict(lookup), true, default);
 
-    public static ValidationResult Failure(IReadOnlyList<BlockError> errors) =>
+    public static BlockValidationResult Failure(IReadOnlyList<BlockError> errors) =>
         new(default, false, errors);
 }

@@ -9,7 +9,7 @@ public abstract class ActionCompilerBase<TDto> : IActionCompiler
         return Compile(typedDto, lookup);
     }
 
-    public Task<ValidationResult> ValidateAsync(
+    public Task<BlockValidationResult> ValidateAsync(
         IActionDto dto,
         CancellationToken cancellationToken = default
     )
@@ -20,7 +20,7 @@ public abstract class ActionCompilerBase<TDto> : IActionCompiler
 
     protected abstract Func<CancellationToken, Task> Compile(TDto dto, LookupContext? lookup);
 
-    protected abstract Task<ValidationResult> ValidateAsync(
+    protected abstract Task<BlockValidationResult> ValidateAsync(
         TDto dto,
         CancellationToken cancellationToken
     );

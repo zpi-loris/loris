@@ -24,7 +24,7 @@ public class DeviceCallActionCompiler(
     private const string DEV_EUI = "DevEui";
     private const string FUNC_ARG_TYPE = "FuncArgType";
 
-    protected override async Task<ValidationResult> ValidateAsync(
+    protected override async Task<BlockValidationResult> ValidateAsync(
         DeviceCallActionDto dto,
         CancellationToken cancellationToken
     )
@@ -37,7 +37,7 @@ public class DeviceCallActionCompiler(
 
         if (device is null)
         {
-            return ValidationResult.Failure([
+            return BlockValidationResult.Failure([
                 new BlockError(
                     nameof(dto.DeviceName),
                     dto.DeviceName,
@@ -53,7 +53,7 @@ public class DeviceCallActionCompiler(
 
         if (function is null)
         {
-            return ValidationResult.Failure([
+            return BlockValidationResult.Failure([
                 new BlockError(
                     nameof(dto.FunctionName),
                     dto.FunctionName,
@@ -78,7 +78,7 @@ public class DeviceCallActionCompiler(
 
         if (!isValidValue)
         {
-            ValidationResult.Failure([
+            BlockValidationResult.Failure([
                 new BlockError(
                     nameof(dto.Value),
                     dto.Value,
@@ -89,7 +89,7 @@ public class DeviceCallActionCompiler(
 
         lookup.Add(FUNC_ARG_TYPE, function.ArgType);
 
-        return ValidationResult.Success(lookup);
+        return BlockValidationResult.Success(lookup);
     }
 
     protected override Func<CancellationToken, Task> Compile(

@@ -1,0 +1,11 @@
+<Solution>
+  <Folder Name="/src/" />
+  <Folder Name="/src/loris/">
+    <Project Path="src/loris/loris.csproj" />
+  </Folder>
+  <Folder Name="/test/" />
+  <Folder Name="/test/lorisTests/">
+    <Project Path="test/loris.IntegrationTests/loris.IntegrationTests.csproj" />
+    <Project Path="test/loris.UnitTests/loris.UnitTests.csproj" />
+  </Folder>
+</Solution>

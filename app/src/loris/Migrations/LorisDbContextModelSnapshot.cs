@@ -28,6 +28,38 @@ namespace Loris.Migrations
             NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "sensor_value_type", new[] { "bool", "float", "int", "text", "unspecified" });
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("Loris.Models.Automation", b =>
+                {
+                    b.Property<Guid>("AutomationId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("automation_id");
+
+                    b.Property<string>("Actions")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("actions");
+
+                    b.Property<string>("Conditions")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("conditions");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("name");
+
+                    b.Property<string>("Triggers")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("triggers");
+
+                    b.HasKey("AutomationId")
+                        .HasName("pk_automations");
+
+                    b.ToTable("automations", (string)null);
+                });
+
             modelBuilder.Entity("Loris.Models.Device", b =>
                 {
                     b.Property<Guid>("DeviceId")

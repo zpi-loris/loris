@@ -11,7 +11,7 @@ public class ExamppleTriggerCompiler : TriggerCompilerBase<ExampleTriggerDto>
     //
     // You can add async keyword to the method, so it will create async state machine
     // and let you to return Task nested types
-    protected override async Task<ValidationResult> ValidateAsync(
+    protected override async Task<BlockValidationResult> ValidateAsync(
         ExampleTriggerDto dto,
         CancellationToken cancellationToken
     )
@@ -55,10 +55,10 @@ public class ExamppleTriggerCompiler : TriggerCompilerBase<ExampleTriggerDto>
 
         if (errors.Count > 0)
         {
-            return ValidationResult.Failure(errors);
+            return BlockValidationResult.Failure(errors);
         }
 
-        return ValidationResult.Success(lookup);
+        return BlockValidationResult.Success(lookup);
 
         // Or if there are no lookups, you don't have to initialize the dictionary
         // just return the overload;
