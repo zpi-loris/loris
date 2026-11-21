@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Loris.Models.Configurations;
@@ -9,7 +10,10 @@ public class DeviceEntityConfiguration : IEntityTypeConfiguration<Device>
     {
         // primary key
         builder.HasKey(e => e.DeviceId);
-        builder.Property(e => e.DeviceId).HasDefaultValueSql("uuidv7()");
+        builder
+            .Property(e => e.DeviceId)
+            .ValueGeneratedOnAdd()
+            .Metadata.SetAfterSaveBehavior(PropertySaveBehavior.Save);
 
         // Unique indexes
         builder.HasIndex(e => e.DevEui).IsUnique();

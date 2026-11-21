@@ -9,19 +9,16 @@ public class SensorReadingEntityConfiguration : IEntityTypeConfiguration<SensorR
     public void Configure(EntityTypeBuilder<SensorReading> builder)
     {
         // primary key
-        builder.HasKey(e => new
-        {
-            e.DevEui,
-            e.SensorId,
-            e.Time,
-        });
+        builder.HasKey(e => new { e.SensorId, e.Time });
+
+        builder.Property(e => e.SensorId).ValueGeneratedNever();
 
         // foreign keys
         builder
             .HasOne(d => d.Sensor)
             .WithMany(p => p.SensorReadings)
-            .HasForeignKey(e => new { e.DevEui, e.SensorId })
-            .OnDelete(DeleteBehavior.Cascade)
+            .HasForeignKey(e => e.SensorId)
+            .OnDelete(DeleteBehavior.NoAction)
             .IsRequired();
 
         // TimescaleDB hypertable
