@@ -1,6 +1,6 @@
 # Overview
 
-_loris_ client app implemented using .NET with ASP.NET core framework
+_loris_ backend app implemented using .NET with ASP.NET core framework
 
 # Development
 
@@ -9,27 +9,24 @@ _loris_ client app implemented using .NET with ASP.NET core framework
 You need to have dotnet SDK which also includes the runtime. For installation
 follow https://dotnet.microsoft.com/en-us/download
 
-## Building and running
+### HTTP endpoints and IPC setup
 
-To build and run the app use
+This app establishes **two endpoints for HTTP communication on the requests
+pipeline**:
+
+- **localhost TCP/IP** socket endpoint listening on `5158` port
+- **UDS (_Unix Domain Socket_)** endpoint listening on:
+  - `<TEMP>/loris.socket` when in Development. Look for first few `INFO` logs
+    to find the socket path (typically when run in linux it will be under
+    `/tmp/loris.socket`)
+  - `/run/loris/loris.socket` when in production
 
 > [!IMPORTANT]
 >
-> Remember to set **required** environmental variables before running
-
-```bash
-# from app/ directory point of view
-dotnet build src/loris
-dotnet src/loris/bin/Debug/net10.0
-
-# or just use inside the src/loris directory
-#
-# this is for development
-dotnet run
-```
-
-These will install any neede dependencies, build the project and run it
-respectively
+> The app manages the socket file lifetime, but it's important that it has
+> required permissions to enter the directory and create/delete the socket file.
+> When in production this will involve some scripts being run with the process
+> manager involed (most probably systemd) or proper docker configuration
 
 ### Configuration
 
@@ -102,6 +99,26 @@ Devices and downlink service - data _going to_ the chirpstack
   - `Chirpstack__DeviceService__Port` - specified api port. - _**8080 if
     ommited**_
 
+## Building and running
+
+To build and run the app use
+
+> [!IMPORTANT]
+>
+> Remember to set **required** environmental variables before running
+
+```bash
+# from app/ directory point of view
+dotnet build src/loris
+dotnet src/loris/bin/Debug/net10.0
+
+# or just use inside the src/loris directory
+dotnet run
+```
+
+These will install any needed dependencies, build the project and run it
+respectively **in development mode**
+
 ## Running tests
 
 > [!IMPORTANT]
@@ -118,7 +135,7 @@ Devices and downlink service - data _going to_ the chirpstack
 > If you are running linux,
 > [here](https://podman.io/docs/installation#installing-on-linux) is the
 > podman's documentation on installation. Remember that you need to have a
-> regisries configured, in order to successfuly resolve unqualified image names
+> registries configured, in order to successfuly resolve unqualified image names
 > referenced in the test environment, as well as be authenticated to request the
 > images from such registries. There are guides on how to configure registries
 > [from podman desktop guide](https://podman-desktop.io/docs/containers/registries)
@@ -146,11 +163,6 @@ Devices and downlink service - data _going to_ the chirpstack
 > # "disabled" - try all configured registries without prompting
 > short-name-mode = "permisive"
 > ```
->
-> After you create these, you can authenticate to each of the registry involed,
-> but you should bee good to go, just authenticated to `docker.io`. Use your
-> regular docker registry credentials you used during docker installation
-> (assuming you used docker before), or sign up in docker hub.
 
 ```bash
 # run these from app/ directory
