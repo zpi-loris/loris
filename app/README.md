@@ -28,6 +28,16 @@ pipeline**:
 > When in production this will involve some scripts being run with the process
 > manager involed (most probably systemd) or proper docker configuration
 
+> [!NOTE]
+>
+> You can check if the socket is working by using curl:
+>
+> ```bash
+> curl -v -X GET --unix-socket \
+>     /var/run/loris/loris.socket \
+>     http://unix:/api/testing/test
+> ```
+
 ### Configuration
 
 To configure the application you can use both **Environmental variables** or
