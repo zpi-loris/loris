@@ -1,50 +1,31 @@
-using System.Net.Sockets;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Loris.Channels;
 using Loris.Consumers;
 using Loris.Data;
+using loris.Extensions;
 using Loris.Extensions;
 using Loris.Jobs;
 using Loris.MQTT.Client;
 using Loris.Services;
-using Microsoft.AspNetCore.Connections;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
-var socketPath = Path.Combine(Path.GetTempPath(), "test.sock");
-
-builder.WebHost.ConfigureKestrel(serverOptions =>
+var socketPath = Path.Combine("/", "run", "loris", "loris.socket");
+if (builder.Environment.IsDevelopment())
 {
-    serverOptions.ListenLocalhost(5158);
-    serverOptions.ListenUnixSocket(
-        socketPath,
-        listenOptions =>
-        {
-            listenOptions.Protocols = HttpProtocols.Http1AndHttp2;
-            listenOptions.Use(
-                async (context, next) =>
-                {
-                    if (context.LocalEndPoint is UnixDomainSocketEndPoint unixEndPoint)
-                    {
-                        context.Items["UnixSocketPath"] = unixEndPoint.ToString();
-                    }
-                    await next(context);
-                }
-            );
-        }
-    );
-});
+    socketPath = Path.Combine(Path.GetTempPath(), "loris.socket");
+}
 
-// Add services to the container.
-
-string? connectionString = builder.Configuration.GetConnectionString("Timescale");
+builder.WebHost.ConfigureLorisLocalhost(port: 5158);
+builder.WebHost.ConfigureLorisUnixSocket(socketPath: socketPath);
 
 // add factory dbContext. It will serve as an entry point for factory retrieval
 // as well as single, scoped DbContext instance for each request.
+string? connectionString = builder.Configuration.GetConnectionString("Timescale");
 builder.Services.AddDbContextFactory<LorisDbContext>(options =>
     options.UseNpgsql(connectionString)
 );
@@ -118,17 +99,6 @@ if (app.Environment.IsDevelopment())
         options.SwaggerEndpoint("/openapi/v1.json", "v1");
     });
 }
-
-app.Use(
-    (context, next) =>
-    {
-        if (context.Items.TryGetValue("UnixSocketPath", out var socketPath))
-        {
-            context.Response.Headers.Add("X-Forwarded-For", socketPath?.ToString());
-        }
-        return next();
-    }
-);
 
 // app.UseHttpsRedirection();
 
