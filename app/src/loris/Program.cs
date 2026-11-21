@@ -3,21 +3,29 @@ using System.Text.Json.Serialization;
 using Loris.Channels;
 using Loris.Consumers;
 using Loris.Data;
+using loris.Extensions;
 using Loris.Extensions;
 using Loris.Jobs;
 using Loris.MQTT.Client;
 using Loris.Services;
+using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+var socketPath = Path.Combine("/", "run", "loris", "loris.socket");
+if (builder.Environment.IsDevelopment())
+{
+    socketPath = Path.Combine(Path.GetTempPath(), "loris.socket");
+}
 
-string? connectionString = builder.Configuration.GetConnectionString("Timescale");
+builder.WebHost.ConfigureLorisLocalhost(port: 5158);
+builder.WebHost.ConfigureLorisUnixSocket(socketPath: socketPath);
 
 // add factory dbContext. It will serve as an entry point for factory retrieval
 // as well as single, scoped DbContext instance for each request.
+string? connectionString = builder.Configuration.GetConnectionString("Timescale");
 builder.Services.AddDbContextFactory<LorisDbContext>(options =>
     options.UseNpgsql(connectionString)
 );
