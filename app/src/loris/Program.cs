@@ -7,6 +7,7 @@ using loris.Extensions;
 using Loris.Extensions;
 using Loris.Jobs;
 using Loris.MQTT.Client;
+using loris.Services;
 using Loris.Services;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.EntityFrameworkCore;
@@ -62,8 +63,9 @@ builder.Services.AddSingleton<IEventChannelHandler, EventChannelHandler>();
 builder.Services.AddAutomationsCompilers();
 
 // Services for controller
-builder.Services.AddScoped<IAutomationService, AutomationService>();
-builder.Services.AddScoped<IDeviceService, DeviceService>();
+builder.Services.AddTransient<IChirpstackService, ChirpstackService>();
+builder.Services.AddTransient<IAutomationService, AutomationService>();
+builder.Services.AddTransient<IDeviceService, DeviceService>();
 
 // Chirpstacks integration background service and device grpc downlink service
 builder.Services.AddChirpstackIntegration<ChirpstackIntegrationHandler>(builder.Configuration);
