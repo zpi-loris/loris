@@ -33,12 +33,12 @@ public class PreStartupStateCacheJob(
 
         foreach (var device in data)
         {
-            _state.UpdateDevices(device);
+            _state[device.DevEui] = device;
             foreach (var sensor in device.Sensors)
             {
                 if (sensor.SensorReadings.FirstOrDefault() is SensorReading reading)
                 {
-                    _state.UpdateSensors(device.DevEui, reading);
+                    _state.AddOrUpdateReading(reading);
                 }
             }
         }

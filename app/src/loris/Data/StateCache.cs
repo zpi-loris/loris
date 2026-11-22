@@ -6,54 +6,71 @@ namespace Loris.Data;
 
 public sealed class StateCache : IStateCache
 {
-    private readonly HashSet<DevEui> _devices = [];
-    private readonly Dictionary<(DevEui, int), (Report, DateTime)> _sensorsCache = [];
+    private readonly Dictionary<DevEui, Device> _devEuiToDevice = [];
+    private readonly Dictionary<Guid, DevEui> _deviceToDevEui = [];
+    private readonly Dictionary<(DevEui, int), Models.Sensor> _sensorMapping = [];
+    private readonly Dictionary<Guid, SensorReading> _lastReadings = [];
 
-    public bool TryGetSensorLastState(
-        DevEui devEui,
-        int sensorId,
-        [NotNullWhen(true)] out Report? state
-    )
+    public Device this[DevEui devEui]
     {
-        if (!_sensorsCache.TryGetValue((devEui, sensorId), out var value))
+        get => _devEuiToDevice[devEui];
+        set
         {
-            state = default;
-            return false;
+            // check if some device (value) already points to some devEUI
+            if (_deviceToDevEui.TryGetValue(value.DeviceId, out var oldDevEui))
+            {
+                // This means, that we have replaced the devEUI (replaced a physical device)
+                // with a new one. All the mappings must be reassigned, and old devEUI removed from cache.
+
+                // remove old devEUI mapping
+                _devEuiToDevice.Remove(oldDevEui);
+
+                // point with deviceId to new devEUI
+                _deviceToDevEui[value.DeviceId] = devEui;
+
+                // replace the sensor mapping with wrong devEUI
+                var oldDevEuiKeys = _sensorMapping.Keys.Where(k => k.Item1 == oldDevEui);
+                foreach (var (_, deviceSensorId) in oldDevEuiKeys)
+                {
+                    var sensor = _sensorMapping[(oldDevEui, deviceSensorId)];
+                    _sensorMapping.Remove((oldDevEui, deviceSensorId));
+                    _sensorMapping[(devEui, deviceSensorId)] = sensor;
+                }
+            }
+
+            _devEuiToDevice[devEui] = value;
         }
-        state = value.Item1;
-        return true;
+    }
+    public Models.Sensor this[(DevEui devEui, int deviceSensorId) sensorMapping]
+    {
+        get => _sensorMapping[sensorMapping];
+        set => _sensorMapping[sensorMapping] = value;
     }
 
-    public bool TryGetSensorLastSeen(
+    public DevEui this[Guid deviceId]
+    {
+        get => _deviceToDevEui[deviceId];
+    }
+
+    public void AddOrUpdateReading(Guid sensorId, Report report, DateTime datetime) =>
+        _lastReadings[sensorId] = SensorReading.FromProto(sensorId, datetime, report);
+
+    public void AddOrUpdateReading(SensorReading reading) =>
+        _lastReadings[reading.SensorId] = reading;
+
+    public bool TryGetDevice(DevEui devEui, [MaybeNullWhen(false)] out Device device)
+    {
+        return _devEuiToDevice.TryGetValue(devEui, out device);
+    }
+
+    public bool TryGetSensor(
         DevEui devEui,
-        int sensorId,
-        [MaybeNullWhen(false)] out DateTime state
-    )
-    {
-        if (!_sensorsCache.TryGetValue((devEui, sensorId), out var value))
-        {
-            state = default;
-            return false;
-        }
-        state = value.Item2;
-        return true;
-    }
+        int deviceSensorId,
+        [MaybeNullWhen(false)] out Models.Sensor sensor
+    ) => _sensorMapping.TryGetValue((devEui, deviceSensorId), out sensor);
 
-    public bool IsDeviceAccepted(DevEui devEui) => _devices.Contains(devEui);
-
-    public void UpdateSensors(DevEui devEui, Report report, DateTime time) =>
-        _sensorsCache[(devEui, report.SensorId)] = (report, time);
-
-    public void UpdateSensors(DevEui devEui, SensorReading model) =>
-        _sensorsCache[(devEui, model.SensorId)] = (model.ToReport(), model.Time);
-
-    public void UpdateDevices(Device device)
-    {
-        // Consider using the variable
-        var added = device.DeviceStatus switch
-        {
-            DeviceStatus.ACTIVE => _devices.Add(device.DevEui),
-            _ => _devices.Remove(device.DevEui),
-        };
-    }
+    public bool TryGetSensorLastReading(
+        Guid sensorId,
+        [MaybeNullWhen(false)] out SensorReading reading
+    ) => _lastReadings.TryGetValue(sensorId, out reading);
 }

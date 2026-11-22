@@ -1,9 +1,9 @@
-using Loris.Models;
-
 namespace Loris.Events;
 
 public readonly record struct SensorEvent : IEvent<SensorEvent>
 {
-    public required DevEui DevEui { get; init; }
-    public required int SensorID { get; init; }
+    /// <summary>
+    /// Sensor primary key
+    /// </summary>
+    public required Guid SensorId { get; init; }
 }

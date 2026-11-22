@@ -5,7 +5,7 @@ namespace Loris.Models;
 [Comment("All of the devices from Chirpstack")]
 public partial class Device
 {
-    public Guid DeviceId { get; set; }
+    public Guid DeviceId { get; set; } = Guid.CreateVersion7();
 
     public DevEui DevEui { get; set; }
 

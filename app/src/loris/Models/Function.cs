@@ -10,7 +10,7 @@ public partial class Function
     /// <summary>
     /// Artificial primary key
     /// </summary>
-    public Guid FunctionId { get; set; }
+    public Guid FunctionId { get; set; } = Guid.CreateVersion7();
 
     /// <summary>
     /// Locally unique ID in a single device

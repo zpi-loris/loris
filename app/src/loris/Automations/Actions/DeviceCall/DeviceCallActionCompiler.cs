@@ -12,16 +12,18 @@ namespace Loris.Automations.Actions.DeviceCall;
 public class DeviceCallActionCompiler(
     ILogger<DeviceCallActionCompiler> logger,
     IDbContextFactory<LorisDbContext> ctxFactory,
-    DeviceService.DeviceServiceClient client
+    DeviceService.DeviceServiceClient client,
+    IStateCache stateCache
 ) : ActionCompilerBase<DeviceCallActionDto>
 {
     private readonly ILogger<DeviceCallActionCompiler> _logger = logger;
     private readonly IDbContextFactory<LorisDbContext> _ctxFactory = ctxFactory;
     private readonly DeviceService.DeviceServiceClient _downlinkClient = client;
+    private readonly IStateCache _stateCache = stateCache;
 
     // lookups
-    private const string FUNCTION_ID = "FunctionId";
-    private const string DEV_EUI = "DevEui";
+    private const string DEVICE_FUNCTION_ID = "DeviceFunctionId";
+    private const string DEVICE_ID = "DeviceId";
     private const string FUNC_ARG_TYPE = "FuncArgType";
 
     protected override async Task<BlockValidationResult> ValidateAsync(
@@ -32,7 +34,7 @@ public class DeviceCallActionCompiler(
         using var ctx = await _ctxFactory.CreateDbContextAsync(cancellationToken);
 
         var device = await ctx
-            .Devices.Where(d => d.DeviceStatus == Loris.Models.DeviceStatus.ACTIVE)
+            .Devices.Where(d => d.DeviceStatus == Models.DeviceStatus.ACTIVE)
             .SingleOrDefaultAsync(d => d.FriendlyName == dto.DeviceName, cancellationToken);
 
         if (device is null)
@@ -47,7 +49,7 @@ public class DeviceCallActionCompiler(
         }
 
         var function = await ctx.Functions.SingleOrDefaultAsync(
-            f => f.DevEui == device.DevEui && f.Name == dto.FunctionName,
+            f => f.DeviceId == device.DeviceId && f.Name == dto.FunctionName,
             cancellationToken
         );
 
@@ -61,12 +63,6 @@ public class DeviceCallActionCompiler(
                 ),
             ]);
         }
-
-        Dictionary<string, object> lookup = [];
-
-        // add verified values
-        lookup.Add(FUNCTION_ID, function.FunctionId);
-        lookup.Add(DEV_EUI, device.DevEui);
 
         var isValidValue = function.ArgType switch
         {
@@ -87,7 +83,12 @@ public class DeviceCallActionCompiler(
             ]);
         }
 
-        lookup.Add(FUNC_ARG_TYPE, function.ArgType);
+        var lookup = new Dictionary<string, object>
+        {
+            { DEVICE_ID, device.DeviceId },
+            { DEVICE_FUNCTION_ID, function.DeviceFunctionId },
+            { FUNC_ARG_TYPE, function.ArgType },
+        };
 
         return BlockValidationResult.Success(lookup);
     }
@@ -97,7 +98,7 @@ public class DeviceCallActionCompiler(
         LookupContext? lookup
     )
     {
-        Call call = new() { FunctionId = lookup!.Get<int>(FUNCTION_ID) };
+        Call call = new() { FunctionId = lookup!.Get<int>(DEVICE_FUNCTION_ID) };
 
         switch (lookup!.Get<FuncArgType>(FUNC_ARG_TYPE))
         {
@@ -123,15 +124,16 @@ public class DeviceCallActionCompiler(
         }
 
         return (token) =>
-            RequestDownlink(lookup!.Get<DevEui>(DEV_EUI), new Downlink { Call = call }, token);
+            RequestDownlink(lookup!.Get<Guid>(DEVICE_ID), new Downlink { Call = call }, token);
     }
 
     private async Task RequestDownlink(
-        DevEui devEui,
+        Guid deviceId,
         Downlink message,
         CancellationToken cancellationToken
     )
     {
+        var devEui = _stateCache[deviceId];
         try
         {
             await _downlinkClient.EnqueueDownlinkAsync(message, devEui, cancellationToken);

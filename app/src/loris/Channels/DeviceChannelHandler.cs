@@ -5,6 +5,7 @@ using Loris.Logging;
 using Loris.Messages.Database;
 using Loris.Messages.Device;
 using Loris.Messages.Event;
+using Loris.Models;
 using Loris.Protocol;
 
 namespace Loris.Channels;
@@ -34,114 +35,136 @@ public class DeviceChannelHandler(
     {
         return uplinkMessage.Payload.PayloadCase switch
         {
-            Uplink.PayloadOneofCase.Report => HandleReportAsync(uplinkMessage, stoppingToken),
-            Uplink.PayloadOneofCase.Capabilities => HandleCapabilitiesAsync(
-                uplinkMessage,
+            Uplink.PayloadOneofCase.Report => HandleReportAsync(
+                uplinkMessage.DevEUI,
+                uplinkMessage.Payload.Report,
+                uplinkMessage.DateTime,
                 stoppingToken
             ),
-            Uplink.PayloadOneofCase.Ping => HandlePingAsync(uplinkMessage, stoppingToken),
+            Uplink.PayloadOneofCase.Capabilities => HandleCapabilitiesAsync(
+                uplinkMessage.DevEUI,
+                uplinkMessage.Payload.Capabilities,
+                uplinkMessage.DateTime,
+                stoppingToken
+            ),
+            Uplink.PayloadOneofCase.Ping => HandlePingAsync(
+                uplinkMessage.DevEUI,
+                uplinkMessage.DateTime,
+                stoppingToken
+            ),
             _ => Task.CompletedTask,
         };
     }
 
     private async Task HandleReportAsync(
-        UplinkMessage uplinkMessage,
+        DevEui devEui,
+        Report report,
+        DateTime dateTime,
         CancellationToken stoppingToken
     )
     {
-        var devEui = uplinkMessage.DevEUI;
+        _logger.ReportReceived(devEui, dateTime);
 
         // early drop if not accepted
-        if (!_stateCache.IsDeviceAccepted(devEui))
+        if (
+            !_stateCache.TryGetDevice(devEui, out var device)
+            || device.DeviceStatus != DeviceStatus.ACTIVE
+        )
         {
             _logger.DeviceNotAccepted(devEui, "Report");
             return;
         }
 
-        var report = uplinkMessage.Payload.Report;
-        var time = uplinkMessage.DateTime;
+        var sensor = _stateCache[(devEui, report.SensorId)];
 
-        _logger.ReportReceived(devEui, time);
-
-        // write new event
-        await _eventChannelWriter.WriteAsync(
-            new SensorEventMessage()
-            {
-                Event = new SensorEvent() { DevEui = devEui, SensorID = report.SensorId },
-                Previous = _stateCache.TryGetSensorLastState(
-                    devEui,
-                    report.SensorId,
-                    out var previus
-                )
-                    ? previus
-                    : default,
-                Current = report,
-            },
-            stoppingToken
-        );
+        await WriteSensorEvent(report, device, sensor, stoppingToken);
 
         // write to database
         await _dbWriteChannel.WriteAsync(
             new ReportWriteMessage()
             {
-                DevEui = devEui,
+                SensorId = sensor.SensorId,
                 Report = report,
-                DateTime = time,
+                DateTime = dateTime,
+                DevEui = devEui,
             },
             stoppingToken
         );
 
         // update sensors cache
-        _stateCache.UpdateSensors(devEui, report, time);
+        _stateCache.AddOrUpdateReading(sensor.SensorId, report, dateTime);
     }
 
-    private async Task HandleCapabilitiesAsync(
-        UplinkMessage uplinkMessage,
+    private async Task WriteSensorEvent(
+        Report report,
+        Device device,
+        Models.Sensor sensor,
         CancellationToken stoppingToken
     )
     {
-        var devEui = uplinkMessage.DevEUI;
+        _stateCache.TryGetSensorLastReading(sensor.SensorId, out SensorReading? reading);
+        await _eventChannelWriter.WriteAsync(
+            new SensorEventMessage()
+            {
+                Event = new SensorEvent() { SensorId = sensor.SensorId },
+                Previous = reading is not null ? reading.ToReport(report.SensorId) : default,
+                Current = report,
+            },
+            stoppingToken
+        );
+    }
+
+    private async Task HandleCapabilitiesAsync(
+        DevEui devEui,
+        Capabilities capabilities,
+        DateTime dateTime,
+        CancellationToken stoppingToken
+    )
+    {
+        _logger.CapabilitiesReceived(devEui, dateTime);
 
         // early drop if already accepted (contrary to report)
-        if (_stateCache.IsDeviceAccepted(devEui))
+        if (
+            _stateCache.TryGetDevice(devEui, out var device)
+            && device.DeviceStatus == DeviceStatus.ACTIVE
+        )
         {
             _logger.DeviceAlreadyAccepted(devEui);
             return;
         }
-
-        var capabilities = uplinkMessage.Payload.Capabilities;
-        var time = uplinkMessage.DateTime;
-
-        _logger.CapabilitiesReceived(devEui, time);
-
         // write to database
         await _dbWriteChannel.WriteAsync(
             new CapabilitiesWriteMessage()
             {
                 DevEui = devEui,
                 Capabilities = capabilities,
-                DateTime = time,
+                DateTime = dateTime,
             },
             stoppingToken
         );
     }
 
-    private async Task HandlePingAsync(UplinkMessage uplinkMessage, CancellationToken stoppingToken)
+    private async Task HandlePingAsync(
+        DevEui devEui,
+        DateTime dateTime,
+        CancellationToken stoppingToken
+    )
     {
-        var devEui = uplinkMessage.DevEUI;
+        _logger.PingReceived(devEui, dateTime);
 
         // early drop if not accepted
-        if (!_stateCache.IsDeviceAccepted(devEui))
+        if (
+            !_stateCache.TryGetDevice(devEui, out var device)
+            || device.DeviceStatus != DeviceStatus.ACTIVE
+        )
         {
             _logger.DeviceNotAccepted(devEui, "Ping");
             return;
         }
 
-        _logger.PingReceived(devEui, uplinkMessage.DateTime);
-
         // write to database
         await _dbWriteChannel.WriteAsync(
-            new PingWriteMessage() { DevEui = devEui, DateTime = uplinkMessage.DateTime },
+            new PingWriteMessage() { DevEui = devEui, DateTime = dateTime },
             stoppingToken
         );
     }

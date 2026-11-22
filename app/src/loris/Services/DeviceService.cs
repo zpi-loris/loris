@@ -98,7 +98,7 @@ public class DeviceService(
         await _ctx.SaveChangesAsync(CancellationToken.None);
 
         // register newly activated device in runtime
-        _stateCache.UpdateDevices(device);
+        _stateCache[device.DevEui] = device;
 
         return Result<Device>.Success(device);
     }
@@ -191,7 +191,7 @@ public class DeviceService(
         await _ctx.SaveChangesAsync(CancellationToken.None);
 
         // update state cache; device is not ACCEPTED anymore
-        _stateCache.UpdateDevices(device);
+        _stateCache[device.DevEui] = device;
 
         return Result<Device>.Success(device);
     }
