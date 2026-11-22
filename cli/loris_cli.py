@@ -117,7 +117,8 @@ def accept(args):
                 f"Request failed with status code {r.status_code}: {details}",
                 file=sys.stderr,
             )
-        except Exception:
+        except Exception as e:
+            print(e, file=sys.stderr)
             print(f"Request failed with status code {r.status_code}.", file=sys.stderr)
 
         sys.exit(1)
@@ -144,7 +145,8 @@ def disconnect(args):
                 f"Request failed with status code {r.status_code}: {details}",
                 file=sys.stderr,
             )
-        except Exception:
+        except Exception as e:
+            print(e, file=sys.stderr)
             print(f"Request failed with status code {r.status_code}.", file=sys.stderr)
 
         sys.exit(1)
@@ -176,7 +178,8 @@ def ignore(args):
                 f"Request failed with status code {r.status_code}: {details}",
                 file=sys.stderr,
             )
-        except Exception:
+        except Exception as e:
+            print(e, file=sys.stderr)
             print(f"Request failed with status code {r.status_code}.", file=sys.stderr)
 
         sys.exit(1)
@@ -187,14 +190,14 @@ def ignore(args):
         print(f"Device {args.device} ignored")
 
 
-def list_devices():
+def list_devices(args):
     headers = {"Accept": "application/json"}
 
     request_url = f"{base_url}/devices"
     params = ""
     if args.pending:
         params = "pending=true"
-    elif args.accepted:
+    elif args.connected:
         params = "accepted=true"
     elif args.ignored:
         params = "ignored=true"
@@ -210,7 +213,8 @@ def list_devices():
                 f"Request failed with status code {r.status_code}: {details}",
                 file=sys.stderr,
             )
-        except Exception:
+        except Exception as e:
+            print(e, file=sys.stderr)
             print(f"Request failed with status code {r.status_code}.", file=sys.stderr)
 
         sys.exit(1)
@@ -234,7 +238,8 @@ def device(args):
                 f"Request failed with status code {r.status_code}: {details}",
                 file=sys.stderr,
             )
-        except Exception:
+        except Exception as e:
+            print(e, file=sys.stderr)
             print(f"Request failed with status code {r.status_code}.", file=sys.stderr)
 
     # TODO: show the results - I'll do it once the endpoint is ready, because it'll be easier then
@@ -266,7 +271,8 @@ def apply(args):
                     print_invalid_rule(invalid_rule)
             elif "errors" in data:
                 print_syntax_error(data["errors"])
-        except Exception:
+        except Exception as e:
+            print(e, file=sys.stderr)
             print(f"Request failed with status code {r.status_code}.", file=sys.stderr)
         sys.exit(1)
 
@@ -299,7 +305,8 @@ def validate(args):
                     print_invalid_rule(invalid_rule)
             elif "errors" in data:
                 print_syntax_error(data["errors"])
-        except Exception:
+        except Exception as e:
+            print(e, file=sys.stderr)
             print(f"Request failed with status code {r.status_code}.", file=sys.stderr)
         sys.exit(1)
 
@@ -386,7 +393,11 @@ args = parser.parse_args()
 if "func" in args:
     try:
         args.func(args)
-    except requests.exceptions.ConnectionError:
-        print("Something went wrong. Check if the given address is correct.")
+    except Exception as e:
+        print(e, file=sys.stderr)
+        print(
+            "Something went wrong. Check if the given address is correct.",
+            file=sys.stderr,
+        )
 else:
     parser.print_help()
