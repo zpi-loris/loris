@@ -4,10 +4,10 @@
 #include "loris/models/function.h"
 #include "loris/models/report.h"
 #include "loris/result.h"
-#include "zephyr/sys/printk.h"
 
 #include <zephyr/logging/log.h>
 #include <zephyr/lorawan/lorawan.h>
+#include <zephyr/sys/printk.h>
 
 #define LORAWAN_DEV_EUI { 0x5b, 0xd1, 0x3f, 0x6a, 0xd9, 0x5e, 0xe2, 0x1c }
 #define LORAWAN_JOIN_EUI { 0x52, 0xf1, 0xcc, 0xb8, 0x84, 0xf6, 0xdc, 0x7c }
