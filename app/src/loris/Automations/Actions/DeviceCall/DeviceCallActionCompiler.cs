@@ -1,11 +1,7 @@
-using Chirpstack.Api;
-using Grpc.Core;
 using Loris.Data;
-using Loris.Extensions;
 using Loris.Logging;
 using Loris.Models;
 using Loris.Protocol;
-using Loris.Results;
 using loris.Services;
 using Microsoft.EntityFrameworkCore;
 
@@ -32,7 +28,7 @@ public class DeviceCallActionCompiler(
         using var ctx = await _ctxFactory.CreateDbContextAsync(cancellationToken);
 
         var device = await ctx
-            .Devices.Where(d => d.DeviceStatus == Models.DeviceStatus.ACTIVE)
+            .Devices.Where(d => d.DeviceStatus == DeviceStatus.ACTIVE)
             .SingleOrDefaultAsync(d => d.FriendlyName == dto.DeviceName, cancellationToken);
 
         if (device is null)
@@ -72,7 +68,7 @@ public class DeviceCallActionCompiler(
 
         if (!isValidValue)
         {
-            BlockValidationResult.Failure([
+            return BlockValidationResult.Failure([
                 new BlockError(
                     nameof(dto.Value),
                     dto.Value,
@@ -123,10 +119,14 @@ public class DeviceCallActionCompiler(
 
         var deviceId = lookup!.Get<Guid>(DEVICE_ID);
 
+        // we capture the service in a local variable
+        // this way we avoid capturing 'this' in the lambda
+        var service = _chirpstackService;
+
         // this is deferred call, so we use deviceId instead of DevEui
         // so the automation always points to the correct device even if DevEui changes
-        //
-        // // TODO: consider catching the result and logging it, so we can see if the call failed
-        return (token) => _chirpstackService.CallFunctionAsync(deviceId, call, token);
+        return (token) => service.CallFunctionAsync(deviceId, call, token);
+
+        // TODO: consider catching the result and logging it, so we can see if the call failed
     }
 }
