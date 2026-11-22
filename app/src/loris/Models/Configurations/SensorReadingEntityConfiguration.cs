@@ -11,8 +11,6 @@ public class SensorReadingEntityConfiguration : IEntityTypeConfiguration<SensorR
         // primary key
         builder.HasKey(e => new { e.SensorId, e.Time });
 
-        builder.Property(e => e.SensorId).ValueGeneratedNever();
-
         // foreign keys
         builder
             .HasOne(d => d.Sensor)

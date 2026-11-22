@@ -10,7 +10,7 @@ public partial class Sensor
     /// <summary>
     /// Artificial primary key
     /// </summary>
-    public Guid SensorId { get; set; } = Guid.CreateVersion7();
+    public Guid SensorId { get; set; }
 
     /// <summary>
     /// Locally unique ID in a single device

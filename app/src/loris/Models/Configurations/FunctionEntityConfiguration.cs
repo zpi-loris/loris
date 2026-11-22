@@ -10,10 +10,9 @@ public class FunctionEntityConfiguration : IEntityTypeConfiguration<Function>
     {
         // primary key
         builder.HasKey(e => e.FunctionId);
-        builder
-            .Property(e => e.FunctionId)
-            .ValueGeneratedOnAdd()
-            .Metadata.SetAfterSaveBehavior(PropertySaveBehavior.Save);
+        // https://www.npgsql.org/efcore/modeling/generated-properties.html#guiduuid-generation
+        // npgsql will generate a new uuid for the primary key when inserting a new row.
+        // it will use GUID v7, from dotnet version 9.0 and onwards
 
         // NOTE:  EF core conventions opt in for VALUE GENERATION for Id ending properties
         // AND WE DON'T WANT THAT HERE

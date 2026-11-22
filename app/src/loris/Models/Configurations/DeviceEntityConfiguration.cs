@@ -10,10 +10,9 @@ public class DeviceEntityConfiguration : IEntityTypeConfiguration<Device>
     {
         // primary key
         builder.HasKey(e => e.DeviceId);
-        builder
-            .Property(e => e.DeviceId)
-            .ValueGeneratedOnAdd()
-            .Metadata.SetAfterSaveBehavior(PropertySaveBehavior.Save);
+        // https://www.npgsql.org/efcore/modeling/generated-properties.html#guiduuid-generation
+        // npgsql will generate a new uuid for the primary key when inserting a new row.
+        // it will use GUID v7, from dotnet version 9.0 and onwards
 
         // Unique indexes
         builder.HasIndex(e => e.DevEui).IsUnique();
