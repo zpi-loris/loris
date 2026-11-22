@@ -20,13 +20,10 @@ public sealed class StateCache : IStateCache
             if (_deviceToDevEui.TryGetValue(value.DeviceId, out var oldDevEui))
             {
                 // This means, that we have replaced the devEUI (replaced a physical device)
-                // with a new one. All the mappings must be reassigned, and old devEUI removed from cache.
+                // with a new one.
 
                 // remove old devEUI mapping
                 _devEuiToDevice.Remove(oldDevEui);
-
-                // point with deviceId to new devEUI
-                _deviceToDevEui[value.DeviceId] = devEui;
 
                 // replace the sensor mapping with wrong devEUI
                 var oldDevEuiKeys = _sensorMapping.Keys.Where(k => k.Item1 == oldDevEui);
@@ -37,7 +34,9 @@ public sealed class StateCache : IStateCache
                     _sensorMapping[(devEui, deviceSensorId)] = sensor;
                 }
             }
-
+            // deviceId => devEui mapping
+            _deviceToDevEui[value.DeviceId] = devEui;
+            // devEui => device mapping
             _devEuiToDevice[devEui] = value;
         }
     }

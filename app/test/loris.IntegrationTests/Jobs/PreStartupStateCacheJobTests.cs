@@ -16,11 +16,12 @@ public class PreStartupStateCacheJobTests(TimescaleDbApplicationFactory<Program>
     public async Task StartAsync_PreStartupStateCacheJob_InitializesStateCache()
     {
         // SEED DATA
+        Device device;
         using (var scope = _appFactory.Services.CreateScope())
         {
             var ctx = scope.ServiceProvider.GetRequiredService<LorisDbContext>();
 
-            await SeedData(ctx);
+            device = await SeedData(ctx);
         }
 
         // ARRANGE
@@ -34,15 +35,21 @@ public class PreStartupStateCacheJobTests(TimescaleDbApplicationFactory<Program>
         await job.StartAsync(CancellationToken.None);
 
         // ASSERT
-        Assert.True(stateCache.IsDeviceAccepted(DevEui.Parse("1122AABBCCDDEEFF")));
+        Assert.Equal(DevEui.Parse("1122AABBCCDDEEFF"), stateCache[device.DeviceId]);
+        Assert.Equal(device.DeviceId, stateCache[DevEui.Parse("1122AABBCCDDEEFF")].DeviceId);
+        Assert.Equal(
+            DeviceStatus.ACTIVE,
+            stateCache[DevEui.Parse("1122AABBCCDDEEFF")].DeviceStatus
+        );
+
         Assert.True(
-            stateCache.TryGetSensorLastState(DevEui.Parse("1122AABBCCDDEEFF"), 1, out var lastState)
+            stateCache.TryGetSensorLastReading(device.Sensors.First().SensorId, out var lastState)
         );
         Assert.NotNull(lastState);
-        Assert.Equal(23.5f, lastState.FloatVal);
+        Assert.Equal(23.5f, lastState.FloatValue);
     }
 
-    private static async Task SeedData(LorisDbContext ctx)
+    private static async Task<Device> SeedData(LorisDbContext ctx)
     {
         await ctx.Sensors.ExecuteDeleteAsync();
         await ctx.Functions.ExecuteDeleteAsync();
@@ -52,7 +59,6 @@ public class PreStartupStateCacheJobTests(TimescaleDbApplicationFactory<Program>
 
         var device = new Device
         {
-            DeviceId = Guid.NewGuid(),
             DeviceName = "loris_sample",
             DevEui = devEui,
             FriendlyName = "loris_friendly",
@@ -62,8 +68,7 @@ public class PreStartupStateCacheJobTests(TimescaleDbApplicationFactory<Program>
 
         var sensor = new Loris.Models.Sensor
         {
-            DevEui = devEui,
-            SensorId = 1,
+            DeviceSensorId = 1,
             Name = "env_temp_sensor",
             Description = string.Empty,
             ValueType = SensorValueType.Float,
@@ -76,8 +81,6 @@ public class PreStartupStateCacheJobTests(TimescaleDbApplicationFactory<Program>
         sensor.SensorReadings.Add(
             new SensorReading()
             {
-                DevEui = devEui,
-                SensorId = 1,
                 Time = DateTime.UtcNow - new TimeSpan(1, 0, 0, 0), // yesterday
                 FloatValue = 23.5f,
             }
@@ -85,14 +88,15 @@ public class PreStartupStateCacheJobTests(TimescaleDbApplicationFactory<Program>
         sensor.SensorReadings.Add(
             new SensorReading()
             {
-                DevEui = devEui,
-                SensorId = 1,
                 Time = DateTime.UtcNow - new TimeSpan(2, 0, 0, 0), // two days before
                 FloatValue = 24.5f,
             }
         );
 
+        // track entity and save
         ctx.Devices.Add(device);
         await ctx.SaveChangesAsync();
+
+        return device;
     }
 }
