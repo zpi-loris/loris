@@ -17,6 +17,18 @@ public static partial class DeviceChannelLogging
     );
 
     [LoggerMessage(
+        EventId = 6,
+        Level = LogLevel.Warning,
+        EventName = nameof(DeviceNotSeen),
+        Message = "Device {DevEui} was not seen before, but sends {MessageType}"
+    )]
+    public static partial void DeviceNotSeen(
+        this ILogger logger,
+        DevEui devEui,
+        string messageType
+    );
+
+    [LoggerMessage(
         EventId = 2,
         Level = LogLevel.Information,
         EventName = nameof(ReportReceived),
@@ -54,5 +66,17 @@ public static partial class DeviceChannelLogging
         this ILogger logger,
         DevEui devEui,
         DateTime dateTime
+    );
+
+    [LoggerMessage(
+        EventId = 7,
+        Level = LogLevel.Warning,
+        EventName = nameof(DeviceSendsUnknownSensor),
+        Message = "Device {DevEui} is accepted but sends an unkown sensor id = {DeviceSensorId}"
+    )]
+    public static partial void DeviceSendsUnknownSensor(
+        this ILogger logger,
+        DevEui devEui,
+        int DeviceSensorId
     );
 }

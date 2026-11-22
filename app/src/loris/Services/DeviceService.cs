@@ -1,13 +1,10 @@
-using Grpc.Core;
 using Loris.Data;
-using Loris.Extensions;
 using Loris.Logging;
 using Loris.Models;
-using Loris.Protocol;
 using Loris.Results;
 using Loris.Results.Errors;
+using loris.Services;
 using Microsoft.EntityFrameworkCore;
-using DownlinkServiceClient = Chirpstack.Api.DeviceService.DeviceServiceClient;
 
 namespace Loris.Services;
 
@@ -15,13 +12,13 @@ public class DeviceService(
     ILogger<DeviceService> logger,
     LorisDbContext ctx,
     IStateCache stateCache,
-    DownlinkServiceClient client
+    IChirpstackService chirpstackService
 ) : IDeviceService
 {
     private readonly ILogger<DeviceService> _logger = logger;
     private readonly LorisDbContext _ctx = ctx;
     private readonly IStateCache _stateCache = stateCache;
-    private readonly DownlinkServiceClient _client = client;
+    private readonly IChirpstackService _chirpstackService = chirpstackService;
 
     public async Task<Result<Device>> AcceptAsync(DevEui devEui, CancellationToken ct = default)
     {
@@ -59,36 +56,12 @@ public class DeviceService(
 
     private async Task<Result<Device>> AcceptDeviceAsync(Device device, CancellationToken ct)
     {
-        try
+        var downlinkResult = await _chirpstackService.AcceptAsync(device.DevEui, ct);
+
+        if (downlinkResult.IsFailure)
         {
-            await _client.EnqueueDownlinkAsync(
-                new Downlink { Ping = new DownPing { Type = DownPingType.Hello } },
-                device.DevEui,
-                ct
-            );
-        }
-        catch (RpcException ex)
-        {
-            if (ex.StatusCode == StatusCode.DeadlineExceeded)
-            {
-                _logger.DownlinkTimeout(device.DevEui, ex.Message);
-                return Result<Device>.Failure(DownlinkErrors.DeadlineExceeded());
-            }
-            else if (ex.StatusCode == StatusCode.Unauthenticated)
-            {
-                // TODO: apparently chirpstack is sending unauthenticated, even
-                // when the token is valid, but it can't find any device with the given DevEUI.
-                // This is a bug in chirpstack and i don't know how to handle it yet.
-                //
-                _logger.DownlinkFailed(device.DevEui, ex.Message);
-                return Result<Device>.Failure(DownlinkErrors.Failed(ex.Message));
-            }
-            else
-            {
-                _logger.DownlinkFailed(device.DevEui, ex.Message);
-                return Result<Device>.Failure(DownlinkErrors.Failed(ex.Message));
-            }
-            // TODO: Handle other exceptions if needed
+            _logger.DownlinkFailed(device.DevEui, downlinkResult.Error.Description);
+            return Result<Device>.Failure(downlinkResult.Error);
         }
 
         device.DeviceStatus = DeviceStatus.ACTIVE;
@@ -110,6 +83,16 @@ public class DeviceService(
     )
     {
         var device = await _ctx.Devices.SingleOrDefaultAsync(d => d.DevEui == devEui, ct);
+        if (device is null && force)
+        {
+            // we don't have the device in the database - maybe we replaced it with a new device,
+            // then we just want to force the disconnection without the businness logic
+            var result = await _chirpstackService.DisconnectAsync(devEui, ct);
+            return result.Match(
+                () => Result<Device>.Success(new Device()), // empty device
+                error => Result<Device>.Failure(error)
+            );
+        }
         return device is null
             ? Result<Device>.Failure(DeviceErrors.NotFound(devEui))
             : await DisconnectAsync(device, force, ct);
@@ -152,36 +135,11 @@ public class DeviceService(
 
     private async Task<Result<Device>> DisconnectDeviceAsync(Device device, CancellationToken ct)
     {
-        try
+        var downlinkResult = await _chirpstackService.DisconnectAsync(device.DevEui, ct);
+        if (downlinkResult.IsFailure)
         {
-            await _client.EnqueueDownlinkAsync(
-                new Downlink { Ping = new DownPing { Type = DownPingType.Disconnect } },
-                device.DevEui,
-                ct
-            );
-        }
-        catch (RpcException ex)
-        {
-            if (ex.StatusCode == StatusCode.DeadlineExceeded)
-            {
-                _logger.DownlinkTimeout(device.DevEui, ex.Message);
-                return Result<Device>.Failure(DownlinkErrors.DeadlineExceeded());
-            }
-            else if (ex.StatusCode == StatusCode.Unauthenticated)
-            {
-                // TODO: apparently chirpstack is sending unauthenticated, even
-                // when the token is valid, but it can't find any device with the given DevEUI.
-                // This is a bug in chirpstack and i don't know how to handle it yet.
-                //
-                _logger.DownlinkFailed(device.DevEui, ex.Message);
-                return Result<Device>.Failure(DownlinkErrors.Failed(ex.Message));
-            }
-            else
-            {
-                _logger.DownlinkFailed(device.DevEui, ex.Message);
-                return Result<Device>.Failure(DownlinkErrors.Failed(ex.Message));
-            }
-            // TODO: Handle other exceptions if needed
+            _logger.DownlinkFailed(device.DevEui, downlinkResult.Error.Description);
+            return Result<Device>.Failure(downlinkResult.Error);
         }
 
         device.DeviceStatus = DeviceStatus.DISCONNECTED;
@@ -262,6 +220,7 @@ public class DeviceService(
     {
         device.DeviceStatus = status;
         await _ctx.SaveChangesAsync(ct);
+        _stateCache[device.DevEui] = device;
         return Result<Device>.Success(device);
     }
 }

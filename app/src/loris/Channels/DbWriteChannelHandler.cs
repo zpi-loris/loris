@@ -61,18 +61,15 @@ public class DbWriteChannelHandler(
         {
             _logger.DeviceAlreadyExists(devEui, dateTime);
 
-            // update the device status to PENDING if it was previously DISCONNECTED
-            var updatedRows = await ctx
-                .Devices.Where(d => d.DevEui == devEui)
-                .Where(d => d.DeviceStatus == DeviceStatus.DISCONNECTED)
-                .ExecuteUpdateAsync(
-                    setter => setter.SetProperty(p => p.DeviceStatus, DeviceStatus.PENDING),
-                    stoppingToken
-                );
-
-            if (updatedRows > 0)
+            // if a device exists, we need to ensure that it is in a PENDING status
+            // because it sends capabilities after all. It could be in DISCONNECTED status by user intervention
+            // or in any other and a device bug forced it to start send capabilities again.
+            var device = await ctx.Devices.FirstAsync(d => d.DevEui == devEui, stoppingToken);
+            if (device.DeviceStatus != DeviceStatus.PENDING)
             {
-                _logger.DisconnectedIsPending(devEui);
+                _logger.ForcedToPending(devEui, device.DeviceStatus);
+                device.DeviceStatus = DeviceStatus.PENDING;
+                await ctx.SaveChangesAsync(CancellationToken.None);
             }
 
             // early return since the device already exists
@@ -127,9 +124,6 @@ public class DbWriteChannelHandler(
     private async Task HandlePing(DevEui devEui, DateTime dateTime, CancellationToken stoppingToken)
     {
         using var ctx = await _ctxFactory.CreateDbContextAsync(stoppingToken);
-
-        _logger.ReceivedPing(devEui, dateTime);
-
         await ctx.TryBumpDeviceAsync(devEui, dateTime, stoppingToken);
     }
 }

@@ -48,7 +48,11 @@ public static partial class DbWriteChannelLogging
     [LoggerMessage(
         EventId = 5,
         Level = LogLevel.Information,
-        Message = "Device {DevEui} has been disconnected but it's now pending"
+        Message = "Device {DevEui} has been in {Status} status but it's now pending"
     )]
-    public static partial void DisconnectedIsPending(this ILogger logger, DevEui devEui);
+    public static partial void ForcedToPending(
+        this ILogger logger,
+        DevEui devEui,
+        DeviceStatus Status
+    );
 }

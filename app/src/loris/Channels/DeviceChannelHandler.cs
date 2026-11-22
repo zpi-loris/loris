@@ -7,6 +7,7 @@ using Loris.Messages.Device;
 using Loris.Messages.Event;
 using Loris.Models;
 using Loris.Protocol;
+using Sensor = Loris.Models.Sensor;
 
 namespace Loris.Channels;
 
@@ -66,18 +67,23 @@ public class DeviceChannelHandler(
         _logger.ReportReceived(devEui, dateTime);
 
         // early drop if not accepted
-        if (
-            !_stateCache.TryGetDevice(devEui, out var device)
-            || device.DeviceStatus != DeviceStatus.ACTIVE
-        )
+        if (!_stateCache.TryGetDevice(devEui, out var device))
+        {
+            _logger.DeviceNotSeen(devEui, "Report");
+            return;
+        }
+        if (device.DeviceStatus != DeviceStatus.ACTIVE)
         {
             _logger.DeviceNotAccepted(devEui, "Report");
             return;
         }
+        if (!_stateCache.TryGetSensor(devEui, report.SensorId, out var sensor))
+        {
+            _logger.DeviceSendsUnknownSensor(devEui, report.SensorId);
+            return;
+        }
 
-        var sensor = _stateCache[(devEui, report.SensorId)];
-
-        await WriteSensorEvent(report, device, sensor, stoppingToken);
+        await WriteSensorEvent(sensor, report, stoppingToken);
 
         // write to database
         await _dbWriteChannel.WriteAsync(
@@ -96,9 +102,8 @@ public class DeviceChannelHandler(
     }
 
     private async Task WriteSensorEvent(
+        Sensor sensor,
         Report report,
-        Device device,
-        Models.Sensor sensor,
         CancellationToken stoppingToken
     )
     {
@@ -123,15 +128,25 @@ public class DeviceChannelHandler(
     {
         _logger.CapabilitiesReceived(devEui, dateTime);
 
-        // early drop if already accepted (contrary to report)
-        if (
-            _stateCache.TryGetDevice(devEui, out var device)
-            && device.DeviceStatus == DeviceStatus.ACTIVE
-        )
+        // check the cached devices
+        if (_stateCache.TryGetDevice(devEui, out var device))
         {
-            _logger.DeviceAlreadyAccepted(devEui);
-            return;
+            switch (device.DeviceStatus)
+            {
+                case DeviceStatus.ACTIVE:
+                    _logger.DeviceAlreadyAccepted(devEui);
+                    return;
+                case DeviceStatus.DISCONNECTED:
+                    // we update the device reference in the cache.
+                    // Device is sending capabilities again after disconnection
+                    // so it is pending again.
+                    device.DeviceStatus = DeviceStatus.PENDING;
+                    break;
+                default:
+                    break;
+            }
         }
+
         // write to database
         await _dbWriteChannel.WriteAsync(
             new CapabilitiesWriteMessage()
@@ -153,10 +168,12 @@ public class DeviceChannelHandler(
         _logger.PingReceived(devEui, dateTime);
 
         // early drop if not accepted
-        if (
-            !_stateCache.TryGetDevice(devEui, out var device)
-            || device.DeviceStatus != DeviceStatus.ACTIVE
-        )
+        if (!_stateCache.TryGetDevice(devEui, out var device))
+        {
+            _logger.DeviceNotSeen(devEui, "Ping");
+            return;
+        }
+        if (device.DeviceStatus != DeviceStatus.ACTIVE)
         {
             _logger.DeviceNotAccepted(devEui, "Ping");
             return;

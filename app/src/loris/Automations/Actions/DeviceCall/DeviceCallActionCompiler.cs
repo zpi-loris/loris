@@ -5,21 +5,19 @@ using Loris.Extensions;
 using Loris.Logging;
 using Loris.Models;
 using Loris.Protocol;
+using Loris.Results;
+using loris.Services;
 using Microsoft.EntityFrameworkCore;
 
 namespace Loris.Automations.Actions.DeviceCall;
 
 public class DeviceCallActionCompiler(
-    ILogger<DeviceCallActionCompiler> logger,
     IDbContextFactory<LorisDbContext> ctxFactory,
-    DeviceService.DeviceServiceClient client,
-    IStateCache stateCache
+    IChirpstackService chirpstackService
 ) : ActionCompilerBase<DeviceCallActionDto>
 {
-    private readonly ILogger<DeviceCallActionCompiler> _logger = logger;
     private readonly IDbContextFactory<LorisDbContext> _ctxFactory = ctxFactory;
-    private readonly DeviceService.DeviceServiceClient _downlinkClient = client;
-    private readonly IStateCache _stateCache = stateCache;
+    private readonly IChirpstackService _chirpstackService = chirpstackService;
 
     // lookups
     private const string DEVICE_FUNCTION_ID = "DeviceFunctionId";
@@ -123,24 +121,12 @@ public class DeviceCallActionCompiler(
             call.WakeAfterSecs = dto.WakeAfter.Value;
         }
 
-        return (token) =>
-            RequestDownlink(lookup!.Get<Guid>(DEVICE_ID), new Downlink { Call = call }, token);
-    }
+        var deviceId = lookup!.Get<Guid>(DEVICE_ID);
 
-    private async Task RequestDownlink(
-        Guid deviceId,
-        Downlink message,
-        CancellationToken cancellationToken
-    )
-    {
-        var devEui = _stateCache[deviceId];
-        try
-        {
-            await _downlinkClient.EnqueueDownlinkAsync(message, devEui, cancellationToken);
-        }
-        catch (RpcException ex)
-        {
-            _logger.DownlinkFailed(devEui, ex.Message);
-        }
+        // this is deferred call, so we use deviceId instead of DevEui
+        // so the automation always points to the correct device even if DevEui changes
+        //
+        // // TODO: consider catching the result and logging it, so we can see if the call failed
+        return (token) => _chirpstackService.CallFunctionAsync(deviceId, call, token);
     }
 }
