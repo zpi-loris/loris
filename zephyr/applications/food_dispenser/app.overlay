@@ -5,9 +5,16 @@
 
   servo: servo {
     compatible = "pwm-servo";
-    pwms = <&pwm0 1 PWM_MSEC(20) PWM_POLARITY_NORMAL>;
+    pwms = <&mcpwm0 0 PWM_MSEC(20) PWM_POLARITY_NORMAL>;
+    min-pulse = <PWM_USEC(500)>;
+    max-pulse = <PWM_USEC(2500)>;
+  };
+
+  zephyr,user {
+    io-channels = <&adc0 7>;
   };
 };
+
 
 &spi3 {
   status = "okay";
@@ -29,16 +36,35 @@
 
 
 &adc0 {
-    status = "okay";
-    #address-cells = <1>;
-    #size-cells = <0>;
+  status = "okay";
+  #address-cells = <1>;
+  #size-cells = <0>;
 
-    channel@7 {
-        reg = <7>;
-        zephyr,gain = "ADC_GAIN_1_4";
-        zephyr,reference = "ADC_REF_INTERNAL";
-        zephyr,acquisition-time = <ADC_ACQ_TIME_DEFAULT>;
-        zephyr,resolution = <12>;
-        zephyr,vref-mv = <1100>;
+  channel@7 {
+    reg = <7>;
+    zephyr,gain = "ADC_GAIN_1_4";
+    zephyr,reference = "ADC_REF_INTERNAL";
+    zephyr,acquisition-time = <ADC_ACQ_TIME_DEFAULT>;
+    zephyr,resolution = <12>;
+    zephyr,vref-mv = <1100>;
+  };
+};
+
+
+&pinctrl {
+  mcpwm0_default: mcpwm0_default {
+    group1 {
+      pinmux = <MCPWM0_OUT0A_GPIO32>;
+      output-enable;
     };
+  };
+};
+
+
+&mcpwm0 {
+  pinctrl-0 = <&mcpwm0_default>;
+  pinctrl-names = "default";
+  prescale = <0>;
+  prescale-timer0 = <255>;
+  status = "okay";
 };
