@@ -5,7 +5,7 @@ using Loris.Events;
 using Loris.Jobs;
 using Loris.Models;
 using Loris.Protocol;
-using Microsoft.AspNetCore.Http.Json;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -57,8 +57,6 @@ public sealed class PreStartupAutomationJobTests(TimescaleDbApplicationFactory a
         // there event key is of given structure
         Assert.True(
             index.TryGet(
-                // TODO: this need to be changed for the sake of system transition
-                // deviceId (GUID) and sensorId (GUID)
                 new SensorEvent { SensorId = device.Sensors.First().SensorId },
                 out var validAutomations
             )

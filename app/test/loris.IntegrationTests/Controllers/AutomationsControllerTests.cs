@@ -1,10 +1,9 @@
 namespace loris.IntegrationTests.Controllers;
 
-public class AutomationsControllerTests(
-    TimescaleDbApplicationFactory<Program> timescaleDbApplicationFactory
-) : IClassFixture<TimescaleDbApplicationFactory<Program>>
+public class AutomationsControllerTests(TimescaleDbApplicationFactory timescaleDbApplicationFactory)
+    : IClassFixture<TimescaleDbApplicationFactory>
 {
-    private readonly TimescaleDbApplicationFactory<Program> _timescaleDbApplicationFactory =
+    private readonly TimescaleDbApplicationFactory _timescaleDbApplicationFactory =
         timescaleDbApplicationFactory;
 
     [Fact]
