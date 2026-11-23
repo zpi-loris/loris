@@ -9,6 +9,9 @@ public class ResultProblemDetails : ProblemDetails
     [JsonPropertyName("errorCode")]
     public string? ErrorCode { get; set; }
 
+    [JsonConstructor]
+    public ResultProblemDetails() { }
+
     public ResultProblemDetails(ProblemDetails source)
     {
         Type = source.Type;
