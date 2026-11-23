@@ -1,22 +1,20 @@
 using Loris.Data;
+using Loris.Jobs;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
 using Testcontainers.PostgreSql;
 
 namespace loris.IntegrationTests;
 
-public sealed class TimescaleDbApplicationFactory<TProgram>
-    : WebApplicationFactory<TProgram>,
-        IAsyncLifetime
-    where TProgram : class
+public sealed class TimescaleDbApplicationFactory : WebApplicationFactory<Program>, IAsyncLifetime
 {
-    private readonly PostgreSqlContainer _postgres = new PostgreSqlBuilder(
+    private readonly PostgreSqlContainer _timescaleContainer = new PostgreSqlBuilder(
         "timescale/timescaledb:latest-pg18"
     ).Build();
 
     public async ValueTask InitializeAsync()
     {
-        await _postgres.StartAsync();
+        await _timescaleContainer.StartAsync();
 
         using var scope = Services.CreateScope();
         var ctx = scope.ServiceProvider.GetRequiredService<LorisDbContext>();
@@ -25,7 +23,7 @@ public sealed class TimescaleDbApplicationFactory<TProgram>
 
     public override async ValueTask DisposeAsync()
     {
-        await _postgres.DisposeAsync();
+        await _timescaleContainer.DisposeAsync();
         await base.DisposeAsync();
     }
 
@@ -34,7 +32,7 @@ public sealed class TimescaleDbApplicationFactory<TProgram>
         builder.ConfigureServices(services =>
         {
             services.ConfigureDbContext<LorisDbContext>(options =>
-                options.UseNpgsql(_postgres.GetConnectionString())
+                options.UseNpgsql(_timescaleContainer.GetConnectionString())
             );
 
             var hostedServiceDescriptors = services
@@ -45,6 +43,9 @@ public sealed class TimescaleDbApplicationFactory<TProgram>
             {
                 services.Remove(descriptor);
             }
+
+            // NOTE: THIS IS FOR DEBUGGING ONLY
+            services.AddHostedService<DebuggingJob>();
         });
     }
 }

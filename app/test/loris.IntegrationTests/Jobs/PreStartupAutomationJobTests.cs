@@ -14,10 +14,10 @@ using Microsoft.Extensions.Options;
 
 namespace loris.IntegrationTests.Jobs;
 
-public sealed class PreStartupAutomationJobTests(TimescaleDbApplicationFactory<Program> appFactory)
-    : IClassFixture<TimescaleDbApplicationFactory<Program>>
+public sealed class PreStartupAutomationJobTests(TimescaleDbApplicationFactory appFactory)
+    : IClassFixture<TimescaleDbApplicationFactory>
 {
-    private readonly TimescaleDbApplicationFactory<Program> _appFactory = appFactory;
+    private readonly TimescaleDbApplicationFactory _appFactory = appFactory;
 
     [Fact]
     public async Task StartAsync_PreStartupAutomationJob_InitializesAllValidAutomations()

@@ -7,10 +7,10 @@ using Microsoft.Extensions.Logging.Abstractions;
 
 namespace loris.IntegrationTests.Jobs;
 
-public class PreStartupStateCacheJobTests(TimescaleDbApplicationFactory<Program> appFactory)
-    : IClassFixture<TimescaleDbApplicationFactory<Program>>
+public class PreStartupStateCacheJobTests(TimescaleDbApplicationFactory appFactory)
+    : IClassFixture<TimescaleDbApplicationFactory>
 {
-    private readonly TimescaleDbApplicationFactory<Program> _appFactory = appFactory;
+    private readonly TimescaleDbApplicationFactory _appFactory = appFactory;
 
     [Fact]
     public async Task StartAsync_PreStartupStateCacheJob_InitializesStateCache()
