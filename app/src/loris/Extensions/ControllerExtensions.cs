@@ -13,6 +13,7 @@ public static class ControllerExtensions
             var (status, title) = error.Type switch
             {
                 ErrorType.Validation => (StatusCodes.Status400BadRequest, "Validation failed"),
+                ErrorType.Invalid => (StatusCodes.Status400BadRequest, "Invalid argument"),
                 ErrorType.NotFound => (StatusCodes.Status404NotFound, "Resource not found"),
                 ErrorType.Conflict => (StatusCodes.Status409Conflict, "Conflict"),
                 ErrorType.Forbidden => (StatusCodes.Status403Forbidden, "Forbidden"),
@@ -100,6 +101,13 @@ public static class ControllerExtensions
         {
             if (result.IsSuccess)
                 return controller.Ok(result.Value);
+            return controller.ErrorProblem(result.Error);
+        }
+
+        public ActionResult ToActionResult(Result result)
+        {
+            if (result.IsSuccess)
+                return controller.NoContent();
             return controller.ErrorProblem(result.Error);
         }
     }
