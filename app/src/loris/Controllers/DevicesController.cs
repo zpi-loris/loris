@@ -27,9 +27,9 @@ public class DevicesController(IDeviceService deviceService) : ControllerBase
     /// </param>
     [HttpGet]
     public async Task<ActionResult<IEnumerable<Device>>> GetAll(
-        [DefaultValue(null)] [FromQuery] DeviceStatus[] status,
+        [DefaultValue(null)] [FromQuery] List<DeviceStatus> status,
         CancellationToken ct
-    ) => throw new NotImplementedException();
+    ) => this.ToActionResult(await _service.ListDevicesAsync(status, ct));
 
     /// <summary>
     /// Get device by id
@@ -41,7 +41,7 @@ public class DevicesController(IDeviceService deviceService) : ControllerBase
     [HttpGet("by-id/{id}")]
     [ProducesSensorNotFound]
     public async Task<ActionResult<Device>> GetById(Guid id, CancellationToken ct) =>
-        throw new NotImplementedException();
+        this.ToActionResult(await _service.GetByIdAsync(id, ct));
 
     /// <summary>
     /// Get device by devEui
@@ -53,7 +53,7 @@ public class DevicesController(IDeviceService deviceService) : ControllerBase
     [HttpGet("by-eui/{devEui}")]
     [ProducesSensorNotFound]
     public async Task<ActionResult<Device>> GetByEui(DevEui devEui, CancellationToken ct) =>
-        throw new NotImplementedException();
+        this.ToActionResult(await _service.GetByEuiAsync(devEui, ct));
 
     /// <summary>
     /// Get device by name
@@ -65,7 +65,7 @@ public class DevicesController(IDeviceService deviceService) : ControllerBase
     [HttpGet("by-name/{name}")]
     [ProducesSensorNotFound]
     public async Task<ActionResult<Device>> GetByName(string name, CancellationToken ct) =>
-        throw new NotImplementedException();
+        this.ToActionResult(await _service.GetByNameAsync(name, ct));
 
     /// <summary>
     /// Accept device by name

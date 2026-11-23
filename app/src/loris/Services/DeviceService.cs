@@ -20,6 +20,59 @@ public class DeviceService(
     private readonly IStateCache _stateCache = stateCache;
     private readonly IChirpstackService _chirpstackService = chirpstackService;
 
+    public async Task<Result<IEnumerable<Device>>> ListDevicesAsync(
+        List<DeviceStatus> statusFilterList,
+        CancellationToken ct = default
+    )
+    {
+        var statusSet = statusFilterList.ToHashSet();
+        var query = _ctx.Devices.Include(d => d.Sensors).Include(d => d.Functions);
+        if (statusSet.Count > 0)
+        {
+            return await query.Where(d => statusSet.Contains(d.DeviceStatus)).ToListAsync(ct);
+        }
+        return await query.ToListAsync(ct);
+    }
+
+    public async Task<Result<Device>> GetByEuiAsync(DevEui devEui, CancellationToken ct = default)
+    {
+        var device = _ctx
+            .Devices.Include(d => d.Functions)
+            .Include(d => d.Sensors)
+            .FirstOrDefault(d => d.DevEui == devEui);
+        if (device is null)
+        {
+            return DeviceErrors.NotFound(devEui);
+        }
+        return device;
+    }
+
+    public async Task<Result<Device>> GetByNameAsync(string name, CancellationToken ct = default)
+    {
+        var device = _ctx
+            .Devices.Include(d => d.Functions)
+            .Include(d => d.Sensors)
+            .FirstOrDefault(d => d.FriendlyName == name);
+        if (device is null)
+        {
+            return DeviceErrors.NotFound(name);
+        }
+        return device;
+    }
+
+    public async Task<Result<Device>> GetByIdAsync(Guid deviceId, CancellationToken ct = default)
+    {
+        var device = _ctx
+            .Devices.Include(d => d.Functions)
+            .Include(d => d.Sensors)
+            .FirstOrDefault(d => d.DeviceId == deviceId);
+        if (device is null)
+        {
+            return DeviceErrors.NotFound(deviceId);
+        }
+        return device;
+    }
+
     public async Task<Result<Device>> AcceptAsync(DevEui devEui, CancellationToken ct = default)
     {
         var device = await _ctx.Devices.SingleOrDefaultAsync(d => d.DevEui == devEui, ct);

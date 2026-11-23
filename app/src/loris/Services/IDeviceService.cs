@@ -27,4 +27,11 @@ public interface IDeviceService
         bool ignore,
         CancellationToken ct = default
     );
+    public Task<Result<IEnumerable<Device>>> ListDevicesAsync(
+        List<DeviceStatus> statusFilterList,
+        CancellationToken ct = default
+    );
+    public Task<Result<Device>> GetByEuiAsync(DevEui devEui, CancellationToken ct = default);
+    public Task<Result<Device>> GetByNameAsync(string name, CancellationToken ct = default);
+    public Task<Result<Device>> GetByIdAsync(Guid deviceId, CancellationToken ct = default);
 }

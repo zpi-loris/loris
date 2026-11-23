@@ -4,6 +4,9 @@ namespace Loris.Results.Errors;
 
 public static class DeviceErrors
 {
+    public static Error NotFound(Guid deviceId) =>
+        Error.NotFound("Devices.NotFound", $"No device was found with the id {deviceId}.");
+
     public static Error NotFound(string name) =>
         Error.NotFound("Devices.NotFound", $"No device was found with the friendly name {name}.");
 
