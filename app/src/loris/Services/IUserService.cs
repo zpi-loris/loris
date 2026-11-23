@@ -1,5 +1,4 @@
-using Loris.Controllers.Requests;
-using Loris.Controllers.Responses;
+using Loris.Dtos.User;
 using Loris.Models;
 using Loris.Results;
 
@@ -17,6 +16,7 @@ public interface IUserService
         CancellationToken ct = default
     );
     public Task<Result<UserResponse>> UpdateUserAsync(
+        Guid userId,
         UpdateUserRequest requestDto,
         CancellationToken ct = default
     );

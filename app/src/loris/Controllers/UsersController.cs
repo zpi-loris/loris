@@ -1,6 +1,5 @@
 using System.ComponentModel;
-using Loris.Controllers.Requests;
-using Loris.Controllers.Responses;
+using Loris.Dtos.User;
 using Loris.Extensions;
 using Loris.Models;
 using Loris.OpenApi;
@@ -77,7 +76,7 @@ public class UsersController(IUserService service) : ControllerBase
         Guid userId,
         [FromBody] UpdateUserRequest request,
         CancellationToken ct
-    ) => this.ToActionResult(await _service.UpdateUserAsync(request, ct));
+    ) => this.ToActionResult(await _service.UpdateUserAsync(userId, request, ct));
 
     /// <summary>
     /// Delete user by ID

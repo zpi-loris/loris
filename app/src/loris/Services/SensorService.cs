@@ -1,6 +1,6 @@
 using CmdScale.EntityFrameworkCore.TimescaleDB.Query;
-using Loris.Controllers.Responses;
 using Loris.Data;
+using Loris.Dtos.Sensor;
 using Loris.Protocol;
 using Loris.Results;
 using Loris.Results.Errors;

@@ -1,3 +1,4 @@
+using Loris.Dtos.Device;
 using Loris.Models;
 using Loris.Results;
 
@@ -5,46 +6,55 @@ namespace Loris.Services;
 
 public interface IDeviceService
 {
-    public Task<Result<Device>> AcceptAsync(DevEui devEui, CancellationToken ct = default);
-    public Task<Result<Device>> AcceptAsync(string name, CancellationToken ct = default);
-    public Task<Result<Device>> DisconnectAsync(
+    public Task<Result<DeviceResponse>> AcceptAsync(DevEui devEui, CancellationToken ct = default);
+    public Task<Result<DeviceResponse>> AcceptAsync(string name, CancellationToken ct = default);
+    public Task<Result<DeviceResponse>> DisconnectAsync(
         DevEui devEui,
         bool force,
         CancellationToken ct = default
     );
-    public Task<Result<Device>> DisconnectAsync(
+    public Task<Result<DeviceResponse>> DisconnectAsync(
         string name,
         bool force,
         CancellationToken ct = default
     );
-    public Task<Result<Device>> ToggleIgnoreAsync(
+    public Task<Result<DeviceResponse>> ToggleIgnoreAsync(
         DevEui devEui,
         bool ignore,
         CancellationToken ct = default
     );
-    public Task<Result<Device>> ToggleIgnoreAsync(
+    public Task<Result<DeviceResponse>> ToggleIgnoreAsync(
         string name,
         bool ignore,
         CancellationToken ct = default
     );
-    public Task<Result<IEnumerable<Device>>> ListDevicesAsync(
+    public Task<Result<IEnumerable<DeviceDetailsResponse>>> ListDevicesAsync(
         List<DeviceStatus> statusFilterList,
         CancellationToken ct = default
     );
-    public Task<Result<Device>> GetAsync(DevEui devEui, CancellationToken ct = default);
-    public Task<Result<Device>> GetAsync(string name, CancellationToken ct = default);
-    public Task<Result<Device>> GetAsync(Guid deviceId, CancellationToken ct = default);
-    public Task<Result<Device>> RenameAsync(
+    public Task<Result<DeviceDetailsResponse>> GetAsync(
+        DevEui devEui,
+        CancellationToken ct = default
+    );
+    public Task<Result<DeviceDetailsResponse>> GetAsync(
+        string name,
+        CancellationToken ct = default
+    );
+    public Task<Result<DeviceDetailsResponse>> GetAsync(
+        Guid deviceId,
+        CancellationToken ct = default
+    );
+    public Task<Result<DeviceResponse>> RenameAsync(
         DevEui devEui,
         string newName,
         CancellationToken ct = default
     );
-    public Task<Result<Device>> RenameAsync(
+    public Task<Result<DeviceResponse>> RenameAsync(
         string name,
         string newName,
         CancellationToken ct = default
     );
-    public Task<Result<Device>> RenameAsync(
+    public Task<Result<DeviceResponse>> RenameAsync(
         Guid deviceId,
         string newName,
         CancellationToken ct = default

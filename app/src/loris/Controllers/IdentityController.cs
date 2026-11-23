@@ -1,5 +1,4 @@
-using Loris.Controllers.Requests;
-using Loris.Controllers.Responses;
+using Loris.Dtos.User;
 using Loris.OpenApi;
 using Microsoft.AspNetCore.Mvc;
 

@@ -1,4 +1,4 @@
-using Loris.Controllers.Responses;
+using Loris.Dtos.Sensor;
 using Loris.Extensions;
 using Loris.OpenApi;
 using loris.Services;

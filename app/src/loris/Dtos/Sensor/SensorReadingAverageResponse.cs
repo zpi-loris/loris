@@ -1,6 +1,6 @@
 using Loris.OpenApi;
 
-namespace Loris.Controllers.Responses;
+namespace Loris.Dtos.Sensor;
 
 public record SensorReadingAverageResponse()
 {

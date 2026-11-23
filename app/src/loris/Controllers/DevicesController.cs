@@ -1,5 +1,5 @@
 using System.ComponentModel;
-using Loris.Controllers.Requests;
+using Loris.Dtos.Device;
 using Loris.Extensions;
 using Loris.Models;
 using Loris.OpenApi;
@@ -27,7 +27,7 @@ public class DevicesController(IDeviceService deviceService) : ControllerBase
     /// Optionally, filter by device status. Accepts unions.
     /// </param>
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<Device>>> GetAll(
+    public async Task<ActionResult<IEnumerable<DeviceDetailsResponse>>> GetAll(
         [DefaultValue(null)] [FromQuery] List<DeviceStatus> status,
         CancellationToken ct
     ) => this.ToActionResult(await _service.ListDevicesAsync(status, ct));
@@ -41,7 +41,7 @@ public class DevicesController(IDeviceService deviceService) : ControllerBase
     /// </remarks>
     [HttpGet("by-id/{id}")]
     [ProducesDeviceNotFound]
-    public async Task<ActionResult<Device>> GetById(Guid id, CancellationToken ct) =>
+    public async Task<ActionResult<DeviceDetailsResponse>> GetById(Guid id, CancellationToken ct) =>
         this.ToActionResult(await _service.GetAsync(id, ct));
 
     /// <summary>
@@ -53,8 +53,10 @@ public class DevicesController(IDeviceService deviceService) : ControllerBase
     /// </remarks>
     [HttpGet("by-eui/{devEui}")]
     [ProducesDeviceNotFound]
-    public async Task<ActionResult<Device>> GetByEui(DevEui devEui, CancellationToken ct) =>
-        this.ToActionResult(await _service.GetAsync(devEui, ct));
+    public async Task<ActionResult<DeviceDetailsResponse>> GetByEui(
+        DevEui devEui,
+        CancellationToken ct
+    ) => this.ToActionResult(await _service.GetAsync(devEui, ct));
 
     /// <summary>
     /// Get device by name
@@ -65,8 +67,10 @@ public class DevicesController(IDeviceService deviceService) : ControllerBase
     /// </remarks>
     [HttpGet("by-name/{name}")]
     [ProducesDeviceNotFound]
-    public async Task<ActionResult<Device>> GetByName(string name, CancellationToken ct) =>
-        this.ToActionResult(await _service.GetAsync(name, ct));
+    public async Task<ActionResult<DeviceDetailsResponse>> GetByName(
+        string name,
+        CancellationToken ct
+    ) => this.ToActionResult(await _service.GetAsync(name, ct));
 
     /// <summary>
     /// Rename device by id
@@ -78,7 +82,7 @@ public class DevicesController(IDeviceService deviceService) : ControllerBase
     [HttpPatch("by-id/{id}")]
     [ProducesDeviceNameConflict]
     [ProducesDeviceNotFound]
-    public async Task<ActionResult<Device>> RenameById(
+    public async Task<ActionResult<DeviceResponse>> RenameById(
         Guid id,
         [FromBody] RenameDeviceRequest request,
         CancellationToken ct
@@ -94,7 +98,7 @@ public class DevicesController(IDeviceService deviceService) : ControllerBase
     [HttpPatch("by-eui/{devEui}")]
     [ProducesDeviceNameConflict]
     [ProducesDeviceNotFound]
-    public async Task<ActionResult<Device>> RenameByEui(
+    public async Task<ActionResult<DeviceResponse>> RenameByEui(
         DevEui devEui,
         [FromBody] RenameDeviceRequest request,
         CancellationToken ct
@@ -110,7 +114,7 @@ public class DevicesController(IDeviceService deviceService) : ControllerBase
     [HttpPatch("by-name/{name}")]
     [ProducesDeviceNameConflict]
     [ProducesDeviceNotFound]
-    public async Task<ActionResult<Device>> RenameByName(
+    public async Task<ActionResult<DeviceResponse>> RenameByName(
         string name,
         [FromBody] RenameDeviceRequest request,
         CancellationToken ct
@@ -126,8 +130,10 @@ public class DevicesController(IDeviceService deviceService) : ControllerBase
     [ProducesLoraWanGatewayErrors]
     [ProducesDeviceStateConflict]
     [ProducesDeviceNotFound]
-    public async Task<ActionResult<Device>> AcceptByName(string name, CancellationToken ct) =>
-        this.ToActionResult(await _service.AcceptAsync(name, ct));
+    public async Task<ActionResult<DeviceResponse>> AcceptByName(
+        string name,
+        CancellationToken ct
+    ) => this.ToActionResult(await _service.AcceptAsync(name, ct));
 
     /// <summary>
     /// Accept device by devEui
@@ -139,8 +145,10 @@ public class DevicesController(IDeviceService deviceService) : ControllerBase
     [ProducesLoraWanGatewayErrors]
     [ProducesDeviceStateConflict]
     [ProducesDeviceNotFound]
-    public async Task<ActionResult<Device>> AcceptByEui(DevEui devEui, CancellationToken ct) =>
-        this.ToActionResult(await _service.AcceptAsync(devEui, ct));
+    public async Task<ActionResult<DeviceResponse>> AcceptByEui(
+        DevEui devEui,
+        CancellationToken ct
+    ) => this.ToActionResult(await _service.AcceptAsync(devEui, ct));
 
     /// <summary>
     /// Ignore device by name
@@ -154,7 +162,7 @@ public class DevicesController(IDeviceService deviceService) : ControllerBase
     [HttpPost("by-name/{name}/ignore")]
     [ProducesDeviceStateConflict]
     [ProducesDeviceNotFound]
-    public async Task<ActionResult<Device>> IgnoreByName(
+    public async Task<ActionResult<DeviceResponse>> IgnoreByName(
         string name,
         [DefaultValue(false)] [FromQuery] bool revert,
         CancellationToken ct
@@ -172,7 +180,7 @@ public class DevicesController(IDeviceService deviceService) : ControllerBase
     [HttpPost("by-eui/{devEui}/ignore")]
     [ProducesDeviceStateConflict]
     [ProducesDeviceNotFound]
-    public async Task<ActionResult<Device>> IgnoreByEui(
+    public async Task<ActionResult<DeviceResponse>> IgnoreByEui(
         DevEui devEui,
         [DefaultValue(false)] [FromQuery] bool revert,
         CancellationToken ct
@@ -191,7 +199,7 @@ public class DevicesController(IDeviceService deviceService) : ControllerBase
     [ProducesLoraWanGatewayErrors]
     [ProducesDeviceStateConflict]
     [ProducesDeviceNotFound]
-    public async Task<ActionResult<Device>> DisconnectByName(
+    public async Task<ActionResult<DeviceResponse>> DisconnectByName(
         string name,
         [DefaultValue(false)] [FromQuery] bool force,
         CancellationToken ct
@@ -210,7 +218,7 @@ public class DevicesController(IDeviceService deviceService) : ControllerBase
     [ProducesLoraWanGatewayErrors]
     [ProducesDeviceStateConflict]
     [ProducesDeviceNotFound]
-    public async Task<ActionResult<Device>> DisconnectByEui(
+    public async Task<ActionResult<DeviceResponse>> DisconnectByEui(
         DevEui devEui,
         [DefaultValue(false)] [FromQuery] bool force,
         CancellationToken ct

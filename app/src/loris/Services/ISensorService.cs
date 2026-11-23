@@ -1,4 +1,4 @@
-using Loris.Controllers.Responses;
+using Loris.Dtos.Sensor;
 using Loris.Results;
 
 namespace loris.Services;

@@ -1,7 +1,5 @@
-using System.ComponentModel;
-using Loris.Controllers.Requests;
+using Loris.Dtos.Function;
 using Loris.Extensions;
-using Loris.Models;
 using Loris.OpenApi;
 using Loris.Services;
 using Microsoft.AspNetCore.Mvc;
