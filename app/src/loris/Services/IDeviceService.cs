@@ -31,7 +31,22 @@ public interface IDeviceService
         List<DeviceStatus> statusFilterList,
         CancellationToken ct = default
     );
-    public Task<Result<Device>> GetByEuiAsync(DevEui devEui, CancellationToken ct = default);
-    public Task<Result<Device>> GetByNameAsync(string name, CancellationToken ct = default);
-    public Task<Result<Device>> GetByIdAsync(Guid deviceId, CancellationToken ct = default);
+    public Task<Result<Device>> GetAsync(DevEui devEui, CancellationToken ct = default);
+    public Task<Result<Device>> GetAsync(string name, CancellationToken ct = default);
+    public Task<Result<Device>> GetAsync(Guid deviceId, CancellationToken ct = default);
+    public Task<Result<Device>> RenameAsync(
+        DevEui devEui,
+        string newName,
+        CancellationToken ct = default
+    );
+    public Task<Result<Device>> RenameAsync(
+        string name,
+        string newName,
+        CancellationToken ct = default
+    );
+    public Task<Result<Device>> RenameAsync(
+        Guid deviceId,
+        string newName,
+        CancellationToken ct = default
+    );
 }

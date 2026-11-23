@@ -16,16 +16,29 @@ public sealed class ProducesDeviceNotFoundAttribute
 }
 
 [AttributeUsage(AttributeTargets.Method | AttributeTargets.Class)]
-public sealed class ProducesDeviceConflictAttribute
+public sealed class ProducesDeviceStateConflictAttribute
     : ProducesResponseTypeAttribute<ResultProblemDetails>
 {
-    public ProducesDeviceConflictAttribute()
+    public ProducesDeviceStateConflictAttribute()
         : base(StatusCodes.Status409Conflict)
     {
         Description =
             @"The device is in a state that does not allow the requested operation.
             This involves accept, disconnect and ignore operations.
             The device must be in a state that allows the requested operation.";
+    }
+}
+
+[AttributeUsage(AttributeTargets.Method | AttributeTargets.Class)]
+public sealed class ProducesDeviceNameConflictAttribute
+    : ProducesResponseTypeAttribute<ResultProblemDetails>
+{
+    public ProducesDeviceNameConflictAttribute()
+        : base(StatusCodes.Status409Conflict)
+    {
+        Description =
+            @"The device friendly name already exists 
+            and/or is used by another device.";
     }
 }
 

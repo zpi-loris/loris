@@ -34,7 +34,7 @@ public class DeviceService(
         return await query.ToListAsync(ct);
     }
 
-    public async Task<Result<Device>> GetByEuiAsync(DevEui devEui, CancellationToken ct = default)
+    public async Task<Result<Device>> GetAsync(DevEui devEui, CancellationToken ct = default)
     {
         var device = _ctx
             .Devices.Include(d => d.Functions)
@@ -47,7 +47,7 @@ public class DeviceService(
         return device;
     }
 
-    public async Task<Result<Device>> GetByNameAsync(string name, CancellationToken ct = default)
+    public async Task<Result<Device>> GetAsync(string name, CancellationToken ct = default)
     {
         var device = _ctx
             .Devices.Include(d => d.Functions)
@@ -60,7 +60,7 @@ public class DeviceService(
         return device;
     }
 
-    public async Task<Result<Device>> GetByIdAsync(Guid deviceId, CancellationToken ct = default)
+    public async Task<Result<Device>> GetAsync(Guid deviceId, CancellationToken ct = default)
     {
         var device = _ctx
             .Devices.Include(d => d.Functions)
@@ -70,6 +70,69 @@ public class DeviceService(
         {
             return DeviceErrors.NotFound(deviceId);
         }
+        return device;
+    }
+
+    public async Task<Result<Device>> RenameAsync(
+        DevEui devEui,
+        string newName,
+        CancellationToken ct = default
+    )
+    {
+        var device = await _ctx.Devices.FirstOrDefaultAsync(d => d.DevEui == devEui, ct);
+        if (device is null)
+        {
+            return DeviceErrors.NotFound(devEui);
+        }
+        return await RenameAsync(device, newName, ct);
+    }
+
+    public async Task<Result<Device>> RenameAsync(
+        string name,
+        string newName,
+        CancellationToken ct = default
+    )
+    {
+        // NOTE: THIS IS ALTERNATE APPROACH
+        // var result = _ctx
+        //     .Devices.Where(d => d.FriendlyName == name)
+        //     .ExecuteUpdateAsync(setters => setters.SetProperty(d => d.FriendlyName, newName), ct);
+        var device = await _ctx.Devices.FirstOrDefaultAsync(d => d.FriendlyName == name, ct);
+        if (device is null)
+        {
+            return DeviceErrors.NotFound(name);
+        }
+        return await RenameAsync(device, newName, ct);
+    }
+
+    public async Task<Result<Device>> RenameAsync(
+        Guid deviceId,
+        string newName,
+        CancellationToken ct = default
+    )
+    {
+        var device = await _ctx.Devices.FirstOrDefaultAsync(d => d.DeviceId == deviceId, ct);
+        if (device is null)
+        {
+            return DeviceErrors.NotFound(deviceId);
+        }
+        return await RenameAsync(device, newName, ct);
+    }
+
+    private async Task<Result<Device>> RenameAsync(
+        Device device,
+        string newName,
+        CancellationToken ct
+    )
+    {
+        var existing = await _ctx.Devices.FirstOrDefaultAsync(d => d.FriendlyName == newName, ct);
+        if (existing is not null)
+        {
+            return DeviceErrors.FriendlyNameTaken(newName);
+        }
+        device.FriendlyName = newName;
+        await _ctx.SaveChangesAsync(ct);
+        _stateCache[device.DevEui] = device;
         return device;
     }
 

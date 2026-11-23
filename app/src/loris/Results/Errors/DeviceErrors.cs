@@ -37,6 +37,12 @@ public static class DeviceErrors
     public static Error AlreadyDisconnected(string device) =>
         Error.Conflict("Devices.AlreadyDisconnected", $"Device {device} is already disconnected.");
 
+    public static Error FriendlyNameTaken(string name) =>
+        Error.Conflict(
+            "Devices.FriendlyNameAlreadyExists",
+            $"Device {name} friendly name already exists"
+        );
+
     public static Error UnknownStatus(string device) =>
         new("Devices.UnknownStatus", $"Device {device} has an unknown status.", ErrorType.Failure);
 }

@@ -42,7 +42,7 @@ public class DevicesController(IDeviceService deviceService) : ControllerBase
     [HttpGet("by-id/{id}")]
     [ProducesDeviceNotFound]
     public async Task<ActionResult<Device>> GetById(Guid id, CancellationToken ct) =>
-        this.ToActionResult(await _service.GetByIdAsync(id, ct));
+        this.ToActionResult(await _service.GetAsync(id, ct));
 
     /// <summary>
     /// Get device by devEui
@@ -54,7 +54,7 @@ public class DevicesController(IDeviceService deviceService) : ControllerBase
     [HttpGet("by-eui/{devEui}")]
     [ProducesDeviceNotFound]
     public async Task<ActionResult<Device>> GetByEui(DevEui devEui, CancellationToken ct) =>
-        this.ToActionResult(await _service.GetByEuiAsync(devEui, ct));
+        this.ToActionResult(await _service.GetAsync(devEui, ct));
 
     /// <summary>
     /// Get device by name
@@ -66,7 +66,55 @@ public class DevicesController(IDeviceService deviceService) : ControllerBase
     [HttpGet("by-name/{name}")]
     [ProducesDeviceNotFound]
     public async Task<ActionResult<Device>> GetByName(string name, CancellationToken ct) =>
-        this.ToActionResult(await _service.GetByNameAsync(name, ct));
+        this.ToActionResult(await _service.GetAsync(name, ct));
+
+    /// <summary>
+    /// Rename device by id
+    /// </summary>
+    /// <remarks>
+    /// Renames a device identified by its unique ID.
+    /// Returns the updated device only.
+    /// </remarks>
+    [HttpPatch("by-id/{id}")]
+    [ProducesDeviceNameConflict]
+    [ProducesDeviceNotFound]
+    public async Task<ActionResult<Device>> RenameById(
+        Guid id,
+        [FromBody] RenameDeviceRequest request,
+        CancellationToken ct
+    ) => this.ToActionResult(await _service.RenameAsync(id, request.NewFriendlyName, ct));
+
+    /// <summary>
+    /// Rename device by devEui
+    /// </summary>
+    /// <remarks>
+    /// Renames a device identified by its unique LoraWAN devEUI address.
+    /// Returns the updated device only.
+    /// </remarks>
+    [HttpPatch("by-eui/{devEui}")]
+    [ProducesDeviceNameConflict]
+    [ProducesDeviceNotFound]
+    public async Task<ActionResult<Device>> RenameByEui(
+        DevEui devEui,
+        [FromBody] RenameDeviceRequest request,
+        CancellationToken ct
+    ) => this.ToActionResult(await _service.RenameAsync(devEui, request.NewFriendlyName, ct));
+
+    /// <summary>
+    /// Rename device by name
+    /// </summary>
+    /// <remarks>
+    /// Renames a device identified by its unique friendly name.
+    /// Returns the updated device only.
+    /// </remarks>
+    [HttpPatch("by-name/{name}")]
+    [ProducesDeviceNameConflict]
+    [ProducesDeviceNotFound]
+    public async Task<ActionResult<Device>> RenameByName(
+        string name,
+        [FromBody] RenameDeviceRequest request,
+        CancellationToken ct
+    ) => this.ToActionResult(await _service.RenameAsync(name, request.NewFriendlyName, ct));
 
     /// <summary>
     /// Accept device by name
@@ -76,7 +124,7 @@ public class DevicesController(IDeviceService deviceService) : ControllerBase
     /// </remarks>
     [HttpPost("by-name/{name}/accept")]
     [ProducesLoraWanGatewayErrors]
-    [ProducesDeviceConflict]
+    [ProducesDeviceStateConflict]
     [ProducesDeviceNotFound]
     public async Task<ActionResult<Device>> AcceptByName(string name, CancellationToken ct) =>
         this.ToActionResult(await _service.AcceptAsync(name, ct));
@@ -89,7 +137,7 @@ public class DevicesController(IDeviceService deviceService) : ControllerBase
     /// </remarks>
     [HttpPost("by-eui/{devEui}/accept")]
     [ProducesLoraWanGatewayErrors]
-    [ProducesDeviceConflict]
+    [ProducesDeviceStateConflict]
     [ProducesDeviceNotFound]
     public async Task<ActionResult<Device>> AcceptByEui(DevEui devEui, CancellationToken ct) =>
         this.ToActionResult(await _service.AcceptAsync(devEui, ct));
@@ -104,7 +152,7 @@ public class DevicesController(IDeviceService deviceService) : ControllerBase
     /// If true, the device will be un-ignored.
     /// </param>
     [HttpPost("by-name/{name}/ignore")]
-    [ProducesDeviceConflict]
+    [ProducesDeviceStateConflict]
     [ProducesDeviceNotFound]
     public async Task<ActionResult<Device>> IgnoreByName(
         string name,
@@ -122,7 +170,7 @@ public class DevicesController(IDeviceService deviceService) : ControllerBase
     /// If true, the device will be un-ignored.
     /// </param>
     [HttpPost("by-eui/{devEui}/ignore")]
-    [ProducesDeviceConflict]
+    [ProducesDeviceStateConflict]
     [ProducesDeviceNotFound]
     public async Task<ActionResult<Device>> IgnoreByEui(
         DevEui devEui,
@@ -141,7 +189,7 @@ public class DevicesController(IDeviceService deviceService) : ControllerBase
     /// </param>
     [HttpPost("by-name/{name}/disconnect")]
     [ProducesLoraWanGatewayErrors]
-    [ProducesDeviceConflict]
+    [ProducesDeviceStateConflict]
     [ProducesDeviceNotFound]
     public async Task<ActionResult<Device>> DisconnectByName(
         string name,
@@ -160,7 +208,7 @@ public class DevicesController(IDeviceService deviceService) : ControllerBase
     /// </param>
     [HttpPost("by-eui/{devEui}/disconnect")]
     [ProducesLoraWanGatewayErrors]
-    [ProducesDeviceConflict]
+    [ProducesDeviceStateConflict]
     [ProducesDeviceNotFound]
     public async Task<ActionResult<Device>> DisconnectByEui(
         DevEui devEui,
