@@ -66,6 +66,7 @@ builder.Services.AddAutomationsCompilers();
 builder.Services.AddTransient<IChirpstackService, ChirpstackService>();
 builder.Services.AddTransient<IAutomationService, AutomationService>();
 builder.Services.AddTransient<IDeviceService, DeviceService>();
+builder.Services.AddTransient<IUserService, UserService>();
 
 // Chirpstacks integration background service and device grpc downlink service
 builder.Services.AddChirpstackIntegration<ChirpstackIntegrationHandler>(builder.Configuration);
