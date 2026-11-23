@@ -1,4 +1,5 @@
 using System.Net;
+using System.Text.Json;
 using Loris.Data;
 using Loris.Dtos.Device;
 using loris.IntegrationTests.Fakes;
@@ -7,6 +8,7 @@ using Loris.Protocol;
 using Loris.Results;
 using loris.Services;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.Options;
 
 namespace loris.IntegrationTests.Controllers;
@@ -26,46 +28,80 @@ public sealed class DevicesControllerTests(
         ((FakeStateCache)_appFactory.Services.GetRequiredService<IStateCache>()).Clear();
     }
 
+    private WebApplicationFactory<Program> WithChirpstackService<TFake>()
+        where TFake : class, IChirpstackService =>
+        _appFactory.WithWebHostBuilder(builder =>
+            builder.ConfigureServices(services =>
+                services.AddTransient<IChirpstackService, TFake>()
+            )
+        );
+
+    private static Device CreateDevice(
+        DeviceStatus status = DeviceStatus.ACTIVE,
+        string devEui = "1122AABBCCDDEEFF",
+        string friendlyName = "loris_friendly",
+        string deviceName = "loris_sample",
+        bool withCapabilities = false
+    )
+    {
+        var device = new Device
+        {
+            DeviceName = deviceName,
+            DevEui = DevEui.Parse(devEui),
+            FriendlyName = friendlyName,
+            LastSeen = DateTime.UtcNow,
+            DeviceStatus = status,
+        };
+
+        if (withCapabilities)
+        {
+            device.Sensors.Add(
+                new Loris.Models.Sensor
+                {
+                    DeviceSensorId = 1,
+                    Name = "env_temp_sensor",
+                    Description = string.Empty,
+                    ValueType = SensorValueType.Float,
+                    Semantics = SensorSemantics.Temperature,
+                    Unit = "C",
+                }
+            );
+            device.Functions.Add(
+                new Loris.Models.Function
+                {
+                    DeviceFunctionId = 2,
+                    Name = "set_led_green",
+                    Description = "Brightness: 0-100",
+                    ArgType = FuncArgType.Int,
+                }
+            );
+        }
+
+        return device;
+    }
+
+    private static async Task SeedDevicesAsync(
+        WebApplicationFactory<Program> factory,
+        params Device[] devices
+    )
+    {
+        using var scope = factory.Services.CreateScope();
+        var ctx = scope.ServiceProvider.GetRequiredService<LorisDbContext>();
+        ctx.Devices.AddRange(devices);
+        await ctx.SaveChangesAsync(CancellationToken.None);
+    }
+
+    private static JsonSerializerOptions GetJsonOptions(WebApplicationFactory<Program> factory) =>
+        factory.Services.GetRequiredService<IOptions<JsonOptions>>().Value.JsonSerializerOptions;
+
     [Fact]
     public async Task Get_GetDevices_ReturnsDeviceDetailsResponseListWhenMoreThanOneExists()
     {
         // Arrange
-        var device = new Device
-        {
-            DeviceName = "loris_sample",
-            DevEui = DevEui.Parse("1122AABBCCDDEEFF"),
-            FriendlyName = "loris_friendly",
-            LastSeen = DateTime.UtcNow,
-            DeviceStatus = DeviceStatus.ACTIVE,
-        };
-        device.Sensors.Add(
-            new Loris.Models.Sensor
-            {
-                DeviceSensorId = 1,
-                Name = "env_temp_sensor",
-                Description = string.Empty,
-                ValueType = SensorValueType.Float,
-                Semantics = SensorSemantics.Temperature,
-                Unit = "C",
-            }
-        );
-        device.Functions.Add(
-            new Loris.Models.Function
-            {
-                DeviceFunctionId = 2,
-                Name = "set_led_green",
-                Description = "Brightness: 0-100",
-                ArgType = FuncArgType.Int,
-            }
-        );
-        using var scope = _appFactory.Services.CreateScope();
-        var ctx = scope.ServiceProvider.GetRequiredService<LorisDbContext>();
-        ctx.Devices.Add(device);
-        await ctx.SaveChangesAsync(CancellationToken.None);
+        var device = CreateDevice(withCapabilities: true);
+        await SeedDevicesAsync(_appFactory, device);
 
-        var jsonOptions = _appFactory
-            .Services.GetRequiredService<IOptions<JsonOptions>>()
-            .Value.JsonSerializerOptions;
+        var jsonOptions = GetJsonOptions(_appFactory);
         var expectedResponse = DeviceDetailsResponse.FromModel(device);
         var client = _appFactory.CreateClient();
 
@@ -91,14 +127,12 @@ public sealed class DevicesControllerTests(
     )
     {
         // Arrange
-        var device1 = new Device
-        {
-            DeviceName = "loris_sample_1",
-            DevEui = DevEui.Parse("1122AABBCCDDEEFF"),
-            FriendlyName = "loris_friendly_1",
-            LastSeen = DateTime.UtcNow,
-            DeviceStatus = DeviceStatus.ACTIVE,
-        };
+        var device1 = CreateDevice(
+            status: DeviceStatus.ACTIVE,
+            devEui: "1122AABBCCDDEEFF",
+            friendlyName: "loris_friendly_1",
+            deviceName: "loris_sample_1"
+        );
         device1.Sensors.Add(
             new Loris.Models.Sensor
             {
@@ -110,30 +144,21 @@ public sealed class DevicesControllerTests(
                 Unit = "C",
             }
         );
-        var device2 = new Device
-        {
-            DeviceName = "loris_sample_2",
-            DevEui = DevEui.Parse("1122AABBCCDDEEF0"),
-            FriendlyName = "loris_friendly_2",
-            LastSeen = DateTime.UtcNow,
-            DeviceStatus = DeviceStatus.PENDING,
-        };
-        var device3 = new Device
-        {
-            DeviceName = "loris_sample_3",
-            DevEui = DevEui.Parse("1122AABBCCDDEEF1"),
-            FriendlyName = "loris_friendly_3",
-            LastSeen = DateTime.UtcNow,
-            DeviceStatus = DeviceStatus.IGNORED,
-        };
-        using var scope = _appFactory.Services.CreateScope();
-        var ctx = scope.ServiceProvider.GetRequiredService<LorisDbContext>();
-        ctx.Devices.AddRange(device1, device2, device3);
-        await ctx.SaveChangesAsync(CancellationToken.None);
+        var device2 = CreateDevice(
+            status: DeviceStatus.PENDING,
+            devEui: "1122AABBCCDDEEF0",
+            friendlyName: "loris_friendly_2",
+            deviceName: "loris_sample_2"
+        );
+        var device3 = CreateDevice(
+            status: DeviceStatus.IGNORED,
+            devEui: "1122AABBCCDDEEF1",
+            friendlyName: "loris_friendly_3",
+            deviceName: "loris_sample_3"
+        );
+        await SeedDevicesAsync(_appFactory, device1, device2, device3);
 
-        var jsonOptions = _appFactory
-            .Services.GetRequiredService<IOptions<JsonOptions>>()
-            .Value.JsonSerializerOptions;
+        var jsonOptions = GetJsonOptions(_appFactory);
         var expectedResponse = new List<DeviceDetailsResponse>();
         foreach (var device in new[] { device1, device2, device3 })
         {
@@ -170,42 +195,10 @@ public sealed class DevicesControllerTests(
     public async Task Get_GetById_ReturnsDeviceDetailsResponseWhenDeviceExists()
     {
         // Arrange
-        var device = new Device
-        {
-            DeviceName = "loris_sample",
-            DevEui = DevEui.Parse("1122AABBCCDDEEFF"),
-            FriendlyName = "loris_friendly",
-            LastSeen = DateTime.UtcNow,
-            DeviceStatus = DeviceStatus.ACTIVE,
-        };
-        device.Sensors.Add(
-            new Loris.Models.Sensor
-            {
-                DeviceSensorId = 1,
-                Name = "env_temp_sensor",
-                Description = string.Empty,
-                ValueType = SensorValueType.Float,
-                Semantics = SensorSemantics.Temperature,
-                Unit = "C",
-            }
-        );
-        device.Functions.Add(
-            new Loris.Models.Function
-            {
-                DeviceFunctionId = 2,
-                Name = "set_led_green",
-                Description = "Brightness: 0-100",
-                ArgType = FuncArgType.Int,
-            }
-        );
-        using var scope = _appFactory.Services.CreateScope();
-        var ctx = scope.ServiceProvider.GetRequiredService<LorisDbContext>();
-        ctx.Devices.Add(device);
-        await ctx.SaveChangesAsync(CancellationToken.None);
+        var device = CreateDevice(withCapabilities: true);
+        await SeedDevicesAsync(_appFactory, device);
 
-        var jsonOptions = _appFactory
-            .Services.GetRequiredService<IOptions<JsonOptions>>()
-            .Value.JsonSerializerOptions;
+        var jsonOptions = GetJsonOptions(_appFactory);
         var expectedResponse = DeviceDetailsResponse.FromModel(device);
         var client = _appFactory.CreateClient();
 
@@ -230,9 +223,7 @@ public sealed class DevicesControllerTests(
     {
         // Arrange
         var nonExistentId = Guid.NewGuid();
-        var jsonOptions = _appFactory
-            .Services.GetRequiredService<IOptions<JsonOptions>>()
-            .Value.JsonSerializerOptions;
+        var jsonOptions = GetJsonOptions(_appFactory);
         var client = _appFactory.CreateClient();
 
         // Act
@@ -255,49 +246,16 @@ public sealed class DevicesControllerTests(
     public async Task Get_GetByEui_ReturnsDeviceDetailsResponseWhenDeviceExists()
     {
         // Arrange
-        var devEui = DevEui.Parse("1122AABBCCDDEEFF");
-        var device = new Device
-        {
-            DeviceName = "loris_sample",
-            DevEui = devEui,
-            FriendlyName = "loris_friendly",
-            LastSeen = DateTime.UtcNow,
-            DeviceStatus = DeviceStatus.ACTIVE,
-        };
-        device.Sensors.Add(
-            new Loris.Models.Sensor
-            {
-                DeviceSensorId = 1,
-                Name = "env_temp_sensor",
-                Description = string.Empty,
-                ValueType = SensorValueType.Float,
-                Semantics = SensorSemantics.Temperature,
-                Unit = "C",
-            }
-        );
-        device.Functions.Add(
-            new Loris.Models.Function
-            {
-                DeviceFunctionId = 2,
-                Name = "set_led_green",
-                Description = "Brightness: 0-100",
-                ArgType = FuncArgType.Int,
-            }
-        );
-        using var scope = _appFactory.Services.CreateScope();
-        var ctx = scope.ServiceProvider.GetRequiredService<LorisDbContext>();
-        ctx.Devices.Add(device);
-        await ctx.SaveChangesAsync(CancellationToken.None);
+        var device = CreateDevice(withCapabilities: true);
+        await SeedDevicesAsync(_appFactory, device);
 
-        var jsonOptions = _appFactory
-            .Services.GetRequiredService<IOptions<JsonOptions>>()
-            .Value.JsonSerializerOptions;
+        var jsonOptions = GetJsonOptions(_appFactory);
         var expectedResponse = DeviceDetailsResponse.FromModel(device);
         var client = _appFactory.CreateClient();
 
         // Act
         var httpResponse = await client.GetAsync(
-            $"/api/devices/by-eui/{devEui}",
+            $"/api/devices/by-eui/{device.DevEui}",
             CancellationToken.None
         );
         var deviceResponse = await httpResponse.Content.ReadFromJsonAsync<DeviceDetailsResponse>(
@@ -316,9 +274,7 @@ public sealed class DevicesControllerTests(
     {
         // Arrange
         var nonExistentEui = DevEui.Parse("FFEEDDCCBBAA2211");
-        var jsonOptions = _appFactory
-            .Services.GetRequiredService<IOptions<JsonOptions>>()
-            .Value.JsonSerializerOptions;
+        var jsonOptions = GetJsonOptions(_appFactory);
         var client = _appFactory.CreateClient();
 
         // Act
@@ -341,42 +297,10 @@ public sealed class DevicesControllerTests(
     public async Task Get_GetByName_ReturnsDeviceDetailsResponseWhenDeviceExists()
     {
         // Arrange
-        var device = new Device
-        {
-            DeviceName = "loris_sample",
-            DevEui = DevEui.Parse("1122AABBCCDDEEFF"),
-            FriendlyName = "loris_friendly",
-            LastSeen = DateTime.UtcNow,
-            DeviceStatus = DeviceStatus.ACTIVE,
-        };
-        device.Sensors.Add(
-            new Loris.Models.Sensor
-            {
-                DeviceSensorId = 1,
-                Name = "env_temp_sensor",
-                Description = string.Empty,
-                ValueType = SensorValueType.Float,
-                Semantics = SensorSemantics.Temperature,
-                Unit = "C",
-            }
-        );
-        device.Functions.Add(
-            new Loris.Models.Function
-            {
-                DeviceFunctionId = 2,
-                Name = "set_led_green",
-                Description = "Brightness: 0-100",
-                ArgType = FuncArgType.Int,
-            }
-        );
-        using var scope = _appFactory.Services.CreateScope();
-        var ctx = scope.ServiceProvider.GetRequiredService<LorisDbContext>();
-        ctx.Devices.Add(device);
-        await ctx.SaveChangesAsync(CancellationToken.None);
+        var device = CreateDevice(withCapabilities: true);
+        await SeedDevicesAsync(_appFactory, device);
 
-        var jsonOptions = _appFactory
-            .Services.GetRequiredService<IOptions<JsonOptions>>()
-            .Value.JsonSerializerOptions;
+        var jsonOptions = GetJsonOptions(_appFactory);
         var expectedResponse = DeviceDetailsResponse.FromModel(device);
         var client = _appFactory.CreateClient();
 
@@ -400,9 +324,7 @@ public sealed class DevicesControllerTests(
     public async Task Get_GetByName_ReturnsNotFoundWhenDeviceDoesNotExist()
     {
         // Arrange
-        var jsonOptions = _appFactory
-            .Services.GetRequiredService<IOptions<JsonOptions>>()
-            .Value.JsonSerializerOptions;
+        var jsonOptions = GetJsonOptions(_appFactory);
         var client = _appFactory.CreateClient();
 
         // Act
@@ -425,23 +347,11 @@ public sealed class DevicesControllerTests(
     public async Task Patch_RenameById_UpdatesFriendlyNameAndStateCacheWhenValid()
     {
         // Arrange
-        var device = new Device
-        {
-            DeviceName = "loris_sample",
-            DevEui = DevEui.Parse("1122AABBCCDDEEFF"),
-            FriendlyName = "loris_friendly",
-            LastSeen = DateTime.UtcNow,
-            DeviceStatus = DeviceStatus.ACTIVE,
-        };
-        using var scope = _appFactory.Services.CreateScope();
-        var ctx = scope.ServiceProvider.GetRequiredService<LorisDbContext>();
-        ctx.Devices.Add(device);
-        await ctx.SaveChangesAsync(CancellationToken.None);
+        var device = CreateDevice();
+        await SeedDevicesAsync(_appFactory, device);
 
         var request = new RenameDeviceRequest { NewFriendlyName = "loris_renamed" };
-        var jsonOptions = _appFactory
-            .Services.GetRequiredService<IOptions<JsonOptions>>()
-            .Value.JsonSerializerOptions;
+        var jsonOptions = GetJsonOptions(_appFactory);
         var stateCache = _appFactory.Services.GetRequiredService<IStateCache>();
         var client = _appFactory.CreateClient();
 
@@ -470,9 +380,7 @@ public sealed class DevicesControllerTests(
     {
         // Arrange
         var request = new RenameDeviceRequest { NewFriendlyName = "loris_renamed" };
-        var jsonOptions = _appFactory
-            .Services.GetRequiredService<IOptions<JsonOptions>>()
-            .Value.JsonSerializerOptions;
+        var jsonOptions = GetJsonOptions(_appFactory);
         var client = _appFactory.CreateClient();
 
         // Act
@@ -497,31 +405,20 @@ public sealed class DevicesControllerTests(
     public async Task Patch_RenameById_ReturnsConflictWhenFriendlyNameAlreadyTaken()
     {
         // Arrange
-        var device1 = new Device
-        {
-            DeviceName = "loris_sample_1",
-            DevEui = DevEui.Parse("1122AABBCCDDEEFF"),
-            FriendlyName = "loris_friendly_1",
-            LastSeen = DateTime.UtcNow,
-            DeviceStatus = DeviceStatus.ACTIVE,
-        };
-        var device2 = new Device
-        {
-            DeviceName = "loris_sample_2",
-            DevEui = DevEui.Parse("1122AABBCCDDEEF0"),
-            FriendlyName = "loris_friendly_2",
-            LastSeen = DateTime.UtcNow,
-            DeviceStatus = DeviceStatus.ACTIVE,
-        };
-        using var scope = _appFactory.Services.CreateScope();
-        var ctx = scope.ServiceProvider.GetRequiredService<LorisDbContext>();
-        ctx.Devices.AddRange(device1, device2);
-        await ctx.SaveChangesAsync(CancellationToken.None);
+        var device1 = CreateDevice(
+            devEui: "1122AABBCCDDEEFF",
+            friendlyName: "loris_friendly_1",
+            deviceName: "loris_sample_1"
+        );
+        var device2 = CreateDevice(
+            devEui: "1122AABBCCDDEEF0",
+            friendlyName: "loris_friendly_2",
+            deviceName: "loris_sample_2"
+        );
+        await SeedDevicesAsync(_appFactory, device1, device2);
 
         var request = new RenameDeviceRequest { NewFriendlyName = device2.FriendlyName };
-        var jsonOptions = _appFactory
-            .Services.GetRequiredService<IOptions<JsonOptions>>()
-            .Value.JsonSerializerOptions;
+        var jsonOptions = GetJsonOptions(_appFactory);
         var client = _appFactory.CreateClient();
 
         // Act
@@ -546,30 +443,17 @@ public sealed class DevicesControllerTests(
     public async Task Patch_RenameByEui_UpdatesFriendlyNameAndStateCacheWhenValid()
     {
         // Arrange
-        var devEui = DevEui.Parse("1122AABBCCDDEEFF");
-        var device = new Device
-        {
-            DeviceName = "loris_sample",
-            DevEui = devEui,
-            FriendlyName = "loris_friendly",
-            LastSeen = DateTime.UtcNow,
-            DeviceStatus = DeviceStatus.ACTIVE,
-        };
-        using var scope = _appFactory.Services.CreateScope();
-        var ctx = scope.ServiceProvider.GetRequiredService<LorisDbContext>();
-        ctx.Devices.Add(device);
-        await ctx.SaveChangesAsync(CancellationToken.None);
+        var device = CreateDevice();
+        await SeedDevicesAsync(_appFactory, device);
 
         var request = new RenameDeviceRequest { NewFriendlyName = "loris_renamed" };
-        var jsonOptions = _appFactory
-            .Services.GetRequiredService<IOptions<JsonOptions>>()
-            .Value.JsonSerializerOptions;
+        var jsonOptions = GetJsonOptions(_appFactory);
         var stateCache = _appFactory.Services.GetRequiredService<IStateCache>();
         var client = _appFactory.CreateClient();
 
         // Act
         var httpResponse = await client.PatchAsJsonAsync(
-            $"/api/devices/by-eui/{devEui}",
+            $"/api/devices/by-eui/{device.DevEui}",
             request,
             jsonOptions,
             CancellationToken.None
@@ -583,7 +467,7 @@ public sealed class DevicesControllerTests(
         httpResponse.EnsureSuccessStatusCode();
         Assert.NotNull(deviceResponse);
         Assert.Equal("loris_renamed", deviceResponse.FriendlyName);
-        Assert.True(stateCache.TryGetDevice(devEui, out var cachedDevice));
+        Assert.True(stateCache.TryGetDevice(device.DevEui, out var cachedDevice));
         Assert.Equal("loris_renamed", cachedDevice.FriendlyName);
     }
 
@@ -593,9 +477,7 @@ public sealed class DevicesControllerTests(
         // Arrange
         var nonExistentEui = DevEui.Parse("FFEEDDCCBBAA2211");
         var request = new RenameDeviceRequest { NewFriendlyName = "loris_renamed" };
-        var jsonOptions = _appFactory
-            .Services.GetRequiredService<IOptions<JsonOptions>>()
-            .Value.JsonSerializerOptions;
+        var jsonOptions = GetJsonOptions(_appFactory);
         var client = _appFactory.CreateClient();
 
         // Act
@@ -620,31 +502,20 @@ public sealed class DevicesControllerTests(
     public async Task Patch_RenameByEui_ReturnsConflictWhenFriendlyNameAlreadyTaken()
     {
         // Arrange
-        var device1 = new Device
-        {
-            DeviceName = "loris_sample_1",
-            DevEui = DevEui.Parse("1122AABBCCDDEEFF"),
-            FriendlyName = "loris_friendly_1",
-            LastSeen = DateTime.UtcNow,
-            DeviceStatus = DeviceStatus.ACTIVE,
-        };
-        var device2 = new Device
-        {
-            DeviceName = "loris_sample_2",
-            DevEui = DevEui.Parse("1122AABBCCDDEEF0"),
-            FriendlyName = "loris_friendly_2",
-            LastSeen = DateTime.UtcNow,
-            DeviceStatus = DeviceStatus.ACTIVE,
-        };
-        using var scope = _appFactory.Services.CreateScope();
-        var ctx = scope.ServiceProvider.GetRequiredService<LorisDbContext>();
-        ctx.Devices.AddRange(device1, device2);
-        await ctx.SaveChangesAsync(CancellationToken.None);
+        var device1 = CreateDevice(
+            devEui: "1122AABBCCDDEEFF",
+            friendlyName: "loris_friendly_1",
+            deviceName: "loris_sample_1"
+        );
+        var device2 = CreateDevice(
+            devEui: "1122AABBCCDDEEF0",
+            friendlyName: "loris_friendly_2",
+            deviceName: "loris_sample_2"
+        );
+        await SeedDevicesAsync(_appFactory, device1, device2);
 
         var request = new RenameDeviceRequest { NewFriendlyName = device2.FriendlyName };
-        var jsonOptions = _appFactory
-            .Services.GetRequiredService<IOptions<JsonOptions>>()
-            .Value.JsonSerializerOptions;
+        var jsonOptions = GetJsonOptions(_appFactory);
         var client = _appFactory.CreateClient();
 
         // Act
@@ -669,23 +540,11 @@ public sealed class DevicesControllerTests(
     public async Task Patch_RenameByName_UpdatesFriendlyNameAndStateCacheWhenValid()
     {
         // Arrange
-        var device = new Device
-        {
-            DeviceName = "loris_sample",
-            DevEui = DevEui.Parse("1122AABBCCDDEEFF"),
-            FriendlyName = "loris_friendly",
-            LastSeen = DateTime.UtcNow,
-            DeviceStatus = DeviceStatus.ACTIVE,
-        };
-        using var scope = _appFactory.Services.CreateScope();
-        var ctx = scope.ServiceProvider.GetRequiredService<LorisDbContext>();
-        ctx.Devices.Add(device);
-        await ctx.SaveChangesAsync(CancellationToken.None);
+        var device = CreateDevice();
+        await SeedDevicesAsync(_appFactory, device);
 
         var request = new RenameDeviceRequest { NewFriendlyName = "loris_renamed" };
-        var jsonOptions = _appFactory
-            .Services.GetRequiredService<IOptions<JsonOptions>>()
-            .Value.JsonSerializerOptions;
+        var jsonOptions = GetJsonOptions(_appFactory);
         var stateCache = _appFactory.Services.GetRequiredService<IStateCache>();
         var client = _appFactory.CreateClient();
 
@@ -714,9 +573,7 @@ public sealed class DevicesControllerTests(
     {
         // Arrange
         var request = new RenameDeviceRequest { NewFriendlyName = "loris_renamed" };
-        var jsonOptions = _appFactory
-            .Services.GetRequiredService<IOptions<JsonOptions>>()
-            .Value.JsonSerializerOptions;
+        var jsonOptions = GetJsonOptions(_appFactory);
         var client = _appFactory.CreateClient();
 
         // Act
@@ -741,31 +598,20 @@ public sealed class DevicesControllerTests(
     public async Task Patch_RenameByName_ReturnsConflictWhenFriendlyNameAlreadyTaken()
     {
         // Arrange
-        var device1 = new Device
-        {
-            DeviceName = "loris_sample_1",
-            DevEui = DevEui.Parse("1122AABBCCDDEEFF"),
-            FriendlyName = "loris_friendly_1",
-            LastSeen = DateTime.UtcNow,
-            DeviceStatus = DeviceStatus.ACTIVE,
-        };
-        var device2 = new Device
-        {
-            DeviceName = "loris_sample_2",
-            DevEui = DevEui.Parse("1122AABBCCDDEEF0"),
-            FriendlyName = "loris_friendly_2",
-            LastSeen = DateTime.UtcNow,
-            DeviceStatus = DeviceStatus.ACTIVE,
-        };
-        using var scope = _appFactory.Services.CreateScope();
-        var ctx = scope.ServiceProvider.GetRequiredService<LorisDbContext>();
-        ctx.Devices.AddRange(device1, device2);
-        await ctx.SaveChangesAsync(CancellationToken.None);
+        var device1 = CreateDevice(
+            devEui: "1122AABBCCDDEEFF",
+            friendlyName: "loris_friendly_1",
+            deviceName: "loris_sample_1"
+        );
+        var device2 = CreateDevice(
+            devEui: "1122AABBCCDDEEF0",
+            friendlyName: "loris_friendly_2",
+            deviceName: "loris_sample_2"
+        );
+        await SeedDevicesAsync(_appFactory, device1, device2);
 
         var request = new RenameDeviceRequest { NewFriendlyName = device2.FriendlyName };
-        var jsonOptions = _appFactory
-            .Services.GetRequiredService<IOptions<JsonOptions>>()
-            .Value.JsonSerializerOptions;
+        var jsonOptions = GetJsonOptions(_appFactory);
         var client = _appFactory.CreateClient();
 
         // Act
@@ -796,22 +642,10 @@ public sealed class DevicesControllerTests(
     )
     {
         // Arrange
-        var device = new Device
-        {
-            DeviceName = "loris_sample",
-            DevEui = DevEui.Parse("1122AABBCCDDEEFF"),
-            FriendlyName = "loris_friendly",
-            LastSeen = DateTime.UtcNow,
-            DeviceStatus = initialStatus,
-        };
-        using var scope = _appFactory.Services.CreateScope();
-        var ctx = scope.ServiceProvider.GetRequiredService<LorisDbContext>();
-        ctx.Devices.Add(device);
-        await ctx.SaveChangesAsync(CancellationToken.None);
+        var device = CreateDevice(status: initialStatus);
+        await SeedDevicesAsync(_appFactory, device);
 
-        var jsonOptions = _appFactory
-            .Services.GetRequiredService<IOptions<JsonOptions>>()
-            .Value.JsonSerializerOptions;
+        var jsonOptions = GetJsonOptions(_appFactory);
         var stateCache = _appFactory.Services.GetRequiredService<IStateCache>();
         var client = _appFactory.CreateClient();
 
@@ -847,22 +681,10 @@ public sealed class DevicesControllerTests(
     )
     {
         // Arrange
-        var device = new Device
-        {
-            DeviceName = "loris_sample",
-            DevEui = DevEui.Parse("1122AABBCCDDEEFF"),
-            FriendlyName = "loris_friendly",
-            LastSeen = DateTime.UtcNow,
-            DeviceStatus = initialStatus,
-        };
-        using var scope = _appFactory.Services.CreateScope();
-        var ctx = scope.ServiceProvider.GetRequiredService<LorisDbContext>();
-        ctx.Devices.Add(device);
-        await ctx.SaveChangesAsync(CancellationToken.None);
+        var device = CreateDevice(status: initialStatus);
+        await SeedDevicesAsync(_appFactory, device);
 
-        var jsonOptions = _appFactory
-            .Services.GetRequiredService<IOptions<JsonOptions>>()
-            .Value.JsonSerializerOptions;
+        var jsonOptions = GetJsonOptions(_appFactory);
         var client = _appFactory.CreateClient();
 
         // Act
@@ -887,9 +709,7 @@ public sealed class DevicesControllerTests(
     {
         // Arrange
         var nonExistentId = Guid.NewGuid();
-        var jsonOptions = _appFactory
-            .Services.GetRequiredService<IOptions<JsonOptions>>()
-            .Value.JsonSerializerOptions;
+        var jsonOptions = GetJsonOptions(_appFactory);
         var client = _appFactory.CreateClient();
 
         // Act
@@ -919,22 +739,10 @@ public sealed class DevicesControllerTests(
     )
     {
         // Arrange
-        var device = new Device
-        {
-            DeviceName = "loris_sample",
-            DevEui = DevEui.Parse("1122AABBCCDDEEFF"),
-            FriendlyName = "loris_friendly",
-            LastSeen = DateTime.UtcNow,
-            DeviceStatus = initialStatus,
-        };
-        using var scope = _appFactory.Services.CreateScope();
-        var ctx = scope.ServiceProvider.GetRequiredService<LorisDbContext>();
-        ctx.Devices.Add(device);
-        await ctx.SaveChangesAsync(CancellationToken.None);
+        var device = CreateDevice(status: initialStatus);
+        await SeedDevicesAsync(_appFactory, device);
 
-        var jsonOptions = _appFactory
-            .Services.GetRequiredService<IOptions<JsonOptions>>()
-            .Value.JsonSerializerOptions;
+        var jsonOptions = GetJsonOptions(_appFactory);
         var stateCache = _appFactory.Services.GetRequiredService<IStateCache>();
         var client = _appFactory.CreateClient();
 
@@ -970,22 +778,10 @@ public sealed class DevicesControllerTests(
     )
     {
         // Arrange
-        var device = new Device
-        {
-            DeviceName = "loris_sample",
-            DevEui = DevEui.Parse("1122AABBCCDDEEFF"),
-            FriendlyName = "loris_friendly",
-            LastSeen = DateTime.UtcNow,
-            DeviceStatus = initialStatus,
-        };
-        using var scope = _appFactory.Services.CreateScope();
-        var ctx = scope.ServiceProvider.GetRequiredService<LorisDbContext>();
-        ctx.Devices.Add(device);
-        await ctx.SaveChangesAsync(CancellationToken.None);
+        var device = CreateDevice(status: initialStatus);
+        await SeedDevicesAsync(_appFactory, device);
 
-        var jsonOptions = _appFactory
-            .Services.GetRequiredService<IOptions<JsonOptions>>()
-            .Value.JsonSerializerOptions;
+        var jsonOptions = GetJsonOptions(_appFactory);
         var client = _appFactory.CreateClient();
 
         // Act
@@ -1009,9 +805,7 @@ public sealed class DevicesControllerTests(
     public async Task Post_IgnoreByName_ReturnsNotFoundWhenDeviceDoesNotExist()
     {
         // Arrange
-        var jsonOptions = _appFactory
-            .Services.GetRequiredService<IOptions<JsonOptions>>()
-            .Value.JsonSerializerOptions;
+        var jsonOptions = GetJsonOptions(_appFactory);
         var client = _appFactory.CreateClient();
 
         // Act
@@ -1041,29 +835,16 @@ public sealed class DevicesControllerTests(
     )
     {
         // Arrange
-        var devEui = DevEui.Parse("1122AABBCCDDEEFF");
-        var device = new Device
-        {
-            DeviceName = "loris_sample",
-            DevEui = devEui,
-            FriendlyName = "loris_friendly",
-            LastSeen = DateTime.UtcNow,
-            DeviceStatus = initialStatus,
-        };
-        using var scope = _appFactory.Services.CreateScope();
-        var ctx = scope.ServiceProvider.GetRequiredService<LorisDbContext>();
-        ctx.Devices.Add(device);
-        await ctx.SaveChangesAsync(CancellationToken.None);
+        var device = CreateDevice(status: initialStatus);
+        await SeedDevicesAsync(_appFactory, device);
 
-        var jsonOptions = _appFactory
-            .Services.GetRequiredService<IOptions<JsonOptions>>()
-            .Value.JsonSerializerOptions;
+        var jsonOptions = GetJsonOptions(_appFactory);
         var stateCache = _appFactory.Services.GetRequiredService<IStateCache>();
         var client = _appFactory.CreateClient();
 
         // Act
         var httpResponse = await client.PostAsync(
-            $"/api/devices/by-eui/{devEui}/ignore?revert={revert}",
+            $"/api/devices/by-eui/{device.DevEui}/ignore?revert={revert}",
             null,
             CancellationToken.None
         );
@@ -1076,7 +857,7 @@ public sealed class DevicesControllerTests(
         httpResponse.EnsureSuccessStatusCode();
         Assert.NotNull(deviceResponse);
         Assert.Equal(expectedStatus, deviceResponse.DeviceStatus);
-        Assert.True(stateCache.TryGetDevice(devEui, out var cachedDevice));
+        Assert.True(stateCache.TryGetDevice(device.DevEui, out var cachedDevice));
         Assert.Equal(expectedStatus, cachedDevice.DeviceStatus);
     }
 
@@ -1093,28 +874,15 @@ public sealed class DevicesControllerTests(
     )
     {
         // Arrange
-        var devEui = DevEui.Parse("1122AABBCCDDEEFF");
-        var device = new Device
-        {
-            DeviceName = "loris_sample",
-            DevEui = devEui,
-            FriendlyName = "loris_friendly",
-            LastSeen = DateTime.UtcNow,
-            DeviceStatus = initialStatus,
-        };
-        using var scope = _appFactory.Services.CreateScope();
-        var ctx = scope.ServiceProvider.GetRequiredService<LorisDbContext>();
-        ctx.Devices.Add(device);
-        await ctx.SaveChangesAsync(CancellationToken.None);
+        var device = CreateDevice(status: initialStatus);
+        await SeedDevicesAsync(_appFactory, device);
 
-        var jsonOptions = _appFactory
-            .Services.GetRequiredService<IOptions<JsonOptions>>()
-            .Value.JsonSerializerOptions;
+        var jsonOptions = GetJsonOptions(_appFactory);
         var client = _appFactory.CreateClient();
 
         // Act
         var httpResponse = await client.PostAsync(
-            $"/api/devices/by-eui/{devEui}/ignore?revert={revert}",
+            $"/api/devices/by-eui/{device.DevEui}/ignore?revert={revert}",
             null,
             CancellationToken.None
         );
@@ -1134,9 +902,7 @@ public sealed class DevicesControllerTests(
     {
         // Arrange
         var nonExistentEui = DevEui.Parse("FFEEDDCCBBAA2211");
-        var jsonOptions = _appFactory
-            .Services.GetRequiredService<IOptions<JsonOptions>>()
-            .Value.JsonSerializerOptions;
+        var jsonOptions = GetJsonOptions(_appFactory);
         var client = _appFactory.CreateClient();
 
         // Act
@@ -1160,29 +926,11 @@ public sealed class DevicesControllerTests(
     public async Task Post_AcceptById_UpdatesStatusAndStateCacheWhenChirpstackSucceeds()
     {
         // Arrange
-        var appFactory = _appFactory.WithWebHostBuilder(builder =>
-        {
-            builder.ConfigureServices(services =>
-            {
-                services.AddTransient<IChirpstackService, FakeChirpstackServiceWithSuccess>();
-            });
-        });
-        var device = new Device
-        {
-            DeviceName = "loris_sample",
-            DevEui = DevEui.Parse("1122AABBCCDDEEFF"),
-            FriendlyName = "loris_friendly",
-            LastSeen = DateTime.UtcNow,
-            DeviceStatus = DeviceStatus.PENDING,
-        };
-        using var scope = appFactory.Services.CreateScope();
-        var ctx = scope.ServiceProvider.GetRequiredService<LorisDbContext>();
-        ctx.Devices.Add(device);
-        await ctx.SaveChangesAsync(CancellationToken.None);
+        using var appFactory = WithChirpstackService<FakeChirpstackServiceWithSuccess>();
+        var device = CreateDevice(status: DeviceStatus.PENDING);
+        await SeedDevicesAsync(appFactory, device);
 
-        var jsonOptions = appFactory
-            .Services.GetRequiredService<IOptions<JsonOptions>>()
-            .Value.JsonSerializerOptions;
+        var jsonOptions = GetJsonOptions(appFactory);
         var stateCache = appFactory.Services.GetRequiredService<IStateCache>();
         var client = appFactory.CreateClient();
 
@@ -1209,29 +957,11 @@ public sealed class DevicesControllerTests(
     public async Task Post_AcceptById_ReturnsBadGatewayWhenChirpstackFails()
     {
         // Arrange
-        var appFactory = _appFactory.WithWebHostBuilder(builder =>
-        {
-            builder.ConfigureServices(services =>
-            {
-                services.AddTransient<IChirpstackService, FakeChirpstackServiceWithFailed>();
-            });
-        });
-        var device = new Device
-        {
-            DeviceName = "loris_sample",
-            DevEui = DevEui.Parse("1122AABBCCDDEEFF"),
-            FriendlyName = "loris_friendly",
-            LastSeen = DateTime.UtcNow,
-            DeviceStatus = DeviceStatus.PENDING,
-        };
-        using var scope = appFactory.Services.CreateScope();
-        var ctx = scope.ServiceProvider.GetRequiredService<LorisDbContext>();
-        ctx.Devices.Add(device);
-        await ctx.SaveChangesAsync(CancellationToken.None);
+        using var appFactory = WithChirpstackService<FakeChirpstackServiceWithFailed>();
+        var device = CreateDevice(status: DeviceStatus.PENDING);
+        await SeedDevicesAsync(appFactory, device);
 
-        var jsonOptions = appFactory
-            .Services.GetRequiredService<IOptions<JsonOptions>>()
-            .Value.JsonSerializerOptions;
+        var jsonOptions = GetJsonOptions(appFactory);
         var stateCache = appFactory.Services.GetRequiredService<IStateCache>();
         stateCache[device.DevEui] = device;
         var client = appFactory.CreateClient();
@@ -1258,29 +988,11 @@ public sealed class DevicesControllerTests(
     public async Task Post_AcceptById_ReturnsGatewayTimeoutWhenChirpstackTimesOut()
     {
         // Arrange
-        var appFactory = _appFactory.WithWebHostBuilder(builder =>
-        {
-            builder.ConfigureServices(services =>
-            {
-                services.AddTransient<IChirpstackService, FakeChirpstackServiceWithTimeout>();
-            });
-        });
-        var device = new Device
-        {
-            DeviceName = "loris_sample",
-            DevEui = DevEui.Parse("1122AABBCCDDEEFF"),
-            FriendlyName = "loris_friendly",
-            LastSeen = DateTime.UtcNow,
-            DeviceStatus = DeviceStatus.PENDING,
-        };
-        using var scope = appFactory.Services.CreateScope();
-        var ctx = scope.ServiceProvider.GetRequiredService<LorisDbContext>();
-        ctx.Devices.Add(device);
-        await ctx.SaveChangesAsync(CancellationToken.None);
+        using var appFactory = WithChirpstackService<FakeChirpstackServiceWithTimeout>();
+        var device = CreateDevice(status: DeviceStatus.PENDING);
+        await SeedDevicesAsync(appFactory, device);
 
-        var jsonOptions = appFactory
-            .Services.GetRequiredService<IOptions<JsonOptions>>()
-            .Value.JsonSerializerOptions;
+        var jsonOptions = GetJsonOptions(appFactory);
         var stateCache = appFactory.Services.GetRequiredService<IStateCache>();
         stateCache[device.DevEui] = device;
         var client = appFactory.CreateClient();
@@ -1312,29 +1024,11 @@ public sealed class DevicesControllerTests(
     )
     {
         // Arrange
-        var appFactory = _appFactory.WithWebHostBuilder(builder =>
-        {
-            builder.ConfigureServices(services =>
-            {
-                services.AddTransient<IChirpstackService, FakeChirpstackServiceWithSuccess>();
-            });
-        });
-        var device = new Device
-        {
-            DeviceName = "loris_sample",
-            DevEui = DevEui.Parse("1122AABBCCDDEEFF"),
-            FriendlyName = "loris_friendly",
-            LastSeen = DateTime.UtcNow,
-            DeviceStatus = initialStatus,
-        };
-        using var scope = appFactory.Services.CreateScope();
-        var ctx = scope.ServiceProvider.GetRequiredService<LorisDbContext>();
-        ctx.Devices.Add(device);
-        await ctx.SaveChangesAsync(CancellationToken.None);
+        using var appFactory = WithChirpstackService<FakeChirpstackServiceWithSuccess>();
+        var device = CreateDevice(status: initialStatus);
+        await SeedDevicesAsync(appFactory, device);
 
-        var jsonOptions = appFactory
-            .Services.GetRequiredService<IOptions<JsonOptions>>()
-            .Value.JsonSerializerOptions;
+        var jsonOptions = GetJsonOptions(appFactory);
         var stateCache = appFactory.Services.GetRequiredService<IStateCache>();
         stateCache[device.DevEui] = device;
         var client = appFactory.CreateClient();
@@ -1361,16 +1055,8 @@ public sealed class DevicesControllerTests(
     public async Task Post_AcceptById_ReturnsNotFoundWhenDeviceDoesNotExist()
     {
         // Arrange
-        var appFactory = _appFactory.WithWebHostBuilder(builder =>
-        {
-            builder.ConfigureServices(services =>
-            {
-                services.AddTransient<IChirpstackService, FakeChirpstackServiceWithSuccess>();
-            });
-        });
-        var jsonOptions = appFactory
-            .Services.GetRequiredService<IOptions<JsonOptions>>()
-            .Value.JsonSerializerOptions;
+        using var appFactory = WithChirpstackService<FakeChirpstackServiceWithSuccess>();
+        var jsonOptions = GetJsonOptions(appFactory);
         var client = appFactory.CreateClient();
 
         // Act
@@ -1394,29 +1080,11 @@ public sealed class DevicesControllerTests(
     public async Task Post_AcceptByName_UpdatesStatusAndStateCacheWhenChirpstackSucceeds()
     {
         // Arrange
-        var appFactory = _appFactory.WithWebHostBuilder(builder =>
-        {
-            builder.ConfigureServices(services =>
-            {
-                services.AddTransient<IChirpstackService, FakeChirpstackServiceWithSuccess>();
-            });
-        });
-        var device = new Device
-        {
-            DeviceName = "loris_sample",
-            DevEui = DevEui.Parse("1122AABBCCDDEEFF"),
-            FriendlyName = "loris_friendly",
-            LastSeen = DateTime.UtcNow,
-            DeviceStatus = DeviceStatus.PENDING,
-        };
-        using var scope = appFactory.Services.CreateScope();
-        var ctx = scope.ServiceProvider.GetRequiredService<LorisDbContext>();
-        ctx.Devices.Add(device);
-        await ctx.SaveChangesAsync(CancellationToken.None);
+        using var appFactory = WithChirpstackService<FakeChirpstackServiceWithSuccess>();
+        var device = CreateDevice(status: DeviceStatus.PENDING);
+        await SeedDevicesAsync(appFactory, device);
 
-        var jsonOptions = appFactory
-            .Services.GetRequiredService<IOptions<JsonOptions>>()
-            .Value.JsonSerializerOptions;
+        var jsonOptions = GetJsonOptions(appFactory);
         var stateCache = appFactory.Services.GetRequiredService<IStateCache>();
         var client = appFactory.CreateClient();
 
@@ -1443,29 +1111,11 @@ public sealed class DevicesControllerTests(
     public async Task Post_AcceptByName_ReturnsBadGatewayWhenChirpstackFails()
     {
         // Arrange
-        var appFactory = _appFactory.WithWebHostBuilder(builder =>
-        {
-            builder.ConfigureServices(services =>
-            {
-                services.AddTransient<IChirpstackService, FakeChirpstackServiceWithFailed>();
-            });
-        });
-        var device = new Device
-        {
-            DeviceName = "loris_sample",
-            DevEui = DevEui.Parse("1122AABBCCDDEEFF"),
-            FriendlyName = "loris_friendly",
-            LastSeen = DateTime.UtcNow,
-            DeviceStatus = DeviceStatus.PENDING,
-        };
-        using var scope = appFactory.Services.CreateScope();
-        var ctx = scope.ServiceProvider.GetRequiredService<LorisDbContext>();
-        ctx.Devices.Add(device);
-        await ctx.SaveChangesAsync(CancellationToken.None);
+        using var appFactory = WithChirpstackService<FakeChirpstackServiceWithFailed>();
+        var device = CreateDevice(status: DeviceStatus.PENDING);
+        await SeedDevicesAsync(appFactory, device);
 
-        var jsonOptions = appFactory
-            .Services.GetRequiredService<IOptions<JsonOptions>>()
-            .Value.JsonSerializerOptions;
+        var jsonOptions = GetJsonOptions(appFactory);
         var stateCache = appFactory.Services.GetRequiredService<IStateCache>();
         stateCache[device.DevEui] = device;
         var client = appFactory.CreateClient();
@@ -1492,29 +1142,11 @@ public sealed class DevicesControllerTests(
     public async Task Post_AcceptByName_ReturnsGatewayTimeoutWhenChirpstackTimesOut()
     {
         // Arrange
-        var appFactory = _appFactory.WithWebHostBuilder(builder =>
-        {
-            builder.ConfigureServices(services =>
-            {
-                services.AddTransient<IChirpstackService, FakeChirpstackServiceWithTimeout>();
-            });
-        });
-        var device = new Device
-        {
-            DeviceName = "loris_sample",
-            DevEui = DevEui.Parse("1122AABBCCDDEEFF"),
-            FriendlyName = "loris_friendly",
-            LastSeen = DateTime.UtcNow,
-            DeviceStatus = DeviceStatus.PENDING,
-        };
-        using var scope = appFactory.Services.CreateScope();
-        var ctx = scope.ServiceProvider.GetRequiredService<LorisDbContext>();
-        ctx.Devices.Add(device);
-        await ctx.SaveChangesAsync(CancellationToken.None);
+        using var appFactory = WithChirpstackService<FakeChirpstackServiceWithTimeout>();
+        var device = CreateDevice(status: DeviceStatus.PENDING);
+        await SeedDevicesAsync(appFactory, device);
 
-        var jsonOptions = appFactory
-            .Services.GetRequiredService<IOptions<JsonOptions>>()
-            .Value.JsonSerializerOptions;
+        var jsonOptions = GetJsonOptions(appFactory);
         var stateCache = appFactory.Services.GetRequiredService<IStateCache>();
         stateCache[device.DevEui] = device;
         var client = appFactory.CreateClient();
@@ -1546,29 +1178,11 @@ public sealed class DevicesControllerTests(
     )
     {
         // Arrange
-        var appFactory = _appFactory.WithWebHostBuilder(builder =>
-        {
-            builder.ConfigureServices(services =>
-            {
-                services.AddTransient<IChirpstackService, FakeChirpstackServiceWithSuccess>();
-            });
-        });
-        var device = new Device
-        {
-            DeviceName = "loris_sample",
-            DevEui = DevEui.Parse("1122AABBCCDDEEFF"),
-            FriendlyName = "loris_friendly",
-            LastSeen = DateTime.UtcNow,
-            DeviceStatus = initialStatus,
-        };
-        using var scope = appFactory.Services.CreateScope();
-        var ctx = scope.ServiceProvider.GetRequiredService<LorisDbContext>();
-        ctx.Devices.Add(device);
-        await ctx.SaveChangesAsync(CancellationToken.None);
+        using var appFactory = WithChirpstackService<FakeChirpstackServiceWithSuccess>();
+        var device = CreateDevice(status: initialStatus);
+        await SeedDevicesAsync(appFactory, device);
 
-        var jsonOptions = appFactory
-            .Services.GetRequiredService<IOptions<JsonOptions>>()
-            .Value.JsonSerializerOptions;
+        var jsonOptions = GetJsonOptions(appFactory);
         var stateCache = appFactory.Services.GetRequiredService<IStateCache>();
         stateCache[device.DevEui] = device;
         var client = appFactory.CreateClient();
@@ -1595,16 +1209,8 @@ public sealed class DevicesControllerTests(
     public async Task Post_AcceptByName_ReturnsNotFoundWhenDeviceDoesNotExist()
     {
         // Arrange
-        var appFactory = _appFactory.WithWebHostBuilder(builder =>
-        {
-            builder.ConfigureServices(services =>
-            {
-                services.AddTransient<IChirpstackService, FakeChirpstackServiceWithSuccess>();
-            });
-        });
-        var jsonOptions = appFactory
-            .Services.GetRequiredService<IOptions<JsonOptions>>()
-            .Value.JsonSerializerOptions;
+        using var appFactory = WithChirpstackService<FakeChirpstackServiceWithSuccess>();
+        var jsonOptions = GetJsonOptions(appFactory);
         var client = appFactory.CreateClient();
 
         // Act
@@ -1628,36 +1234,17 @@ public sealed class DevicesControllerTests(
     public async Task Post_AcceptByEui_UpdatesStatusAndStateCacheWhenChirpstackSucceeds()
     {
         // Arrange
-        var appFactory = _appFactory.WithWebHostBuilder(builder =>
-        {
-            builder.ConfigureServices(services =>
-            {
-                services.AddTransient<IChirpstackService, FakeChirpstackServiceWithSuccess>();
-            });
-        });
-        var devEui = DevEui.Parse("1122AABBCCDDEEFF");
-        var device = new Device
-        {
-            DeviceName = "loris_sample",
-            DevEui = devEui,
-            FriendlyName = "loris_friendly",
-            LastSeen = DateTime.UtcNow,
-            DeviceStatus = DeviceStatus.PENDING,
-        };
-        using var scope = appFactory.Services.CreateScope();
-        var ctx = scope.ServiceProvider.GetRequiredService<LorisDbContext>();
-        ctx.Devices.Add(device);
-        await ctx.SaveChangesAsync(CancellationToken.None);
+        using var appFactory = WithChirpstackService<FakeChirpstackServiceWithSuccess>();
+        var device = CreateDevice(status: DeviceStatus.PENDING);
+        await SeedDevicesAsync(appFactory, device);
 
-        var jsonOptions = appFactory
-            .Services.GetRequiredService<IOptions<JsonOptions>>()
-            .Value.JsonSerializerOptions;
+        var jsonOptions = GetJsonOptions(appFactory);
         var stateCache = appFactory.Services.GetRequiredService<IStateCache>();
         var client = appFactory.CreateClient();
 
         // Act
         var httpResponse = await client.PostAsync(
-            $"/api/devices/by-eui/{devEui}/accept",
+            $"/api/devices/by-eui/{device.DevEui}/accept",
             null,
             CancellationToken.None
         );
@@ -1670,7 +1257,7 @@ public sealed class DevicesControllerTests(
         httpResponse.EnsureSuccessStatusCode();
         Assert.NotNull(deviceResponse);
         Assert.Equal(DeviceStatus.ACTIVE, deviceResponse.DeviceStatus);
-        Assert.True(stateCache.TryGetDevice(devEui, out var cachedDevice));
+        Assert.True(stateCache.TryGetDevice(device.DevEui, out var cachedDevice));
         Assert.Equal(DeviceStatus.ACTIVE, cachedDevice.DeviceStatus);
     }
 
@@ -1678,37 +1265,18 @@ public sealed class DevicesControllerTests(
     public async Task Post_AcceptByEui_ReturnsBadGatewayWhenChirpstackFails()
     {
         // Arrange
-        var appFactory = _appFactory.WithWebHostBuilder(builder =>
-        {
-            builder.ConfigureServices(services =>
-            {
-                services.AddTransient<IChirpstackService, FakeChirpstackServiceWithFailed>();
-            });
-        });
-        var devEui = DevEui.Parse("1122AABBCCDDEEFF");
-        var device = new Device
-        {
-            DeviceName = "loris_sample",
-            DevEui = devEui,
-            FriendlyName = "loris_friendly",
-            LastSeen = DateTime.UtcNow,
-            DeviceStatus = DeviceStatus.PENDING,
-        };
-        using var scope = appFactory.Services.CreateScope();
-        var ctx = scope.ServiceProvider.GetRequiredService<LorisDbContext>();
-        ctx.Devices.Add(device);
-        await ctx.SaveChangesAsync(CancellationToken.None);
+        using var appFactory = WithChirpstackService<FakeChirpstackServiceWithFailed>();
+        var device = CreateDevice(status: DeviceStatus.PENDING);
+        await SeedDevicesAsync(appFactory, device);
 
-        var jsonOptions = appFactory
-            .Services.GetRequiredService<IOptions<JsonOptions>>()
-            .Value.JsonSerializerOptions;
+        var jsonOptions = GetJsonOptions(appFactory);
         var stateCache = appFactory.Services.GetRequiredService<IStateCache>();
         stateCache[device.DevEui] = device;
         var client = appFactory.CreateClient();
 
         // Act
         var httpResponse = await client.PostAsync(
-            $"/api/devices/by-eui/{devEui}/accept",
+            $"/api/devices/by-eui/{device.DevEui}/accept",
             null,
             CancellationToken.None
         );
@@ -1728,37 +1296,18 @@ public sealed class DevicesControllerTests(
     public async Task Post_AcceptByEui_ReturnsGatewayTimeoutWhenChirpstackTimesOut()
     {
         // Arrange
-        var appFactory = _appFactory.WithWebHostBuilder(builder =>
-        {
-            builder.ConfigureServices(services =>
-            {
-                services.AddTransient<IChirpstackService, FakeChirpstackServiceWithTimeout>();
-            });
-        });
-        var devEui = DevEui.Parse("1122AABBCCDDEEFF");
-        var device = new Device
-        {
-            DeviceName = "loris_sample",
-            DevEui = devEui,
-            FriendlyName = "loris_friendly",
-            LastSeen = DateTime.UtcNow,
-            DeviceStatus = DeviceStatus.PENDING,
-        };
-        using var scope = appFactory.Services.CreateScope();
-        var ctx = scope.ServiceProvider.GetRequiredService<LorisDbContext>();
-        ctx.Devices.Add(device);
-        await ctx.SaveChangesAsync(CancellationToken.None);
+        using var appFactory = WithChirpstackService<FakeChirpstackServiceWithTimeout>();
+        var device = CreateDevice(status: DeviceStatus.PENDING);
+        await SeedDevicesAsync(appFactory, device);
 
-        var jsonOptions = appFactory
-            .Services.GetRequiredService<IOptions<JsonOptions>>()
-            .Value.JsonSerializerOptions;
+        var jsonOptions = GetJsonOptions(appFactory);
         var stateCache = appFactory.Services.GetRequiredService<IStateCache>();
         stateCache[device.DevEui] = device;
         var client = appFactory.CreateClient();
 
         // Act
         var httpResponse = await client.PostAsync(
-            $"/api/devices/by-eui/{devEui}/accept",
+            $"/api/devices/by-eui/{device.DevEui}/accept",
             null,
             CancellationToken.None
         );
@@ -1783,37 +1332,18 @@ public sealed class DevicesControllerTests(
     )
     {
         // Arrange
-        var appFactory = _appFactory.WithWebHostBuilder(builder =>
-        {
-            builder.ConfigureServices(services =>
-            {
-                services.AddTransient<IChirpstackService, FakeChirpstackServiceWithSuccess>();
-            });
-        });
-        var devEui = DevEui.Parse("1122AABBCCDDEEFF");
-        var device = new Device
-        {
-            DeviceName = "loris_sample",
-            DevEui = devEui,
-            FriendlyName = "loris_friendly",
-            LastSeen = DateTime.UtcNow,
-            DeviceStatus = initialStatus,
-        };
-        using var scope = appFactory.Services.CreateScope();
-        var ctx = scope.ServiceProvider.GetRequiredService<LorisDbContext>();
-        ctx.Devices.Add(device);
-        await ctx.SaveChangesAsync(CancellationToken.None);
+        using var appFactory = WithChirpstackService<FakeChirpstackServiceWithSuccess>();
+        var device = CreateDevice(status: initialStatus);
+        await SeedDevicesAsync(appFactory, device);
 
-        var jsonOptions = appFactory
-            .Services.GetRequiredService<IOptions<JsonOptions>>()
-            .Value.JsonSerializerOptions;
+        var jsonOptions = GetJsonOptions(appFactory);
         var stateCache = appFactory.Services.GetRequiredService<IStateCache>();
         stateCache[device.DevEui] = device;
         var client = appFactory.CreateClient();
 
         // Act
         var httpResponse = await client.PostAsync(
-            $"/api/devices/by-eui/{devEui}/accept",
+            $"/api/devices/by-eui/{device.DevEui}/accept",
             null,
             CancellationToken.None
         );
@@ -1833,17 +1363,9 @@ public sealed class DevicesControllerTests(
     public async Task Post_AcceptByEui_ReturnsNotFoundWhenDeviceDoesNotExist()
     {
         // Arrange
-        var appFactory = _appFactory.WithWebHostBuilder(builder =>
-        {
-            builder.ConfigureServices(services =>
-            {
-                services.AddTransient<IChirpstackService, FakeChirpstackServiceWithSuccess>();
-            });
-        });
+        using var appFactory = WithChirpstackService<FakeChirpstackServiceWithSuccess>();
         var nonExistentEui = DevEui.Parse("FFEEDDCCBBAA2211");
-        var jsonOptions = appFactory
-            .Services.GetRequiredService<IOptions<JsonOptions>>()
-            .Value.JsonSerializerOptions;
+        var jsonOptions = GetJsonOptions(appFactory);
         var client = appFactory.CreateClient();
 
         // Act
@@ -1875,29 +1397,11 @@ public sealed class DevicesControllerTests(
     )
     {
         // Arrange
-        var appFactory = _appFactory.WithWebHostBuilder(builder =>
-        {
-            builder.ConfigureServices(services =>
-            {
-                services.AddTransient<IChirpstackService, FakeChirpstackServiceWithSuccess>();
-            });
-        });
-        var device = new Device
-        {
-            DeviceName = "loris_sample",
-            DevEui = DevEui.Parse("1122AABBCCDDEEFF"),
-            FriendlyName = "loris_friendly",
-            LastSeen = DateTime.UtcNow,
-            DeviceStatus = initialStatus,
-        };
-        using var scope = appFactory.Services.CreateScope();
-        var ctx = scope.ServiceProvider.GetRequiredService<LorisDbContext>();
-        ctx.Devices.Add(device);
-        await ctx.SaveChangesAsync(CancellationToken.None);
+        using var appFactory = WithChirpstackService<FakeChirpstackServiceWithSuccess>();
+        var device = CreateDevice(status: initialStatus);
+        await SeedDevicesAsync(appFactory, device);
 
-        var jsonOptions = appFactory
-            .Services.GetRequiredService<IOptions<JsonOptions>>()
-            .Value.JsonSerializerOptions;
+        var jsonOptions = GetJsonOptions(appFactory);
         var stateCache = appFactory.Services.GetRequiredService<IStateCache>();
         var client = appFactory.CreateClient();
 
@@ -1924,29 +1428,11 @@ public sealed class DevicesControllerTests(
     public async Task Post_DisconnectById_ReturnsBadGatewayWhenChirpstackFails()
     {
         // Arrange
-        var appFactory = _appFactory.WithWebHostBuilder(builder =>
-        {
-            builder.ConfigureServices(services =>
-            {
-                services.AddTransient<IChirpstackService, FakeChirpstackServiceWithFailed>();
-            });
-        });
-        var device = new Device
-        {
-            DeviceName = "loris_sample",
-            DevEui = DevEui.Parse("1122AABBCCDDEEFF"),
-            FriendlyName = "loris_friendly",
-            LastSeen = DateTime.UtcNow,
-            DeviceStatus = DeviceStatus.ACTIVE,
-        };
-        using var scope = appFactory.Services.CreateScope();
-        var ctx = scope.ServiceProvider.GetRequiredService<LorisDbContext>();
-        ctx.Devices.Add(device);
-        await ctx.SaveChangesAsync(CancellationToken.None);
+        using var appFactory = WithChirpstackService<FakeChirpstackServiceWithFailed>();
+        var device = CreateDevice(status: DeviceStatus.ACTIVE);
+        await SeedDevicesAsync(appFactory, device);
 
-        var jsonOptions = appFactory
-            .Services.GetRequiredService<IOptions<JsonOptions>>()
-            .Value.JsonSerializerOptions;
+        var jsonOptions = GetJsonOptions(appFactory);
         var stateCache = appFactory.Services.GetRequiredService<IStateCache>();
         stateCache[device.DevEui] = device;
         var client = appFactory.CreateClient();
@@ -1973,29 +1459,11 @@ public sealed class DevicesControllerTests(
     public async Task Post_DisconnectById_ReturnsGatewayTimeoutWhenChirpstackTimesOut()
     {
         // Arrange
-        var appFactory = _appFactory.WithWebHostBuilder(builder =>
-        {
-            builder.ConfigureServices(services =>
-            {
-                services.AddTransient<IChirpstackService, FakeChirpstackServiceWithTimeout>();
-            });
-        });
-        var device = new Device
-        {
-            DeviceName = "loris_sample",
-            DevEui = DevEui.Parse("1122AABBCCDDEEFF"),
-            FriendlyName = "loris_friendly",
-            LastSeen = DateTime.UtcNow,
-            DeviceStatus = DeviceStatus.ACTIVE,
-        };
-        using var scope = appFactory.Services.CreateScope();
-        var ctx = scope.ServiceProvider.GetRequiredService<LorisDbContext>();
-        ctx.Devices.Add(device);
-        await ctx.SaveChangesAsync(CancellationToken.None);
+        using var appFactory = WithChirpstackService<FakeChirpstackServiceWithTimeout>();
+        var device = CreateDevice(status: DeviceStatus.ACTIVE);
+        await SeedDevicesAsync(appFactory, device);
 
-        var jsonOptions = appFactory
-            .Services.GetRequiredService<IOptions<JsonOptions>>()
-            .Value.JsonSerializerOptions;
+        var jsonOptions = GetJsonOptions(appFactory);
         var stateCache = appFactory.Services.GetRequiredService<IStateCache>();
         stateCache[device.DevEui] = device;
         var client = appFactory.CreateClient();
@@ -2027,29 +1495,11 @@ public sealed class DevicesControllerTests(
     )
     {
         // Arrange
-        var appFactory = _appFactory.WithWebHostBuilder(builder =>
-        {
-            builder.ConfigureServices(services =>
-            {
-                services.AddTransient<IChirpstackService, FakeChirpstackServiceWithSuccess>();
-            });
-        });
-        var device = new Device
-        {
-            DeviceName = "loris_sample",
-            DevEui = DevEui.Parse("1122AABBCCDDEEFF"),
-            FriendlyName = "loris_friendly",
-            LastSeen = DateTime.UtcNow,
-            DeviceStatus = initialStatus,
-        };
-        using var scope = appFactory.Services.CreateScope();
-        var ctx = scope.ServiceProvider.GetRequiredService<LorisDbContext>();
-        ctx.Devices.Add(device);
-        await ctx.SaveChangesAsync(CancellationToken.None);
+        using var appFactory = WithChirpstackService<FakeChirpstackServiceWithSuccess>();
+        var device = CreateDevice(status: initialStatus);
+        await SeedDevicesAsync(appFactory, device);
 
-        var jsonOptions = appFactory
-            .Services.GetRequiredService<IOptions<JsonOptions>>()
-            .Value.JsonSerializerOptions;
+        var jsonOptions = GetJsonOptions(appFactory);
         var stateCache = appFactory.Services.GetRequiredService<IStateCache>();
         stateCache[device.DevEui] = device;
         var client = appFactory.CreateClient();
@@ -2078,16 +1528,8 @@ public sealed class DevicesControllerTests(
     public async Task Post_DisconnectById_ReturnsNotFoundWhenDeviceDoesNotExist(bool force)
     {
         // Arrange
-        var appFactory = _appFactory.WithWebHostBuilder(builder =>
-        {
-            builder.ConfigureServices(services =>
-            {
-                services.AddTransient<IChirpstackService, FakeChirpstackServiceWithSuccess>();
-            });
-        });
-        var jsonOptions = appFactory
-            .Services.GetRequiredService<IOptions<JsonOptions>>()
-            .Value.JsonSerializerOptions;
+        using var appFactory = WithChirpstackService<FakeChirpstackServiceWithSuccess>();
+        var jsonOptions = GetJsonOptions(appFactory);
         var client = appFactory.CreateClient();
 
         // Act
@@ -2119,29 +1561,11 @@ public sealed class DevicesControllerTests(
     )
     {
         // Arrange
-        var appFactory = _appFactory.WithWebHostBuilder(builder =>
-        {
-            builder.ConfigureServices(services =>
-            {
-                services.AddTransient<IChirpstackService, FakeChirpstackServiceWithSuccess>();
-            });
-        });
-        var device = new Device
-        {
-            DeviceName = "loris_sample",
-            DevEui = DevEui.Parse("1122AABBCCDDEEFF"),
-            FriendlyName = "loris_friendly",
-            LastSeen = DateTime.UtcNow,
-            DeviceStatus = initialStatus,
-        };
-        using var scope = appFactory.Services.CreateScope();
-        var ctx = scope.ServiceProvider.GetRequiredService<LorisDbContext>();
-        ctx.Devices.Add(device);
-        await ctx.SaveChangesAsync(CancellationToken.None);
+        using var appFactory = WithChirpstackService<FakeChirpstackServiceWithSuccess>();
+        var device = CreateDevice(status: initialStatus);
+        await SeedDevicesAsync(appFactory, device);
 
-        var jsonOptions = appFactory
-            .Services.GetRequiredService<IOptions<JsonOptions>>()
-            .Value.JsonSerializerOptions;
+        var jsonOptions = GetJsonOptions(appFactory);
         var stateCache = appFactory.Services.GetRequiredService<IStateCache>();
         var client = appFactory.CreateClient();
 
@@ -2168,29 +1592,11 @@ public sealed class DevicesControllerTests(
     public async Task Post_DisconnectByName_ReturnsBadGatewayWhenChirpstackFails()
     {
         // Arrange
-        var appFactory = _appFactory.WithWebHostBuilder(builder =>
-        {
-            builder.ConfigureServices(services =>
-            {
-                services.AddTransient<IChirpstackService, FakeChirpstackServiceWithFailed>();
-            });
-        });
-        var device = new Device
-        {
-            DeviceName = "loris_sample",
-            DevEui = DevEui.Parse("1122AABBCCDDEEFF"),
-            FriendlyName = "loris_friendly",
-            LastSeen = DateTime.UtcNow,
-            DeviceStatus = DeviceStatus.ACTIVE,
-        };
-        using var scope = appFactory.Services.CreateScope();
-        var ctx = scope.ServiceProvider.GetRequiredService<LorisDbContext>();
-        ctx.Devices.Add(device);
-        await ctx.SaveChangesAsync(CancellationToken.None);
+        using var appFactory = WithChirpstackService<FakeChirpstackServiceWithFailed>();
+        var device = CreateDevice(status: DeviceStatus.ACTIVE);
+        await SeedDevicesAsync(appFactory, device);
 
-        var jsonOptions = appFactory
-            .Services.GetRequiredService<IOptions<JsonOptions>>()
-            .Value.JsonSerializerOptions;
+        var jsonOptions = GetJsonOptions(appFactory);
         var stateCache = appFactory.Services.GetRequiredService<IStateCache>();
         stateCache[device.DevEui] = device;
         var client = appFactory.CreateClient();
@@ -2217,29 +1623,11 @@ public sealed class DevicesControllerTests(
     public async Task Post_DisconnectByName_ReturnsGatewayTimeoutWhenChirpstackTimesOut()
     {
         // Arrange
-        var appFactory = _appFactory.WithWebHostBuilder(builder =>
-        {
-            builder.ConfigureServices(services =>
-            {
-                services.AddTransient<IChirpstackService, FakeChirpstackServiceWithTimeout>();
-            });
-        });
-        var device = new Device
-        {
-            DeviceName = "loris_sample",
-            DevEui = DevEui.Parse("1122AABBCCDDEEFF"),
-            FriendlyName = "loris_friendly",
-            LastSeen = DateTime.UtcNow,
-            DeviceStatus = DeviceStatus.ACTIVE,
-        };
-        using var scope = appFactory.Services.CreateScope();
-        var ctx = scope.ServiceProvider.GetRequiredService<LorisDbContext>();
-        ctx.Devices.Add(device);
-        await ctx.SaveChangesAsync(CancellationToken.None);
+        using var appFactory = WithChirpstackService<FakeChirpstackServiceWithTimeout>();
+        var device = CreateDevice(status: DeviceStatus.ACTIVE);
+        await SeedDevicesAsync(appFactory, device);
 
-        var jsonOptions = appFactory
-            .Services.GetRequiredService<IOptions<JsonOptions>>()
-            .Value.JsonSerializerOptions;
+        var jsonOptions = GetJsonOptions(appFactory);
         var stateCache = appFactory.Services.GetRequiredService<IStateCache>();
         stateCache[device.DevEui] = device;
         var client = appFactory.CreateClient();
@@ -2271,29 +1659,11 @@ public sealed class DevicesControllerTests(
     )
     {
         // Arrange
-        var appFactory = _appFactory.WithWebHostBuilder(builder =>
-        {
-            builder.ConfigureServices(services =>
-            {
-                services.AddTransient<IChirpstackService, FakeChirpstackServiceWithSuccess>();
-            });
-        });
-        var device = new Device
-        {
-            DeviceName = "loris_sample",
-            DevEui = DevEui.Parse("1122AABBCCDDEEFF"),
-            FriendlyName = "loris_friendly",
-            LastSeen = DateTime.UtcNow,
-            DeviceStatus = initialStatus,
-        };
-        using var scope = appFactory.Services.CreateScope();
-        var ctx = scope.ServiceProvider.GetRequiredService<LorisDbContext>();
-        ctx.Devices.Add(device);
-        await ctx.SaveChangesAsync(CancellationToken.None);
+        using var appFactory = WithChirpstackService<FakeChirpstackServiceWithSuccess>();
+        var device = CreateDevice(status: initialStatus);
+        await SeedDevicesAsync(appFactory, device);
 
-        var jsonOptions = appFactory
-            .Services.GetRequiredService<IOptions<JsonOptions>>()
-            .Value.JsonSerializerOptions;
+        var jsonOptions = GetJsonOptions(appFactory);
         var stateCache = appFactory.Services.GetRequiredService<IStateCache>();
         stateCache[device.DevEui] = device;
         var client = appFactory.CreateClient();
@@ -2322,16 +1692,8 @@ public sealed class DevicesControllerTests(
     public async Task Post_DisconnectByName_ReturnsNotFoundWhenDeviceDoesNotExist(bool force)
     {
         // Arrange
-        var appFactory = _appFactory.WithWebHostBuilder(builder =>
-        {
-            builder.ConfigureServices(services =>
-            {
-                services.AddTransient<IChirpstackService, FakeChirpstackServiceWithSuccess>();
-            });
-        });
-        var jsonOptions = appFactory
-            .Services.GetRequiredService<IOptions<JsonOptions>>()
-            .Value.JsonSerializerOptions;
+        using var appFactory = WithChirpstackService<FakeChirpstackServiceWithSuccess>();
+        var jsonOptions = GetJsonOptions(appFactory);
         var client = appFactory.CreateClient();
 
         // Act
@@ -2363,36 +1725,17 @@ public sealed class DevicesControllerTests(
     )
     {
         // Arrange
-        var appFactory = _appFactory.WithWebHostBuilder(builder =>
-        {
-            builder.ConfigureServices(services =>
-            {
-                services.AddTransient<IChirpstackService, FakeChirpstackServiceWithSuccess>();
-            });
-        });
-        var devEui = DevEui.Parse("1122AABBCCDDEEFF");
-        var device = new Device
-        {
-            DeviceName = "loris_sample",
-            DevEui = devEui,
-            FriendlyName = "loris_friendly",
-            LastSeen = DateTime.UtcNow,
-            DeviceStatus = initialStatus,
-        };
-        using var scope = appFactory.Services.CreateScope();
-        var ctx = scope.ServiceProvider.GetRequiredService<LorisDbContext>();
-        ctx.Devices.Add(device);
-        await ctx.SaveChangesAsync(CancellationToken.None);
+        using var appFactory = WithChirpstackService<FakeChirpstackServiceWithSuccess>();
+        var device = CreateDevice(status: initialStatus);
+        await SeedDevicesAsync(appFactory, device);
 
-        var jsonOptions = appFactory
-            .Services.GetRequiredService<IOptions<JsonOptions>>()
-            .Value.JsonSerializerOptions;
+        var jsonOptions = GetJsonOptions(appFactory);
         var stateCache = appFactory.Services.GetRequiredService<IStateCache>();
         var client = appFactory.CreateClient();
 
         // Act
         var httpResponse = await client.PostAsync(
-            $"/api/devices/by-eui/{devEui}/disconnect?force={force}",
+            $"/api/devices/by-eui/{device.DevEui}/disconnect?force={force}",
             null,
             CancellationToken.None
         );
@@ -2405,7 +1748,7 @@ public sealed class DevicesControllerTests(
         httpResponse.EnsureSuccessStatusCode();
         Assert.NotNull(deviceResponse);
         Assert.Equal(DeviceStatus.DISCONNECTED, deviceResponse.DeviceStatus);
-        Assert.True(stateCache.TryGetDevice(devEui, out var cachedDevice));
+        Assert.True(stateCache.TryGetDevice(device.DevEui, out var cachedDevice));
         Assert.Equal(DeviceStatus.DISCONNECTED, cachedDevice.DeviceStatus);
     }
 
@@ -2413,18 +1756,10 @@ public sealed class DevicesControllerTests(
     public async Task Post_DisconnectByEui_ReturnsEmptyDeviceResponseWhenDeviceDoesNotExistAndForceIsTrue()
     {
         // Arrange
-        var appFactory = _appFactory.WithWebHostBuilder(builder =>
-        {
-            builder.ConfigureServices(services =>
-            {
-                services.AddTransient<IChirpstackService, FakeChirpstackServiceWithSuccess>();
-            });
-        });
+        using var appFactory = WithChirpstackService<FakeChirpstackServiceWithSuccess>();
         var unknownEui = DevEui.Parse("FFEEDDCCBBAA2211");
         var expectedResponse = DeviceResponse.FromModel(new Device());
-        var jsonOptions = appFactory
-            .Services.GetRequiredService<IOptions<JsonOptions>>()
-            .Value.JsonSerializerOptions;
+        var jsonOptions = GetJsonOptions(appFactory);
         var client = appFactory.CreateClient();
 
         // Act
@@ -2453,35 +1788,17 @@ public sealed class DevicesControllerTests(
     )
     {
         // Arrange
-        var appFactory = _appFactory.WithWebHostBuilder(builder =>
-        {
-            builder.ConfigureServices(services =>
-            {
-                services.AddTransient<IChirpstackService, FakeChirpstackServiceWithFailed>();
-            });
-        });
+        using var appFactory = WithChirpstackService<FakeChirpstackServiceWithFailed>();
         var devEui = DevEui.Parse("1122AABBCCDDEEFF");
         var stateCache = appFactory.Services.GetRequiredService<IStateCache>();
         if (deviceExists)
         {
-            var device = new Device
-            {
-                DeviceName = "loris_sample",
-                DevEui = devEui,
-                FriendlyName = "loris_friendly",
-                LastSeen = DateTime.UtcNow,
-                DeviceStatus = DeviceStatus.ACTIVE,
-            };
-            using var scope = appFactory.Services.CreateScope();
-            var ctx = scope.ServiceProvider.GetRequiredService<LorisDbContext>();
-            ctx.Devices.Add(device);
-            await ctx.SaveChangesAsync(CancellationToken.None);
+            var device = CreateDevice(status: DeviceStatus.ACTIVE, devEui: "1122AABBCCDDEEFF");
+            await SeedDevicesAsync(appFactory, device);
             stateCache[devEui] = device;
         }
 
-        var jsonOptions = appFactory
-            .Services.GetRequiredService<IOptions<JsonOptions>>()
-            .Value.JsonSerializerOptions;
+        var jsonOptions = GetJsonOptions(appFactory);
         var client = appFactory.CreateClient();
 
         // Act
@@ -2518,35 +1835,17 @@ public sealed class DevicesControllerTests(
     )
     {
         // Arrange
-        var appFactory = _appFactory.WithWebHostBuilder(builder =>
-        {
-            builder.ConfigureServices(services =>
-            {
-                services.AddTransient<IChirpstackService, FakeChirpstackServiceWithTimeout>();
-            });
-        });
+        using var appFactory = WithChirpstackService<FakeChirpstackServiceWithTimeout>();
         var devEui = DevEui.Parse("1122AABBCCDDEEFF");
         var stateCache = appFactory.Services.GetRequiredService<IStateCache>();
         if (deviceExists)
         {
-            var device = new Device
-            {
-                DeviceName = "loris_sample",
-                DevEui = devEui,
-                FriendlyName = "loris_friendly",
-                LastSeen = DateTime.UtcNow,
-                DeviceStatus = DeviceStatus.ACTIVE,
-            };
-            using var scope = appFactory.Services.CreateScope();
-            var ctx = scope.ServiceProvider.GetRequiredService<LorisDbContext>();
-            ctx.Devices.Add(device);
-            await ctx.SaveChangesAsync(CancellationToken.None);
+            var device = CreateDevice(status: DeviceStatus.ACTIVE, devEui: "1122AABBCCDDEEFF");
+            await SeedDevicesAsync(appFactory, device);
             stateCache[devEui] = device;
         }
 
-        var jsonOptions = appFactory
-            .Services.GetRequiredService<IOptions<JsonOptions>>()
-            .Value.JsonSerializerOptions;
+        var jsonOptions = GetJsonOptions(appFactory);
         var client = appFactory.CreateClient();
 
         // Act
@@ -2583,37 +1882,18 @@ public sealed class DevicesControllerTests(
     )
     {
         // Arrange
-        var appFactory = _appFactory.WithWebHostBuilder(builder =>
-        {
-            builder.ConfigureServices(services =>
-            {
-                services.AddTransient<IChirpstackService, FakeChirpstackServiceWithSuccess>();
-            });
-        });
-        var devEui = DevEui.Parse("1122AABBCCDDEEFF");
-        var device = new Device
-        {
-            DeviceName = "loris_sample",
-            DevEui = devEui,
-            FriendlyName = "loris_friendly",
-            LastSeen = DateTime.UtcNow,
-            DeviceStatus = initialStatus,
-        };
-        using var scope = appFactory.Services.CreateScope();
-        var ctx = scope.ServiceProvider.GetRequiredService<LorisDbContext>();
-        ctx.Devices.Add(device);
-        await ctx.SaveChangesAsync(CancellationToken.None);
+        using var appFactory = WithChirpstackService<FakeChirpstackServiceWithSuccess>();
+        var device = CreateDevice(status: initialStatus);
+        await SeedDevicesAsync(appFactory, device);
 
-        var jsonOptions = appFactory
-            .Services.GetRequiredService<IOptions<JsonOptions>>()
-            .Value.JsonSerializerOptions;
+        var jsonOptions = GetJsonOptions(appFactory);
         var stateCache = appFactory.Services.GetRequiredService<IStateCache>();
-        stateCache[devEui] = device;
+        stateCache[device.DevEui] = device;
         var client = appFactory.CreateClient();
 
         // Act
         var httpResponse = await client.PostAsync(
-            $"/api/devices/by-eui/{devEui}/disconnect?force=false",
+            $"/api/devices/by-eui/{device.DevEui}/disconnect?force=false",
             null,
             CancellationToken.None
         );
@@ -2626,24 +1906,16 @@ public sealed class DevicesControllerTests(
         Assert.Equal(HttpStatusCode.Conflict, httpResponse.StatusCode);
         Assert.NotNull(problem);
         Assert.Equal((int)HttpStatusCode.Conflict, problem.Status);
-        Assert.Equal(initialStatus, stateCache[devEui].DeviceStatus);
+        Assert.Equal(initialStatus, stateCache[device.DevEui].DeviceStatus);
     }
 
     [Fact]
     public async Task Post_DisconnectByEui_ReturnsNotFoundWhenDeviceDoesNotExistAndForceIsFalse()
     {
         // Arrange
-        var appFactory = _appFactory.WithWebHostBuilder(builder =>
-        {
-            builder.ConfigureServices(services =>
-            {
-                services.AddTransient<IChirpstackService, FakeChirpstackServiceWithSuccess>();
-            });
-        });
+        using var appFactory = WithChirpstackService<FakeChirpstackServiceWithSuccess>();
         var nonExistentEui = DevEui.Parse("FFEEDDCCBBAA2211");
-        var jsonOptions = appFactory
-            .Services.GetRequiredService<IOptions<JsonOptions>>()
-            .Value.JsonSerializerOptions;
+        var jsonOptions = GetJsonOptions(appFactory);
         var client = appFactory.CreateClient();
 
         // Act
