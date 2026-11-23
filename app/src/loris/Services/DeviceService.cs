@@ -26,16 +26,15 @@ public class DeviceService(
         CancellationToken ct = default
     )
     {
-        var statusSet = statusFilterList.ToHashSet();
-        var query = _ctx
-            .Devices.Include(d => d.Sensors)
-            .Include(d => d.Functions)
-            .Select(d => DeviceDetailsResponse.FromModel(d));
-        if (statusSet.Count > 0)
+        var query = _ctx.Devices.Include(d => d.Sensors).Include(d => d.Functions);
+        if (statusFilterList.Count > 0)
         {
-            return await query.Where(d => statusSet.Contains(d.DeviceStatus)).ToListAsync(ct);
+            return await query
+                .Where(d => statusFilterList.Contains(d.DeviceStatus))
+                .Select(d => DeviceDetailsResponse.FromModel(d))
+                .ToListAsync(ct);
         }
-        return await query.ToListAsync(ct);
+        return await query.Select(d => DeviceDetailsResponse.FromModel(d)).ToListAsync(ct);
     }
 
     public async Task<Result<DeviceDetailsResponse>> GetAsync(
