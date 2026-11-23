@@ -6,8 +6,14 @@ namespace Loris.Services;
 
 public interface IDeviceService
 {
+    public Task<Result<DeviceResponse>> AcceptAsync(Guid deviceId, CancellationToken ct = default);
     public Task<Result<DeviceResponse>> AcceptAsync(DevEui devEui, CancellationToken ct = default);
     public Task<Result<DeviceResponse>> AcceptAsync(string name, CancellationToken ct = default);
+    public Task<Result<DeviceResponse>> DisconnectAsync(
+        Guid deviceId,
+        bool force,
+        CancellationToken ct = default
+    );
     public Task<Result<DeviceResponse>> DisconnectAsync(
         DevEui devEui,
         bool force,
@@ -16,6 +22,11 @@ public interface IDeviceService
     public Task<Result<DeviceResponse>> DisconnectAsync(
         string name,
         bool force,
+        CancellationToken ct = default
+    );
+    public Task<Result<DeviceResponse>> ToggleIgnoreAsync(
+        Guid id,
+        bool ignore,
         CancellationToken ct = default
     );
     public Task<Result<DeviceResponse>> ToggleIgnoreAsync(

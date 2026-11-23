@@ -149,6 +149,15 @@ public class DeviceService(
     }
 
     public async Task<Result<DeviceResponse>> AcceptAsync(
+        Guid deviceId,
+        CancellationToken ct = default
+    )
+    {
+        var device = await _ctx.Devices.SingleOrDefaultAsync(d => d.DeviceId == deviceId, ct);
+        return device is null ? DeviceErrors.NotFound(deviceId) : await AcceptAsync(device, ct);
+    }
+
+    public async Task<Result<DeviceResponse>> AcceptAsync(
         DevEui devEui,
         CancellationToken ct = default
     )
@@ -204,6 +213,18 @@ public class DeviceService(
         _stateCache[device.DevEui] = device;
 
         return DeviceResponse.FromModel(device);
+    }
+
+    public async Task<Result<DeviceResponse>> DisconnectAsync(
+        Guid deviceId,
+        bool force,
+        CancellationToken ct = default
+    )
+    {
+        var device = await _ctx.Devices.SingleOrDefaultAsync(d => d.DeviceId == deviceId, ct);
+        return device is null
+            ? DeviceErrors.NotFound(deviceId)
+            : await DisconnectAsync(device, force, ct);
     }
 
     public async Task<Result<DeviceResponse>> DisconnectAsync(
@@ -281,6 +302,18 @@ public class DeviceService(
         _stateCache[device.DevEui] = device;
 
         return DeviceResponse.FromModel(device);
+    }
+
+    public async Task<Result<DeviceResponse>> ToggleIgnoreAsync(
+        Guid deviceId,
+        bool ignore,
+        CancellationToken ct = default
+    )
+    {
+        var device = await _ctx.Devices.SingleOrDefaultAsync(d => d.DeviceId == deviceId, ct);
+        return device is null
+            ? DeviceErrors.NotFound(deviceId)
+            : await ToggleIgnoreAsync(device, ignore, ct);
     }
 
     public async Task<Result<DeviceResponse>> ToggleIgnoreAsync(

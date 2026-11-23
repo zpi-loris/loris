@@ -121,6 +121,19 @@ public class DevicesController(IDeviceService deviceService) : ControllerBase
     ) => this.ToActionResult(await _service.RenameAsync(name, request.NewFriendlyName, ct));
 
     /// <summary>
+    /// Accept device by id
+    /// </summary>
+    /// <remarks>
+    /// Accepts a device, forcing it to send reports instead of capabilities until disconnected.
+    /// </remarks>
+    [HttpPost("by-id/{id}/accept")]
+    [ProducesLoraWanGatewayErrors]
+    [ProducesDeviceStateConflict]
+    [ProducesDeviceNotFound]
+    public async Task<ActionResult<DeviceResponse>> AcceptById(Guid id, CancellationToken ct) =>
+        this.ToActionResult(await _service.AcceptAsync(id, ct));
+
+    /// <summary>
     /// Accept device by name
     /// </summary>
     /// <remarks>
@@ -149,6 +162,24 @@ public class DevicesController(IDeviceService deviceService) : ControllerBase
         DevEui devEui,
         CancellationToken ct
     ) => this.ToActionResult(await _service.AcceptAsync(devEui, ct));
+
+    /// <summary>
+    /// Ignore device by id
+    /// </summary>
+    /// <remarks>
+    /// Marks the device as ignored in the application without affecting the device itself.
+    /// </remarks>
+    /// <param name="revert">
+    /// If true, the device will be un-ignored.
+    /// </param>
+    [HttpPost("by-id/{id}/ignore")]
+    [ProducesDeviceStateConflict]
+    [ProducesDeviceNotFound]
+    public async Task<ActionResult<DeviceResponse>> IgnoreById(
+        Guid id,
+        [DefaultValue(false)] [FromQuery] bool revert,
+        CancellationToken ct
+    ) => this.ToActionResult(await _service.ToggleIgnoreAsync(id, ignore: !revert, ct));
 
     /// <summary>
     /// Ignore device by name
@@ -185,6 +216,25 @@ public class DevicesController(IDeviceService deviceService) : ControllerBase
         [DefaultValue(false)] [FromQuery] bool revert,
         CancellationToken ct
     ) => this.ToActionResult(await _service.ToggleIgnoreAsync(devEui, ignore: !revert, ct));
+
+    /// <summary>
+    /// Disconnect device by id
+    /// </summary>
+    /// <remarks>
+    /// Disconnects a device, forcing it to send capabilities instead of reports until the next uplink.
+    /// </remarks>
+    /// <param name="force">
+    /// If true, the device will be disconnected even if it is not accepted.
+    /// </param>
+    [HttpPost("by-id/{id}/disconnect")]
+    [ProducesLoraWanGatewayErrors]
+    [ProducesDeviceStateConflict]
+    [ProducesDeviceNotFound]
+    public async Task<ActionResult<DeviceResponse>> DisconnectByName(
+        Guid id,
+        [DefaultValue(false)] [FromQuery] bool force,
+        CancellationToken ct
+    ) => this.ToActionResult(await _service.DisconnectAsync(id, force, ct));
 
     /// <summary>
     /// Disconnect device by name
