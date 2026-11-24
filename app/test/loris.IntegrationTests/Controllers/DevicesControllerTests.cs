@@ -11,6 +11,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.Options;
 
+[assembly: CaptureConsole]
+
 namespace loris.IntegrationTests.Controllers;
 
 [Collection(TimescaleDbApplicationFactory.CollectionKey)]
@@ -1927,6 +1929,795 @@ public sealed class DevicesControllerTests(
         var problem = await httpResponse.Content.ReadFromJsonAsync<ResultProblemDetails>(
             jsonOptions,
             CancellationToken.None
+        );
+
+        // Assert
+        Assert.Equal(HttpStatusCode.NotFound, httpResponse.StatusCode);
+        Assert.NotNull(problem);
+        Assert.Equal((int)HttpStatusCode.NotFound, problem.Status);
+    }
+
+    [Theory]
+    [InlineData(DeviceStatus.ACTIVE)]
+    [InlineData(DeviceStatus.DISCONNECTED)]
+    [InlineData(DeviceStatus.IGNORED)]
+    [InlineData(DeviceStatus.PENDING)]
+    public async Task Post_ReplaceById_ReplacesDeviceWipesSubstituteAndUpdatesStateCache(
+        DeviceStatus originalStatus
+    )
+    {
+        // Arrange
+        using var appFactory = WithChirpstackService<FakeChirpstackServiceWithSuccess>();
+        var originalDevEui = DevEui.Parse("1122AABBCCDDEEFF");
+        var substituteDevEui = DevEui.Parse("1122AABBCCDDEEF0");
+        var device1 = CreateDevice(
+            status: originalStatus,
+            devEui: "1122AABBCCDDEEFF",
+            friendlyName: "loris_friendly_1",
+            deviceName: "loris_sample_1",
+            withCapabilities: true
+        );
+        var device2 = CreateDevice(
+            status: DeviceStatus.PENDING,
+            devEui: "1122AABBCCDDEEF0",
+            friendlyName: "loris_friendly_2",
+            deviceName: "loris_sample_2",
+            withCapabilities: true
+        );
+        await SeedDevicesAsync(appFactory, device1, device2);
+
+        using (var seedScope = appFactory.Services.CreateScope())
+        {
+            var seedCtx = seedScope.ServiceProvider.GetRequiredService<LorisDbContext>();
+            var subSensorId = device2.Sensors.First().SensorId;
+            seedCtx.SensorReadings.Add(
+                new SensorReading
+                {
+                    SensorId = subSensorId,
+                    Time = DateTime.UtcNow,
+                    FloatValue = 21.5f,
+                }
+            );
+            await seedCtx.SaveChangesAsync(CancellationToken.None);
+        }
+
+        var jsonOptions = GetJsonOptions(appFactory);
+        var stateCache = appFactory.Services.GetRequiredService<IStateCache>();
+        stateCache[originalDevEui] = device1;
+        var client = appFactory.CreateClient();
+        var token = TestContext.Current.CancellationToken;
+
+        var replaceRequest = new DeviceReplaceRequest { With = device2.DeviceId };
+        var expectedAfter = CreateDevice(
+            status: DeviceStatus.ACTIVE,
+            devEui: "1122AABBCCDDEEF0",
+            friendlyName: "loris_friendly_1",
+            deviceName: "loris_sample_1"
+        );
+        expectedAfter.DeviceId = device1.DeviceId;
+
+        // Act
+        var replaceResponse = await client.PostAsJsonAsync(
+            $"/api/devices/by-id/{device1.DeviceId}/replace",
+            replaceRequest,
+            jsonOptions,
+            token
+        );
+        var replaceDeviceResponse = await replaceResponse.Content.ReadFromJsonAsync<DeviceResponse>(
+            jsonOptions,
+            token
+        );
+
+        var get1Response = await client.GetAsync($"/api/devices/by-id/{device1.DeviceId}", token);
+        var get1DetailsResponse =
+            await get1Response.Content.ReadFromJsonAsync<DeviceDetailsResponse>(jsonOptions, token);
+        var get2Response = await client.GetAsync($"/api/devices/by-id/{device2.DeviceId}", token);
+
+        // Assert
+        replaceResponse.EnsureSuccessStatusCode();
+        get1Response.EnsureSuccessStatusCode();
+        Assert.Equal(HttpStatusCode.NotFound, get2Response.StatusCode);
+        Assert.NotNull(replaceDeviceResponse);
+        Assert.EquivalentWithExclusions(
+            DeviceResponse.FromModel(expectedAfter),
+            replaceDeviceResponse,
+            [d => d.LastSeen]
+        );
+        Assert.NotNull(get1DetailsResponse);
+        Assert.Equal(substituteDevEui, get1DetailsResponse.DevEui);
+        Assert.Equal(DeviceStatus.ACTIVE, get1DetailsResponse.DeviceStatus);
+        Assert.Single(get1DetailsResponse.Sensors);
+        Assert.Single(get1DetailsResponse.Functions);
+
+        Assert.True(stateCache.TryGetDevice(substituteDevEui, out var cachedDevice));
+        Assert.Equal(device1.DeviceId, cachedDevice.DeviceId);
+        Assert.Equal(DeviceStatus.ACTIVE, cachedDevice.DeviceStatus);
+        Assert.False(stateCache.TryGetDevice(originalDevEui, out _));
+
+        using var verifyScope = appFactory.Services.CreateScope();
+        var verifyCtx = verifyScope.ServiceProvider.GetRequiredService<LorisDbContext>();
+        Assert.False(verifyCtx.Devices.Any(d => d.DeviceId == device2.DeviceId));
+        Assert.False(verifyCtx.Sensors.Any(s => s.DeviceId == device2.DeviceId));
+        Assert.False(verifyCtx.Functions.Any(f => f.DeviceId == device2.DeviceId));
+        Assert.Empty(verifyCtx.SensorReadings);
+    }
+
+    [Theory]
+    [InlineData("guid")]
+    [InlineData("eui")]
+    [InlineData("name")]
+    public async Task Post_ReplaceById_SucceedsForAllSubstituteWithKeyVariations(string keyType)
+    {
+        // Arrange
+        using var appFactory = WithChirpstackService<FakeChirpstackServiceWithSuccess>();
+        var device1 = CreateDevice(
+            status: DeviceStatus.ACTIVE,
+            devEui: "1122AABBCCDDEEFF",
+            friendlyName: "loris_friendly_1",
+            deviceName: "loris_sample_1",
+            withCapabilities: true
+        );
+        var device2 = CreateDevice(
+            status: DeviceStatus.PENDING,
+            devEui: "1122AABBCCDDEEF0",
+            friendlyName: "loris_friendly_2",
+            deviceName: "loris_sample_2",
+            withCapabilities: true
+        );
+        await SeedDevicesAsync(appFactory, device1, device2);
+
+        object withKey = keyType switch
+        {
+            "guid" => device2.DeviceId,
+            "eui" => device2.DevEui,
+            "name" => device2.FriendlyName,
+            _ => throw new ArgumentOutOfRangeException(nameof(keyType)),
+        };
+
+        var jsonOptions = GetJsonOptions(appFactory);
+        var stateCache = appFactory.Services.GetRequiredService<IStateCache>();
+        var client = appFactory.CreateClient();
+        var token = TestContext.Current.CancellationToken;
+
+        var replaceRequest = new DeviceReplaceRequest { With = withKey };
+
+        // Act
+        var httpResponse = await client.PostAsJsonAsync(
+            $"/api/devices/by-id/{device1.DeviceId}/replace",
+            replaceRequest,
+            jsonOptions,
+            token
+        );
+        var deviceResponse = await httpResponse.Content.ReadFromJsonAsync<DeviceResponse>(
+            jsonOptions,
+            token
+        );
+
+        // Assert
+        httpResponse.EnsureSuccessStatusCode();
+        Assert.NotNull(deviceResponse);
+        Assert.Equal(device2.DevEui, deviceResponse.DevEui);
+        Assert.Equal(DeviceStatus.ACTIVE, deviceResponse.DeviceStatus);
+        Assert.True(stateCache.TryGetDevice(device2.DevEui, out var cachedDevice));
+        Assert.Equal(device1.DeviceId, cachedDevice.DeviceId);
+    }
+
+    [Theory]
+    [InlineData(DeviceStatus.ACTIVE)]
+    [InlineData(DeviceStatus.IGNORED)]
+    [InlineData(DeviceStatus.DISCONNECTED)]
+    public async Task Post_ReplaceById_ReturnsConflictWhenSubstituteIsNotPending(
+        DeviceStatus substituteStatus
+    )
+    {
+        // Arrange
+        using var appFactory = WithChirpstackService<FakeChirpstackServiceWithSuccess>();
+        var device1 = CreateDevice(
+            status: DeviceStatus.ACTIVE,
+            devEui: "1122AABBCCDDEEFF",
+            friendlyName: "loris_friendly_1",
+            deviceName: "loris_sample_1",
+            withCapabilities: true
+        );
+        var device2 = CreateDevice(
+            status: substituteStatus,
+            devEui: "1122AABBCCDDEEF0",
+            friendlyName: "loris_friendly_2",
+            deviceName: "loris_sample_2",
+            withCapabilities: true
+        );
+        await SeedDevicesAsync(appFactory, device1, device2);
+
+        var jsonOptions = GetJsonOptions(appFactory);
+        var stateCache = appFactory.Services.GetRequiredService<IStateCache>();
+        stateCache[device1.DevEui] = device1;
+        var client = appFactory.CreateClient();
+        var token = TestContext.Current.CancellationToken;
+
+        var replaceRequest = new DeviceReplaceRequest { With = device2.DeviceId };
+
+        // Act
+        var httpResponse = await client.PostAsJsonAsync(
+            $"/api/devices/by-id/{device1.DeviceId}/replace",
+            replaceRequest,
+            jsonOptions,
+            token
+        );
+        var problem = await httpResponse.Content.ReadFromJsonAsync<ResultProblemDetails>(
+            jsonOptions,
+            token
+        );
+
+        // Assert
+        Assert.Equal(HttpStatusCode.Conflict, httpResponse.StatusCode);
+        Assert.NotNull(problem);
+        Assert.Equal((int)HttpStatusCode.Conflict, problem.Status);
+        Assert.True(stateCache.TryGetDevice(device1.DevEui, out _));
+        Assert.False(stateCache.TryGetDevice(device2.DevEui, out _));
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task Post_ReplaceById_ReturnsErrorWhenSubstituteIsSameOrCapabilitiesMismatch(
+        bool sameDevice
+    )
+    {
+        // Arrange
+        using var appFactory = WithChirpstackService<FakeChirpstackServiceWithSuccess>();
+        var device1 = CreateDevice(
+            status: DeviceStatus.PENDING,
+            devEui: "1122AABBCCDDEEFF",
+            friendlyName: "loris_friendly_1",
+            deviceName: "loris_sample_1",
+            withCapabilities: true
+        );
+        var device2 = CreateDevice(
+            status: DeviceStatus.PENDING,
+            devEui: "1122AABBCCDDEEF0",
+            friendlyName: "loris_friendly_2",
+            deviceName: "loris_sample_2",
+            withCapabilities: false
+        );
+        await SeedDevicesAsync(appFactory, device1, device2);
+
+        var jsonOptions = GetJsonOptions(appFactory);
+        var client = appFactory.CreateClient();
+        var token = TestContext.Current.CancellationToken;
+
+        var replaceRequest = new DeviceReplaceRequest
+        {
+            With = sameDevice ? device1.DeviceId : device2.DeviceId,
+        };
+
+        // Act
+        var httpResponse = await client.PostAsJsonAsync(
+            $"/api/devices/by-id/{device1.DeviceId}/replace",
+            replaceRequest,
+            jsonOptions,
+            token
+        );
+        var problem = await httpResponse.Content.ReadFromJsonAsync<ResultProblemDetails>(
+            jsonOptions,
+            token
+        );
+
+        // Assert
+        Assert.True(
+            httpResponse.StatusCode is HttpStatusCode.BadRequest or HttpStatusCode.Conflict,
+            $"Expected 400 or 409, got {httpResponse.StatusCode}"
+        );
+        Assert.NotNull(problem);
+    }
+
+    [Theory]
+    [InlineData("originalNotFound")]
+    [InlineData("substituteNotFound")]
+    [InlineData("invalidKey")]
+    public async Task Post_ReplaceById_ReturnsNotFoundOrBadRequestForMissingOrInvalidTargets(
+        string scenario
+    )
+    {
+        // Arrange
+        using var appFactory = WithChirpstackService<FakeChirpstackServiceWithSuccess>();
+        var device1 = CreateDevice(
+            status: DeviceStatus.ACTIVE,
+            devEui: "1122AABBCCDDEEFF",
+            friendlyName: "loris_friendly_1",
+            deviceName: "loris_sample_1",
+            withCapabilities: true
+        );
+        await SeedDevicesAsync(appFactory, device1);
+
+        var targetId = scenario == "originalNotFound" ? Guid.NewGuid() : device1.DeviceId;
+        object withKey = scenario switch
+        {
+            "originalNotFound" => device1.DeviceId,
+            "substituteNotFound" => Guid.NewGuid(),
+            "invalidKey" => 12345,
+            _ => throw new ArgumentOutOfRangeException(nameof(scenario)),
+        };
+        var expectedStatus =
+            scenario == "originalNotFound" ? HttpStatusCode.NotFound : HttpStatusCode.BadRequest;
+
+        var jsonOptions = GetJsonOptions(appFactory);
+        var client = appFactory.CreateClient();
+        var token = TestContext.Current.CancellationToken;
+
+        var replaceRequest = new DeviceReplaceRequest { With = withKey };
+
+        // Act
+        var httpResponse = await client.PostAsJsonAsync(
+            $"/api/devices/by-id/{targetId}/replace",
+            replaceRequest,
+            jsonOptions,
+            token
+        );
+        var problem = await httpResponse.Content.ReadFromJsonAsync<ResultProblemDetails>(
+            jsonOptions,
+            token
+        );
+
+        // Assert
+        Assert.Equal(expectedStatus, httpResponse.StatusCode);
+        Assert.NotNull(problem);
+        Assert.Equal((int)expectedStatus, problem.Status);
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task Post_ReplaceById_ReturnsGatewayErrorWhenChirpstackIsUnavailable(
+        bool isTimeout
+    )
+    {
+        // Arrange
+        using var appFactory = isTimeout
+            ? WithChirpstackService<FakeChirpstackServiceWithTimeout>()
+            : WithChirpstackService<FakeChirpstackServiceWithFailed>();
+        var device1 = CreateDevice(
+            status: DeviceStatus.ACTIVE,
+            devEui: "1122AABBCCDDEEFF",
+            friendlyName: "loris_friendly_1",
+            deviceName: "loris_sample_1",
+            withCapabilities: true
+        );
+        var device2 = CreateDevice(
+            status: DeviceStatus.PENDING,
+            devEui: "1122AABBCCDDEEF0",
+            friendlyName: "loris_friendly_2",
+            deviceName: "loris_sample_2",
+            withCapabilities: true
+        );
+        await SeedDevicesAsync(appFactory, device1, device2);
+
+        var expectedStatus = isTimeout ? HttpStatusCode.GatewayTimeout : HttpStatusCode.BadGateway;
+        var jsonOptions = GetJsonOptions(appFactory);
+        var stateCache = appFactory.Services.GetRequiredService<IStateCache>();
+        stateCache[device1.DevEui] = device1;
+        var client = appFactory.CreateClient();
+        var token = TestContext.Current.CancellationToken;
+
+        var replaceRequest = new DeviceReplaceRequest { With = device2.DeviceId };
+
+        // Act
+        var httpResponse = await client.PostAsJsonAsync(
+            $"/api/devices/by-id/{device1.DeviceId}/replace",
+            replaceRequest,
+            jsonOptions,
+            token
+        );
+        var problem = await httpResponse.Content.ReadFromJsonAsync<ResultProblemDetails>(
+            jsonOptions,
+            token
+        );
+
+        // Assert
+        Assert.Equal(expectedStatus, httpResponse.StatusCode);
+        Assert.NotNull(problem);
+        Assert.Equal((int)expectedStatus, problem.Status);
+        Assert.True(stateCache.TryGetDevice(device1.DevEui, out var cachedOriginal));
+        Assert.Equal(device1.DevEui, cachedOriginal.DevEui);
+        Assert.False(stateCache.TryGetDevice(device2.DevEui, out _));
+    }
+
+    [Theory]
+    [InlineData("guid")]
+    [InlineData("eui")]
+    [InlineData("name")]
+    public async Task Post_ReplaceByName_ReplacesDeviceAndUpdatesStateCacheForAllWithKeyVariations(
+        string keyType
+    )
+    {
+        // Arrange
+        using var appFactory = WithChirpstackService<FakeChirpstackServiceWithSuccess>();
+        var device1 = CreateDevice(
+            status: DeviceStatus.ACTIVE,
+            devEui: "1122AABBCCDDEEFF",
+            friendlyName: "loris_friendly_1",
+            deviceName: "loris_sample_1",
+            withCapabilities: true
+        );
+        var device2 = CreateDevice(
+            status: DeviceStatus.PENDING,
+            devEui: "1122AABBCCDDEEF0",
+            friendlyName: "loris_friendly_2",
+            deviceName: "loris_sample_2",
+            withCapabilities: true
+        );
+        await SeedDevicesAsync(appFactory, device1, device2);
+
+        object withKey = keyType switch
+        {
+            "guid" => device2.DeviceId,
+            "eui" => device2.DevEui,
+            "name" => device2.FriendlyName,
+            _ => throw new ArgumentOutOfRangeException(nameof(keyType)),
+        };
+
+        var jsonOptions = GetJsonOptions(appFactory);
+        var stateCache = appFactory.Services.GetRequiredService<IStateCache>();
+        stateCache[device1.DevEui] = device1;
+        var client = appFactory.CreateClient();
+        var token = TestContext.Current.CancellationToken;
+
+        var replaceRequest = new DeviceReplaceRequest { With = withKey };
+
+        // Act
+        var httpResponse = await client.PostAsJsonAsync(
+            $"/api/devices/by-name/{device1.FriendlyName}/replace",
+            replaceRequest,
+            jsonOptions,
+            token
+        );
+        var deviceResponse = await httpResponse.Content.ReadFromJsonAsync<DeviceResponse>(
+            jsonOptions,
+            token
+        );
+
+        // Assert
+        httpResponse.EnsureSuccessStatusCode();
+        Assert.NotNull(deviceResponse);
+        Assert.Equal(device2.DevEui, deviceResponse.DevEui);
+        Assert.Equal(DeviceStatus.ACTIVE, deviceResponse.DeviceStatus);
+        Assert.True(stateCache.TryGetDevice(device2.DevEui, out var cachedDevice));
+        Assert.Equal(device1.DeviceId, cachedDevice.DeviceId);
+        Assert.False(stateCache.TryGetDevice(device1.DevEui, out _));
+    }
+
+    [Theory]
+    [InlineData(DeviceStatus.ACTIVE)]
+    [InlineData(DeviceStatus.IGNORED)]
+    [InlineData(DeviceStatus.DISCONNECTED)]
+    public async Task Post_ReplaceByName_ReturnsConflictWhenSubstituteIsNotPending(
+        DeviceStatus substituteStatus
+    )
+    {
+        // Arrange
+        using var appFactory = WithChirpstackService<FakeChirpstackServiceWithSuccess>();
+        var device1 = CreateDevice(
+            status: DeviceStatus.ACTIVE,
+            devEui: "1122AABBCCDDEEFF",
+            friendlyName: "loris_friendly_1",
+            deviceName: "loris_sample_1",
+            withCapabilities: true
+        );
+        var device2 = CreateDevice(
+            status: substituteStatus,
+            devEui: "1122AABBCCDDEEF0",
+            friendlyName: "loris_friendly_2",
+            deviceName: "loris_sample_2",
+            withCapabilities: true
+        );
+        await SeedDevicesAsync(appFactory, device1, device2);
+
+        var jsonOptions = GetJsonOptions(appFactory);
+        var stateCache = appFactory.Services.GetRequiredService<IStateCache>();
+        stateCache[device1.DevEui] = device1;
+        var client = appFactory.CreateClient();
+        var token = TestContext.Current.CancellationToken;
+
+        var replaceRequest = new DeviceReplaceRequest { With = device2.FriendlyName };
+
+        // Act
+        var httpResponse = await client.PostAsJsonAsync(
+            $"/api/devices/by-name/{device1.FriendlyName}/replace",
+            replaceRequest,
+            jsonOptions,
+            token
+        );
+        var problem = await httpResponse.Content.ReadFromJsonAsync<ResultProblemDetails>(
+            jsonOptions,
+            token
+        );
+
+        // Assert
+        Assert.Equal(HttpStatusCode.Conflict, httpResponse.StatusCode);
+        Assert.NotNull(problem);
+        Assert.Equal((int)HttpStatusCode.Conflict, problem.Status);
+        Assert.True(stateCache.TryGetDevice(device1.DevEui, out _));
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task Post_ReplaceByName_ReturnsGatewayErrorWhenChirpstackIsUnavailable(
+        bool isTimeout
+    )
+    {
+        // Arrange
+        using var appFactory = isTimeout
+            ? WithChirpstackService<FakeChirpstackServiceWithTimeout>()
+            : WithChirpstackService<FakeChirpstackServiceWithFailed>();
+        var device1 = CreateDevice(
+            status: DeviceStatus.ACTIVE,
+            devEui: "1122AABBCCDDEEFF",
+            friendlyName: "loris_friendly_1",
+            deviceName: "loris_sample_1",
+            withCapabilities: true
+        );
+        var device2 = CreateDevice(
+            status: DeviceStatus.PENDING,
+            devEui: "1122AABBCCDDEEF0",
+            friendlyName: "loris_friendly_2",
+            deviceName: "loris_sample_2",
+            withCapabilities: true
+        );
+        await SeedDevicesAsync(appFactory, device1, device2);
+
+        var expectedStatus = isTimeout ? HttpStatusCode.GatewayTimeout : HttpStatusCode.BadGateway;
+        var jsonOptions = GetJsonOptions(appFactory);
+        var stateCache = appFactory.Services.GetRequiredService<IStateCache>();
+        stateCache[device1.DevEui] = device1;
+        var client = appFactory.CreateClient();
+        var token = TestContext.Current.CancellationToken;
+
+        var replaceRequest = new DeviceReplaceRequest { With = device2.FriendlyName };
+
+        // Act
+        var httpResponse = await client.PostAsJsonAsync(
+            $"/api/devices/by-name/{device1.FriendlyName}/replace",
+            replaceRequest,
+            jsonOptions,
+            token
+        );
+        var problem = await httpResponse.Content.ReadFromJsonAsync<ResultProblemDetails>(
+            jsonOptions,
+            token
+        );
+
+        // Assert
+        Assert.Equal(expectedStatus, httpResponse.StatusCode);
+        Assert.NotNull(problem);
+        Assert.Equal((int)expectedStatus, problem.Status);
+        Assert.True(stateCache.TryGetDevice(device1.DevEui, out _));
+        Assert.False(stateCache.TryGetDevice(device2.DevEui, out _));
+    }
+
+    [Fact]
+    public async Task Post_ReplaceByName_ReturnsNotFoundWhenDeviceDoesNotExist()
+    {
+        // Arrange
+        using var appFactory = WithChirpstackService<FakeChirpstackServiceWithSuccess>();
+        var jsonOptions = GetJsonOptions(appFactory);
+        var client = appFactory.CreateClient();
+        var token = TestContext.Current.CancellationToken;
+
+        var replaceRequest = new DeviceReplaceRequest { With = Guid.NewGuid() };
+
+        // Act
+        var httpResponse = await client.PostAsJsonAsync(
+            "/api/devices/by-name/non_existent_device/replace",
+            replaceRequest,
+            jsonOptions,
+            token
+        );
+        var problem = await httpResponse.Content.ReadFromJsonAsync<ResultProblemDetails>(
+            jsonOptions,
+            token
+        );
+
+        // Assert
+        Assert.Equal(HttpStatusCode.NotFound, httpResponse.StatusCode);
+        Assert.NotNull(problem);
+        Assert.Equal((int)HttpStatusCode.NotFound, problem.Status);
+    }
+
+    [Theory]
+    [InlineData("guid")]
+    [InlineData("eui")]
+    [InlineData("name")]
+    public async Task Post_ReplaceByEui_ReplacesDeviceAndUpdatesStateCacheForAllWithKeyVariations(
+        string keyType
+    )
+    {
+        // Arrange
+        using var appFactory = WithChirpstackService<FakeChirpstackServiceWithSuccess>();
+        var device1 = CreateDevice(
+            status: DeviceStatus.ACTIVE,
+            devEui: "1122AABBCCDDEEFF",
+            friendlyName: "loris_friendly_1",
+            deviceName: "loris_sample_1",
+            withCapabilities: true
+        );
+        var device2 = CreateDevice(
+            status: DeviceStatus.PENDING,
+            devEui: "1122AABBCCDDEEF0",
+            friendlyName: "loris_friendly_2",
+            deviceName: "loris_sample_2",
+            withCapabilities: true
+        );
+        await SeedDevicesAsync(appFactory, device1, device2);
+
+        object withKey = keyType switch
+        {
+            "guid" => device2.DeviceId,
+            "eui" => device2.DevEui,
+            "name" => device2.FriendlyName,
+            _ => throw new ArgumentOutOfRangeException(nameof(keyType)),
+        };
+
+        var jsonOptions = GetJsonOptions(appFactory);
+        var stateCache = appFactory.Services.GetRequiredService<IStateCache>();
+        stateCache[device1.DevEui] = device1;
+        var client = appFactory.CreateClient();
+        var token = TestContext.Current.CancellationToken;
+
+        var replaceRequest = new DeviceReplaceRequest { With = withKey };
+
+        // Act
+        var httpResponse = await client.PostAsJsonAsync(
+            $"/api/devices/by-eui/{device1.DevEui}/replace",
+            replaceRequest,
+            jsonOptions,
+            token
+        );
+        var deviceResponse = await httpResponse.Content.ReadFromJsonAsync<DeviceResponse>(
+            jsonOptions,
+            token
+        );
+
+        // Assert
+        httpResponse.EnsureSuccessStatusCode();
+        Assert.NotNull(deviceResponse);
+        Assert.Equal(device2.DevEui, deviceResponse.DevEui);
+        Assert.Equal(DeviceStatus.ACTIVE, deviceResponse.DeviceStatus);
+        Assert.True(stateCache.TryGetDevice(device2.DevEui, out var cachedDevice));
+        Assert.Equal(device1.DeviceId, cachedDevice.DeviceId);
+        Assert.False(stateCache.TryGetDevice(device1.DevEui, out _));
+    }
+
+    [Theory]
+    [InlineData(DeviceStatus.ACTIVE)]
+    [InlineData(DeviceStatus.IGNORED)]
+    [InlineData(DeviceStatus.DISCONNECTED)]
+    public async Task Post_ReplaceByEui_ReturnsConflictWhenSubstituteIsNotPending(
+        DeviceStatus substituteStatus
+    )
+    {
+        // Arrange
+        using var appFactory = WithChirpstackService<FakeChirpstackServiceWithSuccess>();
+        var device1 = CreateDevice(
+            status: DeviceStatus.ACTIVE,
+            devEui: "1122AABBCCDDEEFF",
+            friendlyName: "loris_friendly_1",
+            deviceName: "loris_sample_1",
+            withCapabilities: true
+        );
+        var device2 = CreateDevice(
+            status: substituteStatus,
+            devEui: "1122AABBCCDDEEF0",
+            friendlyName: "loris_friendly_2",
+            deviceName: "loris_sample_2",
+            withCapabilities: true
+        );
+        await SeedDevicesAsync(appFactory, device1, device2);
+
+        var jsonOptions = GetJsonOptions(appFactory);
+        var stateCache = appFactory.Services.GetRequiredService<IStateCache>();
+        stateCache[device1.DevEui] = device1;
+        var client = appFactory.CreateClient();
+        var token = TestContext.Current.CancellationToken;
+
+        var replaceRequest = new DeviceReplaceRequest { With = device2.DevEui };
+
+        // Act
+        var httpResponse = await client.PostAsJsonAsync(
+            $"/api/devices/by-eui/{device1.DevEui}/replace",
+            replaceRequest,
+            jsonOptions,
+            token
+        );
+        var problem = await httpResponse.Content.ReadFromJsonAsync<ResultProblemDetails>(
+            jsonOptions,
+            token
+        );
+
+        // Assert
+        Assert.Equal(HttpStatusCode.Conflict, httpResponse.StatusCode);
+        Assert.NotNull(problem);
+        Assert.Equal((int)HttpStatusCode.Conflict, problem.Status);
+        Assert.True(stateCache.TryGetDevice(device1.DevEui, out _));
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task Post_ReplaceByEui_ReturnsGatewayErrorWhenChirpstackIsUnavailable(
+        bool isTimeout
+    )
+    {
+        // Arrange
+        using var appFactory = isTimeout
+            ? WithChirpstackService<FakeChirpstackServiceWithTimeout>()
+            : WithChirpstackService<FakeChirpstackServiceWithFailed>();
+        var device1 = CreateDevice(
+            status: DeviceStatus.ACTIVE,
+            devEui: "1122AABBCCDDEEFF",
+            friendlyName: "loris_friendly_1",
+            deviceName: "loris_sample_1",
+            withCapabilities: true
+        );
+        var device2 = CreateDevice(
+            status: DeviceStatus.PENDING,
+            devEui: "1122AABBCCDDEEF0",
+            friendlyName: "loris_friendly_2",
+            deviceName: "loris_sample_2",
+            withCapabilities: true
+        );
+        await SeedDevicesAsync(appFactory, device1, device2);
+
+        var expectedStatus = isTimeout ? HttpStatusCode.GatewayTimeout : HttpStatusCode.BadGateway;
+        var jsonOptions = GetJsonOptions(appFactory);
+        var stateCache = appFactory.Services.GetRequiredService<IStateCache>();
+        stateCache[device1.DevEui] = device1;
+        var client = appFactory.CreateClient();
+        var token = TestContext.Current.CancellationToken;
+
+        var replaceRequest = new DeviceReplaceRequest { With = device2.DevEui };
+
+        // Act
+        var httpResponse = await client.PostAsJsonAsync(
+            $"/api/devices/by-eui/{device1.DevEui}/replace",
+            replaceRequest,
+            jsonOptions,
+            token
+        );
+        var problem = await httpResponse.Content.ReadFromJsonAsync<ResultProblemDetails>(
+            jsonOptions,
+            token
+        );
+
+        // Assert
+        Assert.Equal(expectedStatus, httpResponse.StatusCode);
+        Assert.NotNull(problem);
+        Assert.Equal((int)expectedStatus, problem.Status);
+        Assert.True(stateCache.TryGetDevice(device1.DevEui, out _));
+        Assert.False(stateCache.TryGetDevice(device2.DevEui, out _));
+    }
+
+    [Fact]
+    public async Task Post_ReplaceByEui_ReturnsNotFoundWhenDeviceDoesNotExist()
+    {
+        // Arrange
+        using var appFactory = WithChirpstackService<FakeChirpstackServiceWithSuccess>();
+        var nonExistentEui = DevEui.Parse("FFEEDDCCBBAA2211");
+        var jsonOptions = GetJsonOptions(appFactory);
+        var client = appFactory.CreateClient();
+        var token = TestContext.Current.CancellationToken;
+
+        var replaceRequest = new DeviceReplaceRequest { With = Guid.NewGuid() };
+
+        // Act
+        var httpResponse = await client.PostAsJsonAsync(
+            $"/api/devices/by-eui/{nonExistentEui}/replace",
+            replaceRequest,
+            jsonOptions,
+            token
+        );
+        var problem = await httpResponse.Content.ReadFromJsonAsync<ResultProblemDetails>(
+            jsonOptions,
+            token
         );
 
         // Assert
