@@ -277,9 +277,19 @@ public class DevicesController(IDeviceService deviceService) : ControllerBase
         CancellationToken ct
     ) => this.ToActionResult(await _service.DisconnectAsync(devEui, force, ct));
 
+    /// <summary>
+    /// Replace device by name
+    /// </summary>
+    /// <remarks>
+    /// Replaces a device identified by its unique friendly name.
+    /// For a replacement to be successful, the substitute device must have the same capabilities as the original device.
+    /// The replacement device will inherit the original device's friendly name and will be accepted automatically.
+    /// The substitute device must be in a PENDING state and not be ignored. The replacement will attempt to disconnect the original device, but
+    /// the results of this operation are ignored. The replacement device will be accepted regardless of the original device's state.
+    /// </remarks>
     [HttpPost("by-id/{id}/replace")]
     [ProducesLoraWanGatewayErrors]
-    [ProducesDeviceStateConflict]
+    [ProducesDeviceReplaceConflict]
     [ProducesDeviceNotFound]
     [ProducesBadRequest]
     public async Task<ActionResult<DeviceResponse>> ReplaceById(
@@ -288,9 +298,19 @@ public class DevicesController(IDeviceService deviceService) : ControllerBase
         CancellationToken ct
     ) => this.ToActionResult(await _service.ReplaceAsync(id, request, ct));
 
+    /// <summary>
+    /// Replace device by name
+    /// </summary>
+    /// <remarks>
+    /// Replaces a device identified by its unique friendly name.
+    /// For a replacement to be successful, the substitute device must have the same capabilities as the original device.
+    /// The replacement device will inherit the original device's friendly name and will be accepted automatically.
+    /// The substitute device must be in a PENDING state and not be ignored. The replacement will attempt to disconnect the original device, but
+    /// the results of this operation are ignored. The replacement device will be accepted regardless of the original device's state.
+    /// </remarks>
     [HttpPost("by-name/{name}/replace")]
     [ProducesLoraWanGatewayErrors]
-    [ProducesDeviceStateConflict]
+    [ProducesDeviceReplaceConflict]
     [ProducesDeviceNotFound]
     [ProducesBadRequest]
     public async Task<ActionResult<DeviceResponse>> ReplaceByName(
@@ -299,9 +319,19 @@ public class DevicesController(IDeviceService deviceService) : ControllerBase
         CancellationToken ct
     ) => this.ToActionResult(await _service.ReplaceAsync(name, request, ct));
 
+    /// <summary>
+    /// Replace device by devEui
+    /// </summary>
+    /// <remarks>
+    /// Replaces a device identified by its unique LoraWAN devEUI address.
+    /// For a replacement to be successful, the substitute device must have the same capabilities as the original device.
+    /// The replacement device will inherit the original device's friendly name and will be accepted automatically.
+    /// The substitute device must be in a PENDING state and not be ignored. The replacement will attempt to disconnect the original device, but
+    /// the results of this operation are ignored. The replacement device will be accepted regardless of the original device's state.
+    /// </remarks>
     [HttpPost("by-eui/{devEui}/replace")]
     [ProducesLoraWanGatewayErrors]
-    [ProducesDeviceStateConflict]
+    [ProducesDeviceReplaceConflict]
     [ProducesDeviceNotFound]
     [ProducesBadRequest]
     public async Task<ActionResult<DeviceResponse>> ReplaceByEui(

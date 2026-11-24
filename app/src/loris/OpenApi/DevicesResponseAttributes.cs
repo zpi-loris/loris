@@ -43,6 +43,19 @@ public sealed class ProducesDeviceNameConflictAttribute
 }
 
 [AttributeUsage(AttributeTargets.Method | AttributeTargets.Class)]
+public sealed class ProducesDeviceReplaceConflictAttribute
+    : ProducesResponseTypeAttribute<ResultProblemDetails>
+{
+    public ProducesDeviceReplaceConflictAttribute()
+        : base(StatusCodes.Status409Conflict)
+    {
+        Description =
+            @"The substitute device is mismatched, or in a wrong
+            state to proceed with the replacement";
+    }
+}
+
+[AttributeUsage(AttributeTargets.Method | AttributeTargets.Class)]
 public sealed class ProducesLoraWanGatewayErrorsAttribute : Attribute, IActionModelConvention
 {
     public void Apply(ActionModel action)
