@@ -5,7 +5,7 @@ namespace Loris.Logging;
 public static partial class DownlinkLogging
 {
     [LoggerMessage(
-        EventId = 5401,
+        EventId = 6001,
         EventName = nameof(DownlinkFailed),
         Level = LogLevel.Warning,
         Message = "Failed to send downlink to device {DevEui}: {Message}"

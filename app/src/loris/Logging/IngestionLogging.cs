@@ -6,7 +6,7 @@ namespace Loris.Logging;
 public static partial class IngestionLogging
 {
     [LoggerMessage(
-        EventId = 1201,
+        EventId = 1000,
         EventName = nameof(ConnectingToBroker),
         Level = LogLevel.Information,
         Message = "Trying to connect to mqtt://{Host}:{Port}"
@@ -14,7 +14,7 @@ public static partial class IngestionLogging
     public static partial void ConnectingToBroker(this ILogger logger, string host, int port);
 
     [LoggerMessage(
-        EventId = 1202,
+        EventId = 1001,
         EventName = nameof(ClientConnected),
         Level = LogLevel.Information,
         Message = "Connected to MQTT broker at mqtt://{Host}:{Port}"
@@ -22,7 +22,7 @@ public static partial class IngestionLogging
     public static partial void ClientConnected(this ILogger logger, string host, int port);
 
     [LoggerMessage(
-        EventId = 1301,
+        EventId = 1002,
         EventName = nameof(UplinkReceived),
         Level = LogLevel.Debug,
         Message = "Uplink received on {Topic}: {Uplink}"
@@ -30,7 +30,7 @@ public static partial class IngestionLogging
     public static partial void UplinkReceived(this ILogger logger, string topic, Uplink uplink);
 
     [LoggerMessage(
-        EventId = 1302,
+        EventId = 1003,
         EventName = nameof(LorisUplinkProtobufSchemaMismatch),
         Level = LogLevel.Debug,
         Message = "Payload bytes do not match Loris Uplink protobuf schema"
@@ -41,7 +41,7 @@ public static partial class IngestionLogging
     );
 
     [LoggerMessage(
-        EventId = 1303,
+        EventId = 1004,
         EventName = nameof(TopicSubscriptionConfigured),
         Level = LogLevel.Debug,
         Message = "Configured MQTT topic filter: {TopicFilter}"
@@ -49,7 +49,7 @@ public static partial class IngestionLogging
     public static partial void TopicSubscriptionConfigured(this ILogger logger, string topicFilter);
 
     [LoggerMessage(
-        EventId = 1304,
+        EventId = 1005,
         EventName = nameof(MessageReceived),
         Level = LogLevel.Debug,
         Message = "Received message on {Topic} ({PayloadLength} bytes)"
@@ -61,7 +61,7 @@ public static partial class IngestionLogging
     );
 
     [LoggerMessage(
-        EventId = 1305,
+        EventId = 1006,
         EventName = nameof(StoppingIntegrationService),
         Level = LogLevel.Debug,
         Message = "Stopping Chirpstack MQTT integration background service"
@@ -69,7 +69,7 @@ public static partial class IngestionLogging
     public static partial void StoppingIntegrationService(this ILogger logger);
 
     [LoggerMessage(
-        EventId = 1402,
+        EventId = 1007,
         EventName = nameof(IntegrationDisconnected),
         Level = LogLevel.Warning,
         Message = "mqtt://{Host}:{Port} disconnected"
@@ -77,7 +77,7 @@ public static partial class IngestionLogging
     public static partial void IntegrationDisconnected(this ILogger logger, string host, int port);
 
     [LoggerMessage(
-        EventId = 1403,
+        EventId = 1008,
         EventName = nameof(PayloadUtf8DecodingFailed),
         Level = LogLevel.Warning,
         Message = "Failed to decode integration payload: Invalid UTF-8 sequence (Length: {PayloadLength} bytes)"
@@ -89,7 +89,7 @@ public static partial class IngestionLogging
     );
 
     [LoggerMessage(
-        EventId = 1404,
+        EventId = 1009,
         EventName = nameof(ChirpstackUplinkJsonParsingFailed),
         Level = LogLevel.Warning,
         Message = "Failed to parse ChirpStack payload: Content is not valid JSON (Length: {PayloadLength} bytes)"
@@ -101,7 +101,7 @@ public static partial class IngestionLogging
     );
 
     [LoggerMessage(
-        EventId = 1405,
+        EventId = 1010,
         EventName = nameof(ChirpstackUplinkSchemaMismatch),
         Level = LogLevel.Warning,
         Message = "ChirpStack JSON payload does not match UplinkEvent protobuf schema"
@@ -112,7 +112,7 @@ public static partial class IngestionLogging
     );
 
     [LoggerMessage(
-        EventId = 1406,
+        EventId = 1011,
         EventName = nameof(NoHandlerRegisteredForTopic),
         Level = LogLevel.Warning,
         Message = "No matching route registered for event '{EventName}' on topic {Topic}"
@@ -124,7 +124,7 @@ public static partial class IngestionLogging
     );
 
     [LoggerMessage(
-        EventId = 1407,
+        EventId = 1012,
         EventName = nameof(DevEuiParsingFailed),
         Level = LogLevel.Warning,
         Message = "Failed to parse DevEUI '{DevEui}' from Chirpstack message"
@@ -136,7 +136,7 @@ public static partial class IngestionLogging
     );
 
     [LoggerMessage(
-        EventId = 1501,
+        EventId = 1013,
         EventName = nameof(IntegrationTimeout),
         Level = LogLevel.Error,
         Message = "mqtt//{Host}:{Port} connection timeout"
@@ -144,7 +144,7 @@ public static partial class IngestionLogging
     public static partial void IntegrationTimeout(this ILogger logger, string host, int port);
 
     [LoggerMessage(
-        EventId = 1502,
+        EventId = 1014,
         EventName = nameof(IntegrationUnreachable),
         Level = LogLevel.Error,
         Message = "mqtt//{Host}:{Port} is unreachable"
