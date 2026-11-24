@@ -55,6 +55,9 @@ typedef enum lr_nvs_id {
   /** Last used LoRaWAN DevNonce value. */
   LR_NVS_ID_LW_LAST_USED_DEVNONCE,
 
+  /** Last known status of the device: active/disconnected */
+  LR_NVS_ID_DEVICE_STATUS,
+
   /** Internal sentinel for upper bound checking. Shouldn't be used. */
   LR_NVS_ID_MAX_SENTINEL,
 } lr_nvs_id_t;

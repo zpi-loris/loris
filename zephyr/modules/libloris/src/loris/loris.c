@@ -13,7 +13,9 @@
 #include "loris/models/report.h"
 #include "loris/models/sensor.h"
 #include "loris/models/uplink.h"
+#include "loris/nvs.h"
 #include "loris/result.h"
+#include "zephyr/device.h"
 
 #include <stdint.h>
 #include <zephyr/kernel.h>
@@ -46,6 +48,51 @@ struct k_msgq lora_q;
 struct lorawan_downlink_cb dl_cb;
 
 bool device_connected = false;
+
+static bool get_last_status(bool* out) {
+  LOG_DBG("Getting last known device status");
+  if (lr_nvs_init() != LR_NVS_OK) {
+    LOG_WRN("NVS init failed");
+    return false;
+  }
+
+  lr_nvs_result_t ret =
+      lr_nvs_read(LR_NVS_ID_DEVICE_STATUS, out, sizeof(out), NULL);
+
+  if (ret == LR_NVS_ERR_NO_VALUE) { // first time reading dev_status
+    *out = false;
+    return true;
+  }
+
+  if (ret != LR_NVS_OK) {
+    LOG_WRN("NVS read devnonce failed");
+    return false;
+  }
+
+  return true;
+}
+
+static bool save_last_status(bool dev_status) {
+  LOG_DBG("Saving current device status: %u", dev_status);
+  if (lr_nvs_init() != LR_NVS_OK) {
+    LOG_WRN("NVS init failed");
+    return false;
+  }
+
+  lr_nvs_result_t ret = lr_nvs_write(
+      LR_NVS_ID_DEVICE_STATUS,
+      &dev_status,
+      sizeof(dev_status),
+      NULL
+  );
+
+  if (ret != LR_NVS_OK) {
+    LOG_WRN("NVS write status failed");
+    return false;
+  }
+
+  return true;
+}
 
 /* Comparison function for min_heap */
 static int compare(const void* a, const void* b) {
@@ -85,6 +132,8 @@ extern void ul_thread(void* capabilities, void* unused1, void* unused2) {
   sensor_time_t st;
 
   LOG_DBG("Uplink thread started successfully!");
+
+  get_last_status(&device_connected);
   while (1) {
     if (device_connected) {
 
@@ -180,6 +229,8 @@ extern void dl_thread(void* capabilities, void* unused1, void* unused2) {
   LOG_DBG("Downlink thread started successfully!");
   while (1) {
     k_msgq_get(&dl_q, &dl_msg, K_FOREVER);
+    get_last_status(&device_connected);
+
     if (!device_connected) {
       if (dl_msg.payload_type != DOWNLINK_PAYLOAD_TYPE_PING) {
         continue;
@@ -189,11 +240,13 @@ extern void dl_thread(void* capabilities, void* unused1, void* unused2) {
       }
       LOG_DBG("Device connected!");
       device_connected = true;
+      save_last_status(true);
     } else {
       if (dl_msg.payload_type == DOWNLINK_PAYLOAD_TYPE_PING) {
         if (dl_msg.payload.ping.type == DOWN_PING_TYPE_DISCONNECT) {
           LOG_DBG("Disconnecting device...");
           device_connected = false;
+          save_last_status(false);
         }
       } else {
         function_t* func;

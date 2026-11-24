@@ -67,7 +67,7 @@ bool read_weight(
 }
 
 result_t report_weight(report_t* out, sensor_t* sensor) {
-  LOG_INF("Reporting moisture");
+  LOG_INF("Reporting weight");
 
   float weight;
   if (!read_weight(
