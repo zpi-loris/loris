@@ -43,6 +43,9 @@ public static class DeviceErrors
             $"Device {name} friendly name already exists"
         );
 
+    public static Error InvalidSubstituteKey(object key) =>
+        Error.Invalid("Devices.InvalidSubstituteKey", $"Device substitute key: {key} is invalid");
+
     public static Error UnknownStatus(string device) =>
         new("Devices.UnknownStatus", $"Device {device} has an unknown status.", ErrorType.Failure);
 }

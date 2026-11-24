@@ -82,6 +82,7 @@ public class DevicesController(IDeviceService deviceService) : ControllerBase
     [HttpPatch("by-id/{id}")]
     [ProducesDeviceNameConflict]
     [ProducesDeviceNotFound]
+    [ProducesBadRequest]
     public async Task<ActionResult<DeviceResponse>> RenameById(
         Guid id,
         [FromBody] RenameDeviceRequest request,
@@ -98,6 +99,7 @@ public class DevicesController(IDeviceService deviceService) : ControllerBase
     [HttpPatch("by-eui/{devEui}")]
     [ProducesDeviceNameConflict]
     [ProducesDeviceNotFound]
+    [ProducesBadRequest]
     public async Task<ActionResult<DeviceResponse>> RenameByEui(
         DevEui devEui,
         [FromBody] RenameDeviceRequest request,
@@ -114,6 +116,7 @@ public class DevicesController(IDeviceService deviceService) : ControllerBase
     [HttpPatch("by-name/{name}")]
     [ProducesDeviceNameConflict]
     [ProducesDeviceNotFound]
+    [ProducesBadRequest]
     public async Task<ActionResult<DeviceResponse>> RenameByName(
         string name,
         [FromBody] RenameDeviceRequest request,
@@ -273,4 +276,37 @@ public class DevicesController(IDeviceService deviceService) : ControllerBase
         [DefaultValue(false)] [FromQuery] bool force,
         CancellationToken ct
     ) => this.ToActionResult(await _service.DisconnectAsync(devEui, force, ct));
+
+    [HttpPost("by-id/{id}/replace")]
+    [ProducesLoraWanGatewayErrors]
+    [ProducesDeviceStateConflict]
+    [ProducesDeviceNotFound]
+    [ProducesBadRequest]
+    public async Task<ActionResult<DeviceResponse>> SubstituteById(
+        Guid id,
+        [FromBody] DeviceReplaceRequest request,
+        CancellationToken ct
+    ) => this.ToActionResult(await _service.ReplaceAsync(id, request, ct));
+
+    [HttpPost("by-name/{name}/replace")]
+    [ProducesLoraWanGatewayErrors]
+    [ProducesDeviceStateConflict]
+    [ProducesDeviceNotFound]
+    [ProducesBadRequest]
+    public async Task<ActionResult<DeviceResponse>> ReplaceByName(
+        string name,
+        [FromBody] DeviceReplaceRequest request,
+        CancellationToken ct
+    ) => this.ToActionResult(await _service.ReplaceAsync(name, request, ct));
+
+    [HttpPost("by-eui/{devEui}/replace")]
+    [ProducesLoraWanGatewayErrors]
+    [ProducesDeviceStateConflict]
+    [ProducesDeviceNotFound]
+    [ProducesBadRequest]
+    public async Task<ActionResult<DeviceResponse>> ReplaceByEui(
+        DevEui devEui,
+        [FromBody] DeviceReplaceRequest request,
+        CancellationToken ct
+    ) => this.ToActionResult(await _service.ReplaceAsync(devEui, request, ct));
 }

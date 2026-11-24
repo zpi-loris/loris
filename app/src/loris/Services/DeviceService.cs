@@ -1,3 +1,4 @@
+using System.Linq.Expressions;
 using Loris.Data;
 using Loris.Dtos.Device;
 using Loris.Logging;
@@ -376,5 +377,85 @@ public class DeviceService(
         await _ctx.SaveChangesAsync(ct);
         _stateCache[device.DevEui] = device;
         return DeviceResponse.FromModel(device);
+    }
+
+    public async Task<Result<DeviceResponse>> ReplaceAsync(
+        Guid deviceId,
+        DeviceReplaceRequest request,
+        CancellationToken ct = default
+    )
+    {
+        var device = await _ctx.Devices.SingleOrDefaultAsync(d => d.DeviceId == deviceId, ct);
+        return device is null
+            ? DeviceErrors.NotFound(deviceId)
+            : await ReplaceDeviceAsync(device, request, ct);
+    }
+
+    public async Task<Result<DeviceResponse>> ReplaceAsync(
+        string name,
+        DeviceReplaceRequest request,
+        CancellationToken ct = default
+    )
+    {
+        var device = await _ctx.Devices.SingleOrDefaultAsync(d => d.FriendlyName == name, ct);
+        return device is null
+            ? DeviceErrors.NotFound(name)
+            : await ReplaceDeviceAsync(device, request, ct);
+    }
+
+    public async Task<Result<DeviceResponse>> ReplaceAsync(
+        DevEui devEui,
+        DeviceReplaceRequest request,
+        CancellationToken ct = default
+    )
+    {
+        var device = await _ctx.Devices.SingleOrDefaultAsync(d => d.DevEui == devEui, ct);
+        return device is null
+            ? DeviceErrors.NotFound(devEui)
+            : await ReplaceDeviceAsync(device, request, ct);
+    }
+
+    private async Task<Result<DeviceResponse>> ReplaceDeviceAsync(
+        Device device,
+        DeviceReplaceRequest request,
+        CancellationToken ct
+    )
+    {
+        var substituteResult = request.With switch
+        {
+            Guid deviceId => await FindDevice(
+                d => d.DeviceId == deviceId,
+                () => DeviceErrors.NotFound(deviceId),
+                ct
+            ),
+            DevEui devEui => await FindDevice(
+                d => d.DevEui == devEui,
+                () => DeviceErrors.NotFound(devEui),
+                ct
+            ),
+            string friendlyName => await FindDevice(
+                d => d.FriendlyName == friendlyName,
+                () => DeviceErrors.NotFound(friendlyName),
+                ct
+            ),
+            _ => DeviceErrors.InvalidSubstituteKey(request.With),
+        };
+
+        if (substituteResult.IsFailure)
+        {
+            return substituteResult.Error;
+        }
+
+        throw new NotImplementedException();
+    }
+
+    private async Task<Result<Device>> FindDevice(
+        Expression<Func<Device, bool>> predicate,
+        Func<Error> notFound,
+        CancellationToken ct
+    )
+    {
+        var device = await _ctx.Devices.FirstOrDefaultAsync(predicate, ct);
+        return device is null ? notFound() : device;
     }
 }

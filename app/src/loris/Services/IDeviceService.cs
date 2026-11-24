@@ -70,4 +70,19 @@ public interface IDeviceService
         string newName,
         CancellationToken ct = default
     );
+    public Task<Result<DeviceResponse>> ReplaceAsync(
+        Guid deviceId,
+        DeviceReplaceRequest request,
+        CancellationToken ct = default
+    );
+    public Task<Result<DeviceResponse>> ReplaceAsync(
+        string name,
+        DeviceReplaceRequest request,
+        CancellationToken ct = default
+    );
+    public Task<Result<DeviceResponse>> ReplaceAsync(
+        DevEui devEui,
+        DeviceReplaceRequest request,
+        CancellationToken ct = default
+    );
 }
