@@ -56,4 +56,21 @@ public partial class Sensor
             Semantics = sensor.Semantics,
         };
     }
+
+    public bool EqualsWithDefinition(Sensor other)
+    {
+        if (
+            DeviceSensorId != other.DeviceSensorId
+            || Name != other.Name
+            || Description != other.Description
+            || Unit != other.Unit
+            || ValueType != other.ValueType
+            || Semantics != other.Semantics
+        )
+        {
+            return false;
+        }
+
+        return true;
+    }
 }

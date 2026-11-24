@@ -47,4 +47,18 @@ public partial class Function
             ArgType = function.ArgType,
         };
     }
+
+    public bool EqualsWithDefinition(Function other)
+    {
+        if (
+            DeviceFunctionId != other.DeviceFunctionId
+            || Name != other.Name
+            || Description != other.Description
+            || ArgType != other.ArgType
+        )
+        {
+            return false;
+        }
+        return true;
+    }
 }

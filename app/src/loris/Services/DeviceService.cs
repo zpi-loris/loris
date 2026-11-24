@@ -143,9 +143,11 @@ public class DeviceService(
         {
             return DeviceErrors.FriendlyNameTaken(newName);
         }
+        var oldName = device.FriendlyName;
         device.FriendlyName = newName;
         await _ctx.SaveChangesAsync(ct);
         _stateCache[device.DevEui] = device;
+        _logger.DeviceRenamed(device.DeviceId, oldName, newName);
         return DeviceResponse.FromModel(device);
     }
 
@@ -385,7 +387,10 @@ public class DeviceService(
         CancellationToken ct = default
     )
     {
-        var device = await _ctx.Devices.SingleOrDefaultAsync(d => d.DeviceId == deviceId, ct);
+        var device = await _ctx
+            .Devices.Include(d => d.Sensors)
+            .Include(d => d.Functions)
+            .SingleOrDefaultAsync(d => d.DeviceId == deviceId, ct);
         return device is null
             ? DeviceErrors.NotFound(deviceId)
             : await ReplaceDeviceAsync(device, request, ct);
@@ -397,7 +402,10 @@ public class DeviceService(
         CancellationToken ct = default
     )
     {
-        var device = await _ctx.Devices.SingleOrDefaultAsync(d => d.FriendlyName == name, ct);
+        var device = await _ctx
+            .Devices.Include(d => d.Sensors)
+            .Include(d => d.Functions)
+            .SingleOrDefaultAsync(d => d.FriendlyName == name, ct);
         return device is null
             ? DeviceErrors.NotFound(name)
             : await ReplaceDeviceAsync(device, request, ct);
@@ -409,53 +417,151 @@ public class DeviceService(
         CancellationToken ct = default
     )
     {
-        var device = await _ctx.Devices.SingleOrDefaultAsync(d => d.DevEui == devEui, ct);
+        var device = await _ctx
+            .Devices.Include(d => d.Sensors)
+            .Include(d => d.Functions)
+            .SingleOrDefaultAsync(d => d.DevEui == devEui, ct);
         return device is null
             ? DeviceErrors.NotFound(devEui)
             : await ReplaceDeviceAsync(device, request, ct);
     }
 
     private async Task<Result<DeviceResponse>> ReplaceDeviceAsync(
-        Device device,
+        Device original,
         DeviceReplaceRequest request,
         CancellationToken ct
     )
     {
-        var substituteResult = request.With switch
-        {
-            Guid deviceId => await FindDevice(
-                d => d.DeviceId == deviceId,
-                () => DeviceErrors.NotFound(deviceId),
-                ct
-            ),
-            DevEui devEui => await FindDevice(
-                d => d.DevEui == devEui,
-                () => DeviceErrors.NotFound(devEui),
-                ct
-            ),
-            string friendlyName => await FindDevice(
-                d => d.FriendlyName == friendlyName,
-                () => DeviceErrors.NotFound(friendlyName),
-                ct
-            ),
-            _ => DeviceErrors.InvalidSubstituteKey(request.With),
-        };
+        var substituteResult = await FindSubstitute(request, ct);
 
         if (substituteResult.IsFailure)
         {
             return substituteResult.Error;
         }
 
-        throw new NotImplementedException();
+        var substitute = substituteResult.Value;
+
+        if (substitute.DeviceId == original.DeviceId)
+        {
+            return DeviceErrors.SubstituteTheSame();
+        }
+
+        if (!original.EqualsWithCapabilities(substitute))
+        {
+            return DeviceErrors.SubstituteMismatch(substitute.FriendlyName);
+        }
+
+        if (substitute.DeviceStatus != DeviceStatus.PENDING)
+        {
+            return DeviceErrors.SubstituteNotPending(substitute.FriendlyName);
+        }
+
+        // try to disconnect the original device,
+        // We don't return on failure, because maybe the device with chirpstack integration
+        // was corrupted somehow
+        var disconnectResult = await _chirpstackService.DisconnectAsync(
+            original.DevEui,
+            CancellationToken.None
+        );
+        if (disconnectResult.IsFailure)
+        {
+            _logger.DownlinkFailed(original.DevEui, disconnectResult.Error.Description);
+        }
+
+        var acceptResult = await _chirpstackService.AcceptAsync(substitute.DevEui, ct);
+        if (acceptResult.IsFailure)
+        {
+            _logger.DownlinkFailed(substitute.DevEui, acceptResult.Error.Description);
+            return acceptResult.Error;
+        }
+
+        switch (request.ReadingsBehaviour)
+        {
+            // this is default behaviour
+            case DataBehaviour.DISCARD:
+                break;
+            case DataBehaviour.OVERLAP:
+                throw new NotImplementedException();
+            default:
+                break;
+        }
+
+        await ExecuteDeleteAsync(substitute);
+
+        original.DevEui = substitute.DevEui;
+        original.DeviceStatus = DeviceStatus.ACTIVE;
+        await _ctx.SaveChangesAsync(CancellationToken.None);
+        _stateCache[substitute.DevEui] = original;
+
+        return DeviceResponse.FromModel(original);
     }
 
-    private async Task<Result<Device>> FindDevice(
-        Expression<Func<Device, bool>> predicate,
-        Func<Error> notFound,
+    private async Task ExecuteDeleteAsync(Device substitute)
+    {
+        // wipe out readings
+        foreach (var sensor in substitute.Sensors)
+        {
+            await _ctx
+                .SensorReadings.Where(r => r.SensorId == sensor.SensorId)
+                .ExecuteDeleteAsync(CancellationToken.None);
+
+            _logger.ReadingsDeleted(sensor.SensorId);
+        }
+
+        // wipe out substitute sensors
+        await _ctx
+            .Sensors.Where(s => s.DeviceId == substitute.DeviceId)
+            .ExecuteDeleteAsync(CancellationToken.None);
+
+        // wipe out substitute functions
+        await _ctx
+            .Functions.Where(f => f.DeviceId == substitute.DeviceId)
+            .ExecuteDeleteAsync(CancellationToken.None);
+
+        // wipe device
+        await _ctx
+            .Devices.Where(d => d.DeviceId == substitute.DeviceId)
+            .ExecuteDeleteAsync(CancellationToken.None);
+
+        _logger.DeviceDeleted(substitute.FriendlyName, substitute.DeviceId);
+    }
+
+    private async Task<Result<Device>> FindSubstitute(
+        DeviceReplaceRequest request,
         CancellationToken ct
     )
     {
-        var device = await _ctx.Devices.FirstOrDefaultAsync(predicate, ct);
-        return device is null ? notFound() : device;
+        async Task<Result<Device>> FindHelper(
+            Expression<Func<Device, bool>> predicate,
+            Func<Error> notFound,
+            CancellationToken ct
+        )
+        {
+            var device = await _ctx
+                .Devices.Include(d => d.Functions)
+                .Include(d => d.Sensors)
+                .FirstOrDefaultAsync(predicate, ct);
+            return device is null ? notFound() : device;
+        }
+
+        return request.With switch
+        {
+            Guid deviceId => await FindHelper(
+                d => d.DeviceId == deviceId,
+                () => DeviceErrors.SubstituteNotFound(deviceId),
+                ct
+            ),
+            DevEui devEui => await FindHelper(
+                d => d.DevEui == devEui,
+                () => DeviceErrors.SubstituteNotFound(devEui),
+                ct
+            ),
+            string friendlyName => await FindHelper(
+                d => d.FriendlyName == friendlyName,
+                () => DeviceErrors.SubstituteNotFound(friendlyName),
+                ct
+            ),
+            _ => DeviceErrors.InvalidSubstituteKey(request.With),
+        };
     }
 }

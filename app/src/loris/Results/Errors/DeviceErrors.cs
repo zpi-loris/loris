@@ -13,6 +13,39 @@ public static class DeviceErrors
     public static Error NotFound(DevEui devEui) =>
         Error.NotFound("Devices.NotFound", $"No device was found with the devEUI {devEui}.");
 
+    public static Error SubstituteNotFound(Guid deviceId) =>
+        Error.Invalid(
+            "Devices.SubstituteNotFound",
+            $"Substitute device with id {deviceId} was not found"
+        );
+
+    public static Error SubstituteNotFound(DevEui devEui) =>
+        Error.Invalid(
+            "Devices.SubstituteNotFound",
+            $"Substitute device with devEUI {devEui} was not found"
+        );
+
+    public static Error SubstituteNotFound(string name) =>
+        Error.Invalid(
+            "Devices.SubstituteNotFound",
+            $"Substitute device with friendly name {name} was not found"
+        );
+
+    public static Error SubstituteNotPending(string device) =>
+        Error.Conflict(
+            "Devices.SubstituteNotPending",
+            $"Substitute device {device} must be in a pending state to substitute"
+        );
+
+    public static Error SubstituteMismatch(string device) =>
+        Error.Conflict(
+            "Devices.SubstituteMismatch",
+            $"Substitute devices {device} differs with capabilities from original"
+        );
+
+    public static Error SubstituteTheSame() =>
+        Error.Invalid("Devices.SubstituteTheSame", "Can't replace a device with itself");
+
     public static Error Disconnected(string device) =>
         Error.Conflict("Devices.NotConnected", $"Device {device} is  disconnected");
 

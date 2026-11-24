@@ -282,7 +282,7 @@ public class DevicesController(IDeviceService deviceService) : ControllerBase
     [ProducesDeviceStateConflict]
     [ProducesDeviceNotFound]
     [ProducesBadRequest]
-    public async Task<ActionResult<DeviceResponse>> SubstituteById(
+    public async Task<ActionResult<DeviceResponse>> ReplaceById(
         Guid id,
         [FromBody] DeviceReplaceRequest request,
         CancellationToken ct

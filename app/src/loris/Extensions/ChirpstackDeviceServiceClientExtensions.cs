@@ -50,7 +50,9 @@ public static class ChirpstackDeviceServiceClientExtensions
                     // TODO: apparently chirpstack is sending unauthenticated, even
                     // when the token is valid, but it can't find any device with the given DevEUI.
                     // This is a bug in chirpstack and i don't know how to handle it yet.
-                    StatusCode.Unauthenticated => Result.Failure(DownlinkErrors.Failed(ex.Message)),
+                    StatusCode.Unauthenticated => Result.Failure(
+                        DownlinkErrors.Unauthenticated(devEui)
+                    ),
 
                     // TODO: Handle other exceptions if needed
                     _ => Result.Failure(DownlinkErrors.Failed(ex.Message)),
