@@ -38,6 +38,9 @@ class LorisAdapter(HTTPAdapter):
     def get_connection_with_tls_context(self, request, verify, proxies=None, cert=None):
         return LorisConnectionPool()
 
+    def get_connection(self, url, proxies=None):
+        return LorisConnectionPool()
+
 
 session = requests.Session()
 session.mount("http://loris/", LorisAdapter())
