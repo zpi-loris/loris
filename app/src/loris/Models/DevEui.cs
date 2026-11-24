@@ -65,7 +65,17 @@ public readonly record struct DevEui(ulong Value) : IParsable<DevEui>
             ref Utf8JsonReader reader,
             Type typeToConvert,
             JsonSerializerOptions options
-        ) => Parse(reader.GetString() ?? "");
+        )
+        {
+            try
+            {
+                return Parse(reader.GetString() ?? "");
+            }
+            catch (ArgumentException ex)
+            {
+                throw new JsonException($"Could not read json", ex);
+            }
+        }
 
         public override void Write(
             Utf8JsonWriter writer,

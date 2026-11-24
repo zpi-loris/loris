@@ -1,11 +1,13 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Text.Json.Serialization.Metadata;
 using Loris.Channels;
 using Loris.Consumers;
 using Loris.Data;
 using loris.Extensions;
 using Loris.Extensions;
 using Loris.Jobs;
+using Loris.Json;
 using Loris.MQTT.Client;
 using loris.Services;
 using Loris.Services;
@@ -79,6 +81,10 @@ builder
         options.JsonSerializerOptions.Converters.Add(
             new JsonStringEnumConverter(JsonNamingPolicy.CamelCase)
         );
+        options.JsonSerializerOptions.TypeInfoResolver = new DefaultJsonTypeInfoResolver
+        {
+            Modifiers = { OneOfTypesPropertyModifier.Modifier },
+        };
     });
 
 builder.Services.AddProblemDetails();

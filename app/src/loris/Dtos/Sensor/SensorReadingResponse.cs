@@ -1,4 +1,4 @@
-using Loris.OpenApi;
+using Loris.Json;
 
 namespace Loris.Dtos.Sensor;
 

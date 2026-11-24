@@ -1,5 +1,6 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Loris.Json;
 using Loris.Models;
 using Loris.OpenApi;
 using Microsoft.AspNetCore.Http.Json;
