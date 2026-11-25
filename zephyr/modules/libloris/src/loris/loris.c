@@ -65,7 +65,7 @@ static bool get_last_status(bool* out) {
   }
 
   if (ret != LR_NVS_OK) {
-    LOG_WRN("NVS read devnonce failed");
+    LOG_WRN("NVS read status failed");
     return false;
   }
 
