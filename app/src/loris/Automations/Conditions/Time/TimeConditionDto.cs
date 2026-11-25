@@ -1,5 +1,5 @@
 using System.Text.Json.Serialization;
-using Loris.OpenApi;
+using Loris.Json;
 
 namespace Loris.Automations.Conditions.Time;
 
