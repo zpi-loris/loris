@@ -1,0 +1,32 @@
+&pinctrl {
+  mcpwm0_default: mcpwm0_default {
+    group1 {
+      pinmux = <MCPWM0_OUT0A_GPIO33>;
+      output-enable;
+    };
+  };
+};
+
+&mcpwm0 {
+  pinctrl-0 = <&mcpwm0_default>;
+  pinctrl-names = "default";
+  prescale = <255>;
+  status = "okay";
+};
+
+/ {
+  aliases {
+    motor = &motor;
+  };
+
+  pwms_node: pwms_node {
+    compatible = "pwm-leds";
+
+    motor: motor {
+      pwms = <&mcpwm0 0 PWM_KHZ(1) PWM_POLARITY_NORMAL>;
+      label = "motor";
+    };
+  };
+};
+
+
