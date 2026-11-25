@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import socket
+from pprint import pprint
 from requests.adapters import HTTPAdapter
 from urllib3.connectionpool import HTTPConnectionPool
 from urllib3.connection import HTTPConnection
@@ -223,30 +224,88 @@ def list_devices(args):
 
         sys.exit(1)
 
-    # TODO: show the results - I'll do it once the endpoint is ready, because it'll be easier then
+    print(8 * "=", "  Devices  ", 8 * "=")
+    yaml_string = yaml.safe_dump(r.json())
+    for device in yaml_string:
+        pprint(device)
 
 
 def device(args):
-    headers = {"Accept": "application/json"}
-    if args.by_eui:
-        request_url = f"{base_url}/devices/by-eui/{args.device}"
+    headers = {"Accept": "application/json", "Content-Type": "application/json"}
+    if args.rename:
+        if args.by_eui:
+            request_url = f"{base_url}/devices/by-eui/{args.device}"
+        else:
+            request_url = f"{base_url}/devices/by-name/{args.device}"
+
+        r = session.patch(
+            request_url,
+            headers=headers,
+            data={"newFriendlyName": args.new_friendly_name},
+        )
+
+        if not r.ok:
+            try:
+                details = r.json().get("detail")
+                print(
+                    f"Request failed with status code {r.status_code}: {details}",
+                    file=sys.stderr,
+                )
+            except Exception as e:
+                print(e, file=sys.stderr)
+                print(
+                    f"Request failed with status code {r.status_code}.", file=sys.stderr
+                )
+    elif args.replace:
+        if args.by_eui:
+            request_url = f"{base_url}/devices/by-eui/{args.device}/replace"
+        else:
+            request_url = f"{base_url}/devices/by-name/{args.device}/replace"
+
+        r = session.post(
+            request_url,
+            headers=headers,
+            data={
+                "newFriendlyName": args.new_friendly_name,
+                "readingsBehaviour": args.readings_behaviour,
+            },
+        )
+
+        if not r.ok:
+            try:
+                details = r.json().get("detail")
+                print(
+                    f"Request failed with status code {r.status_code}: {details}",
+                    file=sys.stderr,
+                )
+            except Exception as e:
+                print(e, file=sys.stderr)
+                print(
+                    f"Request failed with status code {r.status_code}.", file=sys.stderr
+                )
     else:
-        request_url = f"{base_url}/devices/by-name/{args.device}"
+        if args.by_eui:
+            request_url = f"{base_url}/devices/by-eui/{args.device}"
+        else:
+            request_url = f"{base_url}/devices/by-name/{args.device}"
 
-    r = session.get(request_url, headers=headers)
+        r = session.get(request_url, headers=headers)
 
-    if not r.ok:
-        try:
-            details = r.json().get("detail")
-            print(
-                f"Request failed with status code {r.status_code}: {details}",
-                file=sys.stderr,
-            )
-        except Exception as e:
-            print(e, file=sys.stderr)
-            print(f"Request failed with status code {r.status_code}.", file=sys.stderr)
+        if not r.ok:
+            try:
+                details = r.json().get("detail")
+                print(
+                    f"Request failed with status code {r.status_code}: {details}",
+                    file=sys.stderr,
+                )
+            except Exception as e:
+                print(e, file=sys.stderr)
+                print(
+                    f"Request failed with status code {r.status_code}.", file=sys.stderr
+                )
 
-    # TODO: show the results - I'll do it once the endpoint is ready, because it'll be easier then
+    yaml_string = yaml.safe_dump(r.json())
+    pprint(yaml_string)
 
 
 def apply(args):
@@ -317,6 +376,44 @@ def validate(args):
     print("Validation was successful!")
 
 
+def rules(args):
+    headers = {"Accept": "application/json", "Content-Type": "application/json"}
+    request_url = f"{base_url}/automations/validate"
+
+    with open(args.filepath, "r") as yaml_in:
+        yaml_object = yaml.safe_load(yaml_in)
+        convert_yaml(yaml_object)
+
+    # Useful for debugging
+    #
+    # with open("saved.json", "w") as f:
+    #    json.dump(yaml_object, f, indent=2, default=dict)
+
+    json_string = json.dumps(yaml_object, default=str)
+
+    r = session.post(request_url, data=json_string, headers=headers)
+    if not r.ok:
+        try:
+            print(f"Request failed with status code {r.status_code}", file=sys.stderr)
+            data = r.json()
+
+            if "invalidRules" in data:
+                for invalid_rule in data["invalidRules"]:
+                    print_invalid_rule(invalid_rule)
+            elif "errors" in data:
+                print_syntax_error(data["errors"])
+        except Exception as e:
+            print(e, file=sys.stderr)
+            print(f"Request failed with status code {r.status_code}.", file=sys.stderr)
+        sys.exit(1)
+
+    print("Validation was successful!")
+
+
+def users(args):
+    pass
+
+
 subparsers = parser.add_subparsers(help="Subcommand help")
 
 # Accept
@@ -376,7 +473,13 @@ list_subparser.set_defaults(func=list_devices)
 device_subparser = subparsers.add_parser(
     "device", help="Show information about the device"
 )
-device_subparser.add_argument("DevEUI", type=str, help="DevEUI of the device")
+device_subparser.add_argument(
+    "-d", "--by-eui", help="Accept by the EUI of the device", action="store_true"
+)
+disconnect_subparser.add_argument(
+    "device", type=str, help="Name (default) or the EUI (-d option) of the device"
+)
+device_subparser.set_defaults(func=device)
 
 # Validate
 validate_subparser = subparsers.add_parser(
@@ -391,6 +494,12 @@ validate_subparser.set_defaults(func=validate)
 apply_subparser = subparsers.add_parser("apply", help="Apply the automation file")
 apply_subparser.add_argument("filepath", type=str, help="Path to the automation file")
 apply_subparser.set_defaults(func=apply)
+
+# Users
+users_subparser = subparsers.add_parser(
+    "users", help="Show information about the users"
+)
+device_subparser.set_defaults(func=users)
 
 
 def main():
