@@ -13,6 +13,10 @@ import requests
 import os
 
 
+def socket_path():
+    return os.getenv("LORIS_SOCKET", "/tmp/loris.socket")
+
+
 # HTTP adapter for sockets
 class LorisConnection(HTTPConnection):
     def __init__(self):
@@ -20,10 +24,7 @@ class LorisConnection(HTTPConnection):
 
     def connect(self):
         self.sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-        if os.getenv("LORIS_SOCKET"):
-            self.sock.connect(os.getenv("LORIS_SOCKET"))
-        else:
-            self.sock.connect("/tmp/loris.socket")
+        self.sock.connect(socket_path())
 
 
 class LorisConnectionPool(HTTPConnectionPool):
@@ -391,16 +392,25 @@ apply_subparser = subparsers.add_parser("apply", help="Apply the automation file
 apply_subparser.add_argument("filepath", type=str, help="Path to the automation file")
 apply_subparser.set_defaults(func=apply)
 
-args = parser.parse_args()
 
-if "func" in args:
+def main():
+    args = parser.parse_args()
+    if "func" not in args:
+        parser.print_help()
+        return
     try:
         args.func(args)
-    except Exception as e:
-        print(e, file=sys.stderr)
+    except requests.exceptions.ConnectionError:
         print(
-            "Something went wrong. Check if the given address is correct.",
+            f"Could not connect to the loris client at {socket_path()}. "
+            "Is it running? Set LORIS_SOCKET to use a different socket.",
             file=sys.stderr,
         )
-else:
-    parser.print_help()
+        sys.exit(1)
+    except Exception as e:
+        print(e, file=sys.stderr)
+        sys.exit(1)
+
+
+if __name__ == "__main__":
+    main()
