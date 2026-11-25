@@ -1,0 +1,28 @@
+- id: 42e40ec4-71d9-426c-9fe5-f6eda4f52928
+  name: Another Automation
+  triggers:
+    - example:
+        name: test
+        value: 5
+    - example:
+        name: test
+        value: 5
+  conditions:
+    - example:
+        name: test3
+  actions:
+    - example:
+        name: test
+
+- id: 42e40ec4-71d9-426c-9fe5-f6eda4f52923
+  name: Another Automation
+  triggers:
+    - example:
+        name: test
+        value: 5
+  conditions:
+    - example:
+        name: test
+  actions:
+    - example:
+        name: test
