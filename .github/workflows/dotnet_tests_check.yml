@@ -22,6 +22,6 @@ jobs:
       - name: Restore dependencies
         run: "cd app/ && dotnet restore"
       - name: Build
-        run: "cd app/ && dotnet build app/"
+        run: "cd app/ && dotnet build "
       - name: Test
         run: "cd app/ && dotnet test --no-build --verbosity normal"
