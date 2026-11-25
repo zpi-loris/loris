@@ -1,0 +1,30 @@
+[build-system]
+requires = ["setuptools >= 77.0.3"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "loris_cli"
+version = "0.0.1"
+authors = [
+  { name="Jan Kubów", email="jankubow.sr@gmail.com" },
+]
+description = "Loris CLI client"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "requests>=2.32.0",
+    "urllib3>=1.26",
+    "PyYAML>=6.0",
+]
+license = "MIT"
+license-files = ["LICEN[CS]E*"]
+
+[project.scripts]
+loris = "loris_cli:main"
+
+[tool.setuptools]
+py-modules = ["loris_cli"]
+
+[project.urls]
+Homepage = "https://github.com/zpi-loris/loris"
+Issues = "https://github.com/zpi-loris/loris/issues"
