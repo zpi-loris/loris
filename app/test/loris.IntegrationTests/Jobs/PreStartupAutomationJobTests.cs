@@ -5,7 +5,7 @@ using Loris.Events;
 using Loris.Jobs;
 using Loris.Models;
 using Loris.Protocol;
-using Microsoft.AspNetCore.Http.Json;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -14,19 +14,29 @@ using Microsoft.Extensions.Options;
 
 namespace loris.IntegrationTests.Jobs;
 
-public sealed class PreStartupAutomationJobTests(TimescaleDbApplicationFactory<Program> appFactory)
-    : IClassFixture<TimescaleDbApplicationFactory<Program>>
+[Collection(TimescaleDbApplicationFactory.CollectionKey)]
+public sealed class PreStartupAutomationJobTests(TimescaleDbApplicationFactory appFactory)
+    : IAsyncLifetime
 {
-    private readonly TimescaleDbApplicationFactory<Program> _appFactory = appFactory;
+    private readonly TimescaleDbApplicationFactory _appFactory = appFactory;
+
+    public async ValueTask DisposeAsync()
+    {
+        await _appFactory.ResetDatabaseAsync();
+        ((FakeStateCache)_appFactory.Services.GetRequiredService<IStateCache>()).Clear();
+    }
+
+    public ValueTask InitializeAsync() => ValueTask.CompletedTask;
 
     [Fact]
     public async Task StartAsync_PreStartupAutomationJob_InitializesAllValidAutomations()
     {
         // SEED
+        Device device;
         using (var scope = _appFactory.Services.CreateScope())
         {
             var ctx = scope.ServiceProvider.GetRequiredService<LorisDbContext>();
-            await SeedDevice(ctx);
+            device = await SeedDevice(ctx);
             await SeedValidAutomations(ctx);
         }
 
@@ -56,7 +66,7 @@ public sealed class PreStartupAutomationJobTests(TimescaleDbApplicationFactory<P
         // there event key is of given structure
         Assert.True(
             index.TryGet(
-                new SensorEvent { DevEui = DevEui.Parse("1122AABBCCDDEEFF"), SensorID = 1 },
+                new SensorEvent { SensorId = device.Sensors.First().SensorId },
                 out var validAutomations
             )
         );
@@ -65,13 +75,14 @@ public sealed class PreStartupAutomationJobTests(TimescaleDbApplicationFactory<P
     }
 
     [Fact]
-    public async Task StartAsync_PreStartupAutomationJob_DiscardsInvalidAutomationsButLeavesValid()
+    public async Task StartAsync_PreStartupAutomationJob_DiscardsInvalidAutomationsButLeaveValid()
     {
         // SEED
+        Device device;
         using (var scope = _appFactory.Services.CreateScope())
         {
             var ctx = scope.ServiceProvider.GetRequiredService<LorisDbContext>();
-            await SeedDevice(ctx);
+            device = await SeedDevice(ctx);
             await SeedAutomationsWithOneInvalid(ctx);
         }
 
@@ -101,7 +112,9 @@ public sealed class PreStartupAutomationJobTests(TimescaleDbApplicationFactory<P
         // the event key is of given structure
         Assert.True(
             index.TryGet(
-                new SensorEvent { DevEui = DevEui.Parse("1122AABBCCDDEEFF"), SensorID = 1 },
+                // TODO: this need to be changed for the sake of system transition
+                // deviceId (GUID) and sensorId (GUID)
+                new SensorEvent { SensorId = device.Sensors.First().SensorId },
                 out var validAutomations
             )
         );
@@ -109,19 +122,16 @@ public sealed class PreStartupAutomationJobTests(TimescaleDbApplicationFactory<P
         Assert.Single(validAutomations);
     }
 
-    private static async Task SeedDevice(LorisDbContext ctx)
+    private static async Task<Device> SeedDevice(LorisDbContext ctx)
     {
         await ctx.Sensors.ExecuteDeleteAsync();
         await ctx.Functions.ExecuteDeleteAsync();
         await ctx.Devices.ExecuteDeleteAsync();
 
-        var devEui = DevEui.Parse("1122AABBCCDDEEFF");
-
         var device = new Device
         {
-            DeviceId = Guid.NewGuid(),
             DeviceName = "loris_sample",
-            DevEui = devEui,
+            DevEui = DevEui.Parse("1122AABBCCDDEEFF"),
             FriendlyName = "loris_friendly",
             LastSeen = DateTime.UtcNow,
             DeviceStatus = DeviceStatus.ACTIVE,
@@ -130,8 +140,7 @@ public sealed class PreStartupAutomationJobTests(TimescaleDbApplicationFactory<P
         device.Sensors.Add(
             new Loris.Models.Sensor
             {
-                DevEui = devEui,
-                SensorId = 1,
+                DeviceSensorId = 1,
                 Name = "env_temp_sensor",
                 Description = string.Empty,
                 ValueType = SensorValueType.Float,
@@ -143,8 +152,7 @@ public sealed class PreStartupAutomationJobTests(TimescaleDbApplicationFactory<P
         device.Sensors.Add(
             new Loris.Models.Sensor
             {
-                DevEui = devEui,
-                SensorId = 2,
+                DeviceSensorId = 2,
                 Name = "moisture_sensor",
                 Description = string.Empty,
                 ValueType = SensorValueType.Float,
@@ -156,8 +164,7 @@ public sealed class PreStartupAutomationJobTests(TimescaleDbApplicationFactory<P
         device.Functions.Add(
             new Loris.Models.Function
             {
-                DevEui = devEui,
-                FunctionId = 2,
+                DeviceFunctionId = 2,
                 Name = "set_led_green",
                 Description = "Brightness: 0-100",
                 ArgType = FuncArgType.Int,
@@ -166,6 +173,8 @@ public sealed class PreStartupAutomationJobTests(TimescaleDbApplicationFactory<P
 
         ctx.Devices.Add(device);
         await ctx.SaveChangesAsync();
+
+        return device;
     }
 
     private static async Task SeedValidAutomations(LorisDbContext ctx)

@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace Loris.Migrations
 {
     /// <inheritdoc />
-    public partial class Initialmigration : Migration
+    public partial class Addinitialmigration : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -20,10 +20,25 @@ namespace Loris.Migrations
                 .Annotation("Npgsql:Enum:sensor_value_type", "bool,float,int,text,unspecified");
 
             migrationBuilder.CreateTable(
+                name: "automations",
+                columns: table => new
+                {
+                    automation_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    name = table.Column<string>(type: "text", nullable: false),
+                    triggers = table.Column<string>(type: "jsonb", nullable: false),
+                    conditions = table.Column<string>(type: "jsonb", nullable: false),
+                    actions = table.Column<string>(type: "jsonb", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("pk_automations", x => x.automation_id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "devices",
                 columns: table => new
                 {
-                    device_id = table.Column<Guid>(type: "uuid", nullable: false, defaultValueSql: "uuidv7()"),
+                    device_id = table.Column<Guid>(type: "uuid", nullable: false),
                     dev_eui = table.Column<byte[]>(type: "bytea", nullable: false),
                     device_name = table.Column<string>(type: "text", nullable: false),
                     friendly_name = table.Column<string>(type: "text", nullable: false),
@@ -33,7 +48,6 @@ namespace Loris.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("pk_devices", x => x.device_id);
-                    table.UniqueConstraint("ak_devices_dev_eui", x => x.dev_eui);
                 },
                 comment: "All of the devices from Chirpstack");
 
@@ -56,20 +70,21 @@ namespace Loris.Migrations
                 name: "functions",
                 columns: table => new
                 {
-                    dev_eui = table.Column<byte[]>(type: "bytea", nullable: false),
-                    function_id = table.Column<int>(type: "integer", nullable: false),
+                    function_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    device_function_id = table.Column<int>(type: "integer", nullable: false),
                     name = table.Column<string>(type: "text", nullable: false),
                     description = table.Column<string>(type: "text", nullable: false),
-                    arg_type = table.Column<FuncArgType>(type: "func_arg_type", nullable: false)
+                    arg_type = table.Column<FuncArgType>(type: "func_arg_type", nullable: false),
+                    device_id = table.Column<Guid>(type: "uuid", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("pk_functions", x => new { x.dev_eui, x.function_id });
+                    table.PrimaryKey("pk_functions", x => x.function_id);
                     table.ForeignKey(
-                        name: "fk_functions_devices_dev_eui",
-                        column: x => x.dev_eui,
+                        name: "fk_functions_devices_device_id",
+                        column: x => x.device_id,
                         principalTable: "devices",
-                        principalColumn: "dev_eui");
+                        principalColumn: "device_id");
                 },
                 comment: "Devices functions exposed via capabilities ");
 
@@ -77,22 +92,23 @@ namespace Loris.Migrations
                 name: "sensors",
                 columns: table => new
                 {
-                    dev_eui = table.Column<byte[]>(type: "bytea", nullable: false),
-                    sensor_id = table.Column<int>(type: "integer", nullable: false),
+                    sensor_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    device_sensor_id = table.Column<int>(type: "integer", nullable: false),
                     name = table.Column<string>(type: "text", nullable: false),
                     description = table.Column<string>(type: "text", nullable: false),
                     unit = table.Column<string>(type: "text", nullable: true),
                     value_type = table.Column<SensorValueType>(type: "sensor_value_type", nullable: false),
-                    semantics = table.Column<SensorSemantics>(type: "sensor_semantics", nullable: false)
+                    semantics = table.Column<SensorSemantics>(type: "sensor_semantics", nullable: false),
+                    device_id = table.Column<Guid>(type: "uuid", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("pk_sensors", x => new { x.dev_eui, x.sensor_id });
+                    table.PrimaryKey("pk_sensors", x => x.sensor_id);
                     table.ForeignKey(
-                        name: "fk_sensors_devices_dev_eui",
-                        column: x => x.dev_eui,
+                        name: "fk_sensors_devices_device_id",
+                        column: x => x.device_id,
                         principalTable: "devices",
-                        principalColumn: "dev_eui");
+                        principalColumn: "device_id");
                 },
                 comment: "Devices sensors exposed via capabilities");
 
@@ -100,8 +116,7 @@ namespace Loris.Migrations
                 name: "sensor_readings",
                 columns: table => new
                 {
-                    dev_eui = table.Column<byte[]>(type: "bytea", nullable: false),
-                    sensor_id = table.Column<int>(type: "integer", nullable: false),
+                    sensor_id = table.Column<Guid>(type: "uuid", nullable: false),
                     time = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     int_value = table.Column<int>(type: "integer", nullable: true),
                     float_value = table.Column<float>(type: "real", nullable: true),
@@ -110,13 +125,12 @@ namespace Loris.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("pk_sensor_readings", x => new { x.dev_eui, x.sensor_id, x.time });
+                    table.PrimaryKey("pk_sensor_readings", x => new { x.sensor_id, x.time });
                     table.ForeignKey(
-                        name: "fk_sensor_readings_sensors_dev_eui_sensor_id",
-                        columns: x => new { x.dev_eui, x.sensor_id },
+                        name: "fk_sensor_readings_sensors_sensor_id",
+                        column: x => x.sensor_id,
                         principalTable: "sensors",
-                        principalColumns: new[] { "dev_eui", "sensor_id" },
-                        onDelete: ReferentialAction.Cascade);
+                        principalColumn: "sensor_id");
                 },
                 comment: "Readings of actuals sensors exposed via capabilities");
 
@@ -131,6 +145,16 @@ namespace Loris.Migrations
                 table: "devices",
                 column: "friendly_name",
                 unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "ix_functions_device_id",
+                table: "functions",
+                column: "device_id");
+
+            migrationBuilder.CreateIndex(
+                name: "ix_sensors_device_id",
+                table: "sensors",
+                column: "device_id");
 
             migrationBuilder.CreateIndex(
                 name: "ix_users_display_name",
@@ -152,6 +176,9 @@ namespace Loris.Migrations
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.DropTable(
+                name: "automations");
+
             migrationBuilder.DropTable(
                 name: "functions");
 

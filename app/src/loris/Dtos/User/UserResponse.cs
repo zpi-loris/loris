@@ -1,6 +1,6 @@
 using Loris.Models;
 
-namespace Loris.Controllers.Responses;
+namespace Loris.Dtos.User;
 
 public record UserResponse
 {

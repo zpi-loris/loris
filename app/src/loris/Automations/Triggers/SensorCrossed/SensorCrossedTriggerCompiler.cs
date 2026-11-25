@@ -14,7 +14,6 @@ public class SensorCrossedTriggerCompiler(IDbContextFactory<LorisDbContext> ctxF
 
     // lookups
     private const string SENSOR_ID = "SensorId";
-    private const string DEV_EUI = "DevEui";
     private const string SENSOR_VALUE_TYPE = "SensorValueType";
 
     protected override async Task<BlockValidationResult> ValidateAsync(
@@ -40,7 +39,7 @@ public class SensorCrossedTriggerCompiler(IDbContextFactory<LorisDbContext> ctxF
         }
 
         var sensor = await ctx.Sensors.SingleOrDefaultAsync(
-            s => s.DevEui == device.DevEui && s.Name == dto.SensorName,
+            s => s.DeviceId == device.DeviceId && s.Name == dto.SensorName,
             cancellationToken
         );
 
@@ -95,7 +94,6 @@ public class SensorCrossedTriggerCompiler(IDbContextFactory<LorisDbContext> ctxF
             new Dictionary<string, object>
             {
                 { SENSOR_ID, sensor.SensorId },
-                { DEV_EUI, device.DevEui },
                 { SENSOR_VALUE_TYPE, sensor.ValueType },
             }
         );
@@ -106,11 +104,10 @@ public class SensorCrossedTriggerCompiler(IDbContextFactory<LorisDbContext> ctxF
         LookupContext? lookup
     )
     {
-        var devEui = lookup!.Get<DevEui>(DEV_EUI);
-        var sensorId = lookup!.Get<int>(SENSOR_ID);
+        var sensorId = lookup!.Get<Guid>(SENSOR_ID);
         var valueType = lookup!.Get<SensorValueType>(SENSOR_VALUE_TYPE);
 
-        IEvent newEvent = new SensorEvent { DevEui = devEui, SensorID = sensorId };
+        IEvent newEvent = new SensorEvent { SensorId = sensorId };
 
         Func<IEventMessage, bool> filter = valueType switch
         {

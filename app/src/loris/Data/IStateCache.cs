@@ -9,18 +9,24 @@ namespace Loris.Data;
 ///</summary>
 public interface IStateCache
 {
-    public bool IsDeviceAccepted(DevEui devEui);
-    public bool TryGetSensorLastSeen(
+    public bool TryGetDevice(DevEui devEui, [MaybeNullWhen(false)] out Device device);
+    public bool TryGetSensor(
         DevEui devEui,
-        int sensorId,
-        [MaybeNullWhen(false)] out DateTime state
+        int deviceSensorId,
+        [MaybeNullWhen(false)] out Models.Sensor sensor
     );
-    public bool TryGetSensorLastState(
-        DevEui devEui,
-        int sensorId,
-        [NotNullWhen(true)] out Report? state
+    public bool TryGetSensorLastReading(
+        Guid sensorId,
+        [MaybeNullWhen(false)] out SensorReading reading
     );
-    public void UpdateSensors(DevEui devEui, Report report, DateTime time);
-    public void UpdateSensors(DevEui devEui, SensorReading model);
-    public void UpdateDevices(Device device);
+
+    public void AddOrUpdateReading(Guid sensorId, Report report, DateTime datetime);
+
+    public void AddOrUpdateReading(SensorReading reading);
+
+    public DevEui this[Guid DeviceId] { get; }
+
+    public Device this[DevEui devEui] { get; set; }
+
+    public Models.Sensor this[(DevEui devEui, int deviceSensorId) sensorMapping] { get; set; }
 }

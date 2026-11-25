@@ -7,7 +7,7 @@ using Loris.Data;
 using Loris.Logging;
 using Loris.Models;
 using Loris.Services;
-using Microsoft.AspNetCore.Http.Json;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 
@@ -21,7 +21,7 @@ public class PreStartupAutomationJob(
 {
     private readonly IServiceScopeFactory _scopeFactory = serviceScopeFactory;
     private readonly ILogger<PreStartupAutomationJob> _logger = logger;
-    private readonly JsonSerializerOptions _jsonOptions = jsonOptions.Value.SerializerOptions;
+    private readonly JsonSerializerOptions _jsonOptions = jsonOptions.Value.JsonSerializerOptions;
 
     public async Task StartAsync(CancellationToken cancellationToken)
     {

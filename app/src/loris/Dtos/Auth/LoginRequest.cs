@@ -1,4 +1,4 @@
-namespace Loris.Controllers.Requests;
+namespace Loris.Dtos.Auth;
 
 public record LoginRequest
 {

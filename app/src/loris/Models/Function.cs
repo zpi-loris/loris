@@ -7,15 +7,23 @@ namespace Loris.Models;
 [Comment("Devices functions exposed via capabilities ")]
 public partial class Function
 {
-    public DevEui DevEui { get; set; }
+    /// <summary>
+    /// Artificial primary key
+    /// </summary>
+    public Guid FunctionId { get; set; }
 
-    public int FunctionId { get; set; }
+    /// <summary>
+    /// Locally unique ID in a single device
+    /// </summary>
+    public int DeviceFunctionId { get; set; }
 
     public string Name { get; set; } = null!;
 
     public string Description { get; set; } = null!;
 
     public FuncArgType ArgType { get; set; }
+
+    public Guid DeviceId { get; set; }
 
     //
     // REFERENCES
@@ -28,15 +36,29 @@ public partial class Function
     // Proto helpers
     //
 
-    public static Function FromProto(DevEui devEui, Protocol.Function function)
+    public static Function FromProto(Guid deviceId, Protocol.Function function)
     {
         return new Function()
         {
-            DevEui = devEui,
-            FunctionId = function.Id,
+            DeviceId = deviceId,
+            DeviceFunctionId = function.Id,
             Name = function.Name,
             Description = function.Description,
             ArgType = function.ArgType,
         };
+    }
+
+    public bool EqualsWithDefinition(Function other)
+    {
+        if (
+            DeviceFunctionId != other.DeviceFunctionId
+            || Name != other.Name
+            || Description != other.Description
+            || ArgType != other.ArgType
+        )
+        {
+            return false;
+        }
+        return true;
     }
 }

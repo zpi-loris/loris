@@ -1,6 +1,6 @@
-using Loris.OpenApi;
+using Loris.Json;
 
-namespace Loris.Controllers.Responses;
+namespace Loris.Dtos.Sensor;
 
 public record SensorReadingResponse()
 {

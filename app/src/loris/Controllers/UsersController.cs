@@ -1,6 +1,9 @@
-using Loris.Controllers.Requests;
-using Loris.Controllers.Responses;
+using System.ComponentModel;
+using Loris.Dtos.User;
+using Loris.Extensions;
+using Loris.Models;
 using Loris.OpenApi;
+using Loris.Services;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Loris.Controllers;
@@ -10,8 +13,10 @@ namespace Loris.Controllers;
 [Produces("application/json")]
 [ProducesUnauthenticated]
 [ProducesUnauthorized]
-public class UsersController : ControllerBase
+public class UsersController(IUserService service) : ControllerBase
 {
+    private readonly IUserService _service = service;
+
     /// <summary>
     /// Get all users
     /// </summary>
@@ -21,7 +26,10 @@ public class UsersController : ControllerBase
     /// </remarks>
     [HttpGet]
     [ProducesSuccess]
-    public Task<IEnumerable<UserResponse>> GetUsers() => throw new NotImplementedException();
+    public async Task<ActionResult<IEnumerable<UserResponse>>> GetUsers(
+        [DefaultValue(null)] [FromQuery] List<UserRole> role,
+        CancellationToken ct
+    ) => this.ToActionResult(await _service.ListUsersAsync(role, ct));
 
     /// <summary>
     /// Get user by ID
@@ -33,7 +41,8 @@ public class UsersController : ControllerBase
     [HttpGet("{userId}")]
     [ProducesSuccess]
     [ProducesNotFound("user")]
-    public Task<UserResponse> GetUser(Guid userId) => throw new NotImplementedException();
+    public async Task<ActionResult<UserResponse>> GetUser(Guid userId, CancellationToken ct) =>
+        this.ToActionResult(await _service.GetUserAsync(userId, ct));
 
     /// <summary>
     /// Create new user
@@ -46,8 +55,10 @@ public class UsersController : ControllerBase
     [ProducesUserCreated]
     [ProducesBadRequest]
     [ProducesUserConflict]
-    public Task<UserResponse> CreateUser([FromBody] CreateUserRequest request) =>
-        throw new NotImplementedException();
+    public async Task<ActionResult<UserResponse>> CreateUser(
+        [FromBody] CreateUserRequest request,
+        CancellationToken ct
+    ) => this.ToActionResult(await _service.CreateUserAsync(request, ct));
 
     /// <summary>
     /// Update user by ID
@@ -61,8 +72,11 @@ public class UsersController : ControllerBase
     [ProducesBadRequest]
     [ProducesUserConflict]
     [ProducesNotFound("user")]
-    public Task<UserResponse> UpdateUser(Guid userId, [FromBody] UpdateUserRequest request) =>
-        throw new NotImplementedException();
+    public async Task<ActionResult<UserResponse>> UpdateUser(
+        Guid userId,
+        [FromBody] UpdateUserRequest request,
+        CancellationToken ct
+    ) => this.ToActionResult(await _service.UpdateUserAsync(userId, request, ct));
 
     /// <summary>
     /// Delete user by ID
@@ -74,5 +88,6 @@ public class UsersController : ControllerBase
     [HttpDelete("{userId}")]
     [ProducesSuccessNoContent]
     [ProducesNotFound("user")]
-    public Task<IActionResult> DeleteUser(Guid userId) => throw new NotImplementedException();
+    public async Task<IActionResult> DeleteUser(Guid userId, CancellationToken ct) =>
+        this.ToActionResult(await _service.DeleteUserAsync(userId, ct));
 }

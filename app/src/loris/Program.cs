@@ -1,12 +1,15 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Text.Json.Serialization.Metadata;
 using Loris.Channels;
 using Loris.Consumers;
 using Loris.Data;
 using loris.Extensions;
 using Loris.Extensions;
 using Loris.Jobs;
+using Loris.Json;
 using Loris.MQTT.Client;
+using loris.Services;
 using Loris.Services;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.EntityFrameworkCore;
@@ -62,8 +65,10 @@ builder.Services.AddSingleton<IEventChannelHandler, EventChannelHandler>();
 builder.Services.AddAutomationsCompilers();
 
 // Services for controller
-builder.Services.AddScoped<IAutomationService, AutomationService>();
-builder.Services.AddScoped<IDeviceService, DeviceService>();
+builder.Services.AddTransient<IChirpstackService, ChirpstackService>();
+builder.Services.AddTransient<IAutomationService, AutomationService>();
+builder.Services.AddTransient<IDeviceService, DeviceService>();
+builder.Services.AddTransient<IUserService, UserService>();
 
 // Chirpstacks integration background service and device grpc downlink service
 builder.Services.AddChirpstackIntegration<ChirpstackIntegrationHandler>(builder.Configuration);
@@ -76,6 +81,10 @@ builder
         options.JsonSerializerOptions.Converters.Add(
             new JsonStringEnumConverter(JsonNamingPolicy.CamelCase)
         );
+        options.JsonSerializerOptions.TypeInfoResolver = new DefaultJsonTypeInfoResolver
+        {
+            Modifiers = { OneOfTypesPropertyModifier.Modifier },
+        };
     });
 
 builder.Services.AddProblemDetails();

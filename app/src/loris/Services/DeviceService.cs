@@ -1,13 +1,12 @@
-using Grpc.Core;
+using System.Linq.Expressions;
 using Loris.Data;
-using Loris.Extensions;
+using Loris.Dtos.Device;
 using Loris.Logging;
 using Loris.Models;
-using Loris.Protocol;
 using Loris.Results;
 using Loris.Results.Errors;
+using loris.Services;
 using Microsoft.EntityFrameworkCore;
-using DownlinkServiceClient = Chirpstack.Api.DeviceService.DeviceServiceClient;
 
 namespace Loris.Services;
 
@@ -15,80 +14,196 @@ public class DeviceService(
     ILogger<DeviceService> logger,
     LorisDbContext ctx,
     IStateCache stateCache,
-    DownlinkServiceClient client
+    IChirpstackService chirpstackService
 ) : IDeviceService
 {
     private readonly ILogger<DeviceService> _logger = logger;
     private readonly LorisDbContext _ctx = ctx;
     private readonly IStateCache _stateCache = stateCache;
-    private readonly DownlinkServiceClient _client = client;
+    private readonly IChirpstackService _chirpstackService = chirpstackService;
 
-    public async Task<Result<Device>> AcceptAsync(DevEui devEui, CancellationToken ct = default)
+    public async Task<Result<IEnumerable<DeviceDetailsResponse>>> ListDevicesAsync(
+        List<DeviceStatus> statusFilterList,
+        CancellationToken ct = default
+    )
+    {
+        var query = _ctx.Devices.Include(d => d.Sensors).Include(d => d.Functions);
+        if (statusFilterList.Count > 0)
+        {
+            return await query
+                .Where(d => statusFilterList.Contains(d.DeviceStatus))
+                .Select(d => DeviceDetailsResponse.FromModel(d))
+                .ToListAsync(ct);
+        }
+        return await query.Select(d => DeviceDetailsResponse.FromModel(d)).ToListAsync(ct);
+    }
+
+    public async Task<Result<DeviceDetailsResponse>> GetAsync(
+        DevEui devEui,
+        CancellationToken ct = default
+    )
+    {
+        var device = _ctx
+            .Devices.Include(d => d.Functions)
+            .Include(d => d.Sensors)
+            .FirstOrDefault(d => d.DevEui == devEui);
+        if (device is null)
+        {
+            return DeviceErrors.NotFound(devEui);
+        }
+        return DeviceDetailsResponse.FromModel(device);
+    }
+
+    public async Task<Result<DeviceDetailsResponse>> GetAsync(
+        string name,
+        CancellationToken ct = default
+    )
+    {
+        var device = _ctx
+            .Devices.Include(d => d.Functions)
+            .Include(d => d.Sensors)
+            .FirstOrDefault(d => d.FriendlyName == name);
+        if (device is null)
+        {
+            return DeviceErrors.NotFound(name);
+        }
+        return DeviceDetailsResponse.FromModel(device);
+    }
+
+    public async Task<Result<DeviceDetailsResponse>> GetAsync(
+        Guid deviceId,
+        CancellationToken ct = default
+    )
+    {
+        var device = _ctx
+            .Devices.Include(d => d.Functions)
+            .Include(d => d.Sensors)
+            .FirstOrDefault(d => d.DeviceId == deviceId);
+        if (device is null)
+        {
+            return DeviceErrors.NotFound(deviceId);
+        }
+        return DeviceDetailsResponse.FromModel(device);
+    }
+
+    public async Task<Result<DeviceResponse>> RenameAsync(
+        DevEui devEui,
+        string newName,
+        CancellationToken ct = default
+    )
+    {
+        var device = await _ctx.Devices.FirstOrDefaultAsync(d => d.DevEui == devEui, ct);
+        if (device is null)
+        {
+            return DeviceErrors.NotFound(devEui);
+        }
+        return await RenameAsync(device, newName, ct);
+    }
+
+    public async Task<Result<DeviceResponse>> RenameAsync(
+        string name,
+        string newName,
+        CancellationToken ct = default
+    )
+    {
+        // NOTE: THIS IS ALTERNATE APPROACH
+        // var result = _ctx
+        //     .Devices.Where(d => d.FriendlyName == name)
+        //     .ExecuteUpdateAsync(setters => setters.SetProperty(d => d.FriendlyName, newName), ct);
+        var device = await _ctx.Devices.FirstOrDefaultAsync(d => d.FriendlyName == name, ct);
+        if (device is null)
+        {
+            return DeviceErrors.NotFound(name);
+        }
+        return await RenameAsync(device, newName, ct);
+    }
+
+    public async Task<Result<DeviceResponse>> RenameAsync(
+        Guid deviceId,
+        string newName,
+        CancellationToken ct = default
+    )
+    {
+        var device = await _ctx.Devices.FirstOrDefaultAsync(d => d.DeviceId == deviceId, ct);
+        if (device is null)
+        {
+            return DeviceErrors.NotFound(deviceId);
+        }
+        return await RenameAsync(device, newName, ct);
+    }
+
+    private async Task<Result<DeviceResponse>> RenameAsync(
+        Device device,
+        string newName,
+        CancellationToken ct
+    )
+    {
+        var existing = await _ctx.Devices.FirstOrDefaultAsync(d => d.FriendlyName == newName, ct);
+        if (existing is not null)
+        {
+            return DeviceErrors.FriendlyNameTaken(newName);
+        }
+        var oldName = device.FriendlyName;
+        device.FriendlyName = newName;
+        await _ctx.SaveChangesAsync(ct);
+        _stateCache[device.DevEui] = device;
+        _logger.DeviceRenamed(device.DeviceId, oldName, newName);
+        return DeviceResponse.FromModel(device);
+    }
+
+    public async Task<Result<DeviceResponse>> AcceptAsync(
+        Guid deviceId,
+        CancellationToken ct = default
+    )
+    {
+        var device = await _ctx.Devices.SingleOrDefaultAsync(d => d.DeviceId == deviceId, ct);
+        return device is null ? DeviceErrors.NotFound(deviceId) : await AcceptAsync(device, ct);
+    }
+
+    public async Task<Result<DeviceResponse>> AcceptAsync(
+        DevEui devEui,
+        CancellationToken ct = default
+    )
     {
         var device = await _ctx.Devices.SingleOrDefaultAsync(d => d.DevEui == devEui, ct);
-        return device is null
-            ? Result<Device>.Failure(DeviceErrors.NotFound(devEui))
-            : await AcceptAsync(device, ct);
+        return device is null ? DeviceErrors.NotFound(devEui) : await AcceptAsync(device, ct);
     }
 
-    public async Task<Result<Device>> AcceptAsync(string name, CancellationToken ct = default)
+    public async Task<Result<DeviceResponse>> AcceptAsync(
+        string name,
+        CancellationToken ct = default
+    )
     {
         var device = await _ctx.Devices.SingleOrDefaultAsync(d => d.FriendlyName == name, ct);
-        return device is null
-            ? Result<Device>.Failure(DeviceErrors.NotFound(name))
-            : await AcceptAsync(device, ct);
+        return device is null ? DeviceErrors.NotFound(name) : await AcceptAsync(device, ct);
     }
 
-    private async Task<Result<Device>> AcceptAsync(Device device, CancellationToken ct = default)
+    private async Task<Result<DeviceResponse>> AcceptAsync(
+        Device device,
+        CancellationToken ct = default
+    )
     {
         return device.DeviceStatus switch
         {
             DeviceStatus.PENDING => await AcceptDeviceAsync(device, ct),
-            DeviceStatus.ACTIVE => Result<Device>.Failure(
-                DeviceErrors.AlreadyActive(device.FriendlyName)
-            ),
-            DeviceStatus.IGNORED => Result<Device>.Failure(
-                DeviceErrors.Ignored(device.FriendlyName)
-            ),
-            DeviceStatus.DISCONNECTED => Result<Device>.Failure(
-                DeviceErrors.Disconnected(device.FriendlyName)
-            ),
-            _ => Result<Device>.Failure(DeviceErrors.UnknownStatus(device.FriendlyName)),
+            DeviceStatus.ACTIVE => DeviceErrors.AlreadyActive(device.FriendlyName),
+            DeviceStatus.IGNORED => DeviceErrors.Ignored(device.FriendlyName),
+            DeviceStatus.DISCONNECTED => DeviceErrors.Disconnected(device.FriendlyName),
+            _ => DeviceErrors.UnknownStatus(device.FriendlyName),
         };
     }
 
-    private async Task<Result<Device>> AcceptDeviceAsync(Device device, CancellationToken ct)
+    private async Task<Result<DeviceResponse>> AcceptDeviceAsync(
+        Device device,
+        CancellationToken ct
+    )
     {
-        try
+        var downlinkResult = await _chirpstackService.AcceptAsync(device.DevEui, ct);
+
+        if (downlinkResult.IsFailure)
         {
-            await _client.EnqueueDownlinkAsync(
-                new Downlink { Ping = new DownPing { Type = DownPingType.Hello } },
-                device.DevEui,
-                ct
-            );
-        }
-        catch (RpcException ex)
-        {
-            if (ex.StatusCode == StatusCode.DeadlineExceeded)
-            {
-                _logger.DownlinkTimeout(device.DevEui, ex.Message);
-                return Result<Device>.Failure(DownlinkErrors.DeadlineExceeded());
-            }
-            else if (ex.StatusCode == StatusCode.Unauthenticated)
-            {
-                // TODO: apparently chirpstack is sending unauthenticated, even
-                // when the token is valid, but it can't find any device with the given DevEUI.
-                // This is a bug in chirpstack and i don't know how to handle it yet.
-                //
-                _logger.DownlinkFailed(device.DevEui, ex.Message);
-                return Result<Device>.Failure(DownlinkErrors.Failed(ex.Message));
-            }
-            else
-            {
-                _logger.DownlinkFailed(device.DevEui, ex.Message);
-                return Result<Device>.Failure(DownlinkErrors.Failed(ex.Message));
-            }
-            // TODO: Handle other exceptions if needed
+            _logger.DownlinkFailed(device.DevEui, downlinkResult.Error.Description);
+            return downlinkResult.Error;
         }
 
         device.DeviceStatus = DeviceStatus.ACTIVE;
@@ -98,24 +213,46 @@ public class DeviceService(
         await _ctx.SaveChangesAsync(CancellationToken.None);
 
         // register newly activated device in runtime
-        _stateCache.UpdateDevices(device);
+        _stateCache[device.DevEui] = device;
 
-        return Result<Device>.Success(device);
+        return DeviceResponse.FromModel(device);
     }
 
-    public async Task<Result<Device>> DisconnectAsync(
+    public async Task<Result<DeviceResponse>> DisconnectAsync(
+        Guid deviceId,
+        bool force,
+        CancellationToken ct = default
+    )
+    {
+        var device = await _ctx.Devices.SingleOrDefaultAsync(d => d.DeviceId == deviceId, ct);
+        return device is null
+            ? DeviceErrors.NotFound(deviceId)
+            : await DisconnectAsync(device, force, ct);
+    }
+
+    public async Task<Result<DeviceResponse>> DisconnectAsync(
         DevEui devEui,
         bool force,
         CancellationToken ct = default
     )
     {
         var device = await _ctx.Devices.SingleOrDefaultAsync(d => d.DevEui == devEui, ct);
+        if (device is null && force)
+        {
+            // we don't have the device in the database - maybe we replaced it with a new device,
+            // then we just want to force the disconnection without the businness logic
+            var result = await _chirpstackService.DisconnectAsync(devEui, ct);
+            return result.Match<Result<DeviceResponse>>(
+                () => DeviceResponse.FromModel(new Device()), // empty device
+                error => error
+            );
+        }
         return device is null
-            ? Result<Device>.Failure(DeviceErrors.NotFound(devEui))
+            ? DeviceErrors.NotFound(devEui)
             : await DisconnectAsync(device, force, ct);
     }
 
-    public async Task<Result<Device>> DisconnectAsync(
+    public async Task<Result<DeviceResponse>> DisconnectAsync(
         string name,
         bool force,
         CancellationToken ct = default
@@ -123,11 +260,11 @@ public class DeviceService(
     {
         var device = await _ctx.Devices.SingleOrDefaultAsync(d => d.FriendlyName == name, ct);
         return device is null
-            ? Result<Device>.Failure(DeviceErrors.NotFound(name))
+            ? DeviceErrors.NotFound(name)
             : await DisconnectAsync(device, force, ct);
     }
 
-    private async Task<Result<Device>> DisconnectAsync(
+    private async Task<Result<DeviceResponse>> DisconnectAsync(
         Device device,
         bool force,
         CancellationToken ct
@@ -137,51 +274,25 @@ public class DeviceService(
         {
             (DeviceStatus.ACTIVE, _) => await DisconnectDeviceAsync(device, ct),
             (_, true) => await DisconnectDeviceAsync(device, ct),
-            (DeviceStatus.PENDING, false) => Result<Device>.Failure(
-                DeviceErrors.Pending(device.FriendlyName)
+            (DeviceStatus.PENDING, false) => DeviceErrors.Pending(device.FriendlyName),
+            (DeviceStatus.IGNORED, false) => DeviceErrors.PendingButIgnored(device.FriendlyName),
+            (DeviceStatus.DISCONNECTED, false) => DeviceErrors.AlreadyDisconnected(
+                device.FriendlyName
             ),
-            (DeviceStatus.IGNORED, false) => Result<Device>.Failure(
-                DeviceErrors.PendingButIgnored(device.FriendlyName)
-            ),
-            (DeviceStatus.DISCONNECTED, false) => Result<Device>.Failure(
-                DeviceErrors.AlreadyDisconnected(device.FriendlyName)
-            ),
-            _ => Result<Device>.Failure(DeviceErrors.UnknownStatus(device.FriendlyName)),
+            _ => DeviceErrors.UnknownStatus(device.FriendlyName),
         };
     }
 
-    private async Task<Result<Device>> DisconnectDeviceAsync(Device device, CancellationToken ct)
+    private async Task<Result<DeviceResponse>> DisconnectDeviceAsync(
+        Device device,
+        CancellationToken ct
+    )
     {
-        try
+        var downlinkResult = await _chirpstackService.DisconnectAsync(device.DevEui, ct);
+        if (downlinkResult.IsFailure)
         {
-            await _client.EnqueueDownlinkAsync(
-                new Downlink { Ping = new DownPing { Type = DownPingType.Disconnect } },
-                device.DevEui,
-                ct
-            );
-        }
-        catch (RpcException ex)
-        {
-            if (ex.StatusCode == StatusCode.DeadlineExceeded)
-            {
-                _logger.DownlinkTimeout(device.DevEui, ex.Message);
-                return Result<Device>.Failure(DownlinkErrors.DeadlineExceeded());
-            }
-            else if (ex.StatusCode == StatusCode.Unauthenticated)
-            {
-                // TODO: apparently chirpstack is sending unauthenticated, even
-                // when the token is valid, but it can't find any device with the given DevEUI.
-                // This is a bug in chirpstack and i don't know how to handle it yet.
-                //
-                _logger.DownlinkFailed(device.DevEui, ex.Message);
-                return Result<Device>.Failure(DownlinkErrors.Failed(ex.Message));
-            }
-            else
-            {
-                _logger.DownlinkFailed(device.DevEui, ex.Message);
-                return Result<Device>.Failure(DownlinkErrors.Failed(ex.Message));
-            }
-            // TODO: Handle other exceptions if needed
+            _logger.DownlinkFailed(device.DevEui, downlinkResult.Error.Description);
+            return downlinkResult.Error;
         }
 
         device.DeviceStatus = DeviceStatus.DISCONNECTED;
@@ -191,12 +302,24 @@ public class DeviceService(
         await _ctx.SaveChangesAsync(CancellationToken.None);
 
         // update state cache; device is not ACCEPTED anymore
-        _stateCache.UpdateDevices(device);
+        _stateCache[device.DevEui] = device;
 
-        return Result<Device>.Success(device);
+        return DeviceResponse.FromModel(device);
     }
 
-    public async Task<Result<Device>> ToggleIgnoreAsync(
+    public async Task<Result<DeviceResponse>> ToggleIgnoreAsync(
+        Guid deviceId,
+        bool ignore,
+        CancellationToken ct = default
+    )
+    {
+        var device = await _ctx.Devices.SingleOrDefaultAsync(d => d.DeviceId == deviceId, ct);
+        return device is null
+            ? DeviceErrors.NotFound(deviceId)
+            : await ToggleIgnoreAsync(device, ignore, ct);
+    }
+
+    public async Task<Result<DeviceResponse>> ToggleIgnoreAsync(
         DevEui devEui,
         bool ignore,
         CancellationToken ct = default
@@ -204,11 +327,11 @@ public class DeviceService(
     {
         var device = await _ctx.Devices.SingleOrDefaultAsync(d => d.DevEui == devEui, ct);
         return device is null
-            ? Result<Device>.Failure(DeviceErrors.NotFound(devEui))
+            ? DeviceErrors.NotFound(devEui)
             : await ToggleIgnoreAsync(device, ignore, ct);
     }
 
-    public async Task<Result<Device>> ToggleIgnoreAsync(
+    public async Task<Result<DeviceResponse>> ToggleIgnoreAsync(
         string name,
         bool ignore,
         CancellationToken ct = default
@@ -216,11 +339,11 @@ public class DeviceService(
     {
         var device = await _ctx.Devices.SingleOrDefaultAsync(d => d.FriendlyName == name, ct);
         return device is null
-            ? Result<Device>.Failure(DeviceErrors.NotFound(name))
+            ? DeviceErrors.NotFound(name)
             : await ToggleIgnoreAsync(device, ignore, ct);
     }
 
-    private async Task<Result<Device>> ToggleIgnoreAsync(
+    private async Task<Result<DeviceResponse>> ToggleIgnoreAsync(
         Device device,
         bool ignore,
         CancellationToken ct
@@ -238,23 +361,15 @@ public class DeviceService(
                 DeviceStatus.PENDING,
                 ct
             ),
-            (DeviceStatus.IGNORED, true) => Result<Device>.Failure(
-                DeviceErrors.AlreadyIgnored(device.FriendlyName)
-            ),
-            (DeviceStatus.ACTIVE, _) => Result<Device>.Failure(
-                DeviceErrors.Active(device.FriendlyName)
-            ),
-            (DeviceStatus.DISCONNECTED, _) => Result<Device>.Failure(
-                DeviceErrors.Disconnected(device.FriendlyName)
-            ),
-            (DeviceStatus.PENDING, false) => Result<Device>.Failure(
-                DeviceErrors.Pending(device.FriendlyName)
-            ),
-            _ => Result<Device>.Failure(DeviceErrors.UnknownStatus(device.FriendlyName)),
+            (DeviceStatus.IGNORED, true) => DeviceErrors.AlreadyIgnored(device.FriendlyName),
+            (DeviceStatus.ACTIVE, _) => DeviceErrors.Active(device.FriendlyName),
+            (DeviceStatus.DISCONNECTED, _) => DeviceErrors.Disconnected(device.FriendlyName),
+            (DeviceStatus.PENDING, false) => DeviceErrors.Pending(device.FriendlyName),
+            _ => DeviceErrors.UnknownStatus(device.FriendlyName),
         };
     }
 
-    private async Task<Result<Device>> ToggleIgnoreDeviceAsync(
+    private async Task<Result<DeviceResponse>> ToggleIgnoreDeviceAsync(
         Device device,
         DeviceStatus status,
         CancellationToken ct
@@ -262,6 +377,191 @@ public class DeviceService(
     {
         device.DeviceStatus = status;
         await _ctx.SaveChangesAsync(ct);
-        return Result<Device>.Success(device);
+        _stateCache[device.DevEui] = device;
+        return DeviceResponse.FromModel(device);
+    }
+
+    public async Task<Result<DeviceResponse>> ReplaceAsync(
+        Guid deviceId,
+        DeviceReplaceRequest request,
+        CancellationToken ct = default
+    )
+    {
+        var device = await _ctx
+            .Devices.Include(d => d.Sensors)
+            .Include(d => d.Functions)
+            .SingleOrDefaultAsync(d => d.DeviceId == deviceId, ct);
+        return device is null
+            ? DeviceErrors.NotFound(deviceId)
+            : await ReplaceDeviceAsync(device, request, ct);
+    }
+
+    public async Task<Result<DeviceResponse>> ReplaceAsync(
+        string name,
+        DeviceReplaceRequest request,
+        CancellationToken ct = default
+    )
+    {
+        var device = await _ctx
+            .Devices.Include(d => d.Sensors)
+            .Include(d => d.Functions)
+            .SingleOrDefaultAsync(d => d.FriendlyName == name, ct);
+        return device is null
+            ? DeviceErrors.NotFound(name)
+            : await ReplaceDeviceAsync(device, request, ct);
+    }
+
+    public async Task<Result<DeviceResponse>> ReplaceAsync(
+        DevEui devEui,
+        DeviceReplaceRequest request,
+        CancellationToken ct = default
+    )
+    {
+        var device = await _ctx
+            .Devices.Include(d => d.Sensors)
+            .Include(d => d.Functions)
+            .SingleOrDefaultAsync(d => d.DevEui == devEui, ct);
+        return device is null
+            ? DeviceErrors.NotFound(devEui)
+            : await ReplaceDeviceAsync(device, request, ct);
+    }
+
+    private async Task<Result<DeviceResponse>> ReplaceDeviceAsync(
+        Device original,
+        DeviceReplaceRequest request,
+        CancellationToken ct
+    )
+    {
+        var substituteResult = await FindSubstitute(request, ct);
+
+        if (substituteResult.IsFailure)
+        {
+            return substituteResult.Error;
+        }
+
+        var substitute = substituteResult.Value;
+
+        if (substitute.DeviceId == original.DeviceId)
+        {
+            return DeviceErrors.SubstituteTheSame();
+        }
+
+        if (!original.EqualsWithCapabilities(substitute))
+        {
+            return DeviceErrors.SubstituteMismatch(substitute.FriendlyName);
+        }
+
+        if (substitute.DeviceStatus != DeviceStatus.PENDING)
+        {
+            return DeviceErrors.SubstituteNotPending(substitute.FriendlyName);
+        }
+
+        // try to disconnect the original device,
+        // We don't return on failure, because maybe the device with chirpstack integration
+        // was corrupted somehow
+        var disconnectResult = await _chirpstackService.DisconnectAsync(
+            original.DevEui,
+            CancellationToken.None
+        );
+        if (disconnectResult.IsFailure)
+        {
+            _logger.DownlinkFailed(original.DevEui, disconnectResult.Error.Description);
+        }
+
+        var acceptResult = await _chirpstackService.AcceptAsync(substitute.DevEui, ct);
+        if (acceptResult.IsFailure)
+        {
+            _logger.DownlinkFailed(substitute.DevEui, acceptResult.Error.Description);
+            return acceptResult.Error;
+        }
+
+        switch (request.ReadingsBehaviour)
+        {
+            // this is default behaviour
+            case DataBehaviour.DISCARD:
+                break;
+            case DataBehaviour.OVERLAP:
+                throw new NotImplementedException();
+            default:
+                break;
+        }
+
+        await ExecuteDeleteAsync(substitute);
+
+        original.DevEui = substitute.DevEui;
+        original.DeviceStatus = DeviceStatus.ACTIVE;
+        await _ctx.SaveChangesAsync(CancellationToken.None);
+        _stateCache[substitute.DevEui] = original;
+
+        return DeviceResponse.FromModel(original);
+    }
+
+    private async Task ExecuteDeleteAsync(Device substitute)
+    {
+        // wipe out readings
+        foreach (var sensor in substitute.Sensors)
+        {
+            await _ctx
+                .SensorReadings.Where(r => r.SensorId == sensor.SensorId)
+                .ExecuteDeleteAsync(CancellationToken.None);
+
+            _logger.ReadingsDeleted(sensor.SensorId);
+        }
+
+        // wipe out substitute sensors
+        await _ctx
+            .Sensors.Where(s => s.DeviceId == substitute.DeviceId)
+            .ExecuteDeleteAsync(CancellationToken.None);
+
+        // wipe out substitute functions
+        await _ctx
+            .Functions.Where(f => f.DeviceId == substitute.DeviceId)
+            .ExecuteDeleteAsync(CancellationToken.None);
+
+        // wipe device
+        await _ctx
+            .Devices.Where(d => d.DeviceId == substitute.DeviceId)
+            .ExecuteDeleteAsync(CancellationToken.None);
+
+        _logger.DeviceDeleted(substitute.FriendlyName, substitute.DeviceId);
+    }
+
+    private async Task<Result<Device>> FindSubstitute(
+        DeviceReplaceRequest request,
+        CancellationToken ct
+    )
+    {
+        async Task<Result<Device>> FindHelper(
+            Expression<Func<Device, bool>> predicate,
+            Func<Error> notFound,
+            CancellationToken ct
+        )
+        {
+            var device = await _ctx
+                .Devices.Include(d => d.Functions)
+                .Include(d => d.Sensors)
+                .FirstOrDefaultAsync(predicate, ct);
+            return device is null ? notFound() : device;
+        }
+
+        return request.With switch
+        {
+            Guid deviceId => await FindHelper(
+                d => d.DeviceId == deviceId,
+                () => DeviceErrors.SubstituteNotFound(deviceId),
+                ct
+            ),
+            DevEui devEui => await FindHelper(
+                d => d.DevEui == devEui,
+                () => DeviceErrors.SubstituteNotFound(devEui),
+                ct
+            ),
+            string friendlyName => await FindHelper(
+                d => d.FriendlyName == friendlyName,
+                () => DeviceErrors.SubstituteNotFound(friendlyName),
+                ct
+            ),
+            _ => DeviceErrors.InvalidSubstituteKey(request.With),
+        };
     }
 }

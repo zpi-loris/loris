@@ -1,7 +1,7 @@
-using System.ComponentModel;
-using Loris.Controllers.Requests;
-using Loris.Models;
+using Loris.Dtos.Function;
+using Loris.Extensions;
 using Loris.OpenApi;
+using Loris.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 
@@ -12,8 +12,10 @@ namespace Loris.Controllers;
 [Produces("application/json")]
 [ProducesUnauthenticated]
 [ProducesSensorNotFound]
-public class FunctionsController : ControllerBase
+public class FunctionsController(IFunctionService functionService) : ControllerBase
 {
+    private readonly IFunctionService _functionService = functionService;
+
     /// <summary>
     /// Invoke device function by id
     /// </summary>
@@ -30,9 +32,9 @@ public class FunctionsController : ControllerBase
     [HttpPost("{id}/invoke")]
     [ProducesUnauthorized]
     [ProducesSuccessNoContent]
-    public Task<IActionResult> CallFunction(
+    public async Task<IActionResult> CallFunction(
         Guid id,
         [FromBody(EmptyBodyBehavior = EmptyBodyBehavior.Allow)] CallFunctionRequest request,
         CancellationToken ct
-    ) => throw new NotImplementedException();
+    ) => this.ToActionResult(await _functionService.CallFunction(id, request.Arg, ct));
 }

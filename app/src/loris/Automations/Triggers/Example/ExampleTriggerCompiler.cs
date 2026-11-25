@@ -51,7 +51,7 @@ public class ExamppleTriggerCompiler : TriggerCompilerBase<ExampleTriggerDto>
 
         Dictionary<string, object> lookup = [];
 
-        lookup.Add("Name", DevEui.Parse("efce217c394b45fe"));
+        lookup.Add("SensorID", Guid.CreateVersion7());
 
         if (errors.Count > 0)
         {
@@ -73,10 +73,10 @@ public class ExamppleTriggerCompiler : TriggerCompilerBase<ExampleTriggerDto>
     {
         // at this point, you the implementer
         // know if there is a lookup context provided,
-        var devEui = lookup!.Get<DevEui>("Name");
+        var sensorId = lookup!.Get<Guid>("SensorID");
 
         // create IEvent for fast automation index
-        IEvent newEvent = new SensorEvent { DevEui = devEui, SensorID = 1 };
+        IEvent newEvent = new SensorEvent { SensorId = sensorId };
 
         // create triggerFilter delegate, to filter the IEventMessage
         Func<IEventMessage, bool> filter = (ival) =>

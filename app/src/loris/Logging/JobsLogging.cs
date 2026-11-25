@@ -4,14 +4,14 @@ namespace Loris.Logging;
 
 public static partial class IngestionLogging
 {
-    [LoggerMessage(EventId = 1000, Level = LogLevel.Information, Message = "{JobName} started")]
+    [LoggerMessage(EventId = 9000, Level = LogLevel.Information, Message = "{JobName} started")]
     public static partial void JobStarted(this ILogger logger, string jobName);
 
-    [LoggerMessage(EventId = 1001, Level = LogLevel.Information, Message = "{JobName} finished")]
+    [LoggerMessage(EventId = 9001, Level = LogLevel.Information, Message = "{JobName} finished")]
     public static partial void JobFinished(this ILogger logger, string jobName);
 
     [LoggerMessage(
-        EventId = 1002,
+        EventId = 9002,
         Level = LogLevel.Critical,
         Message = "{Count} Automations not applied due to errors: {Errors}"
     )]
@@ -22,7 +22,7 @@ public static partial class IngestionLogging
     );
 
     [LoggerMessage(
-        EventId = 1003,
+        EventId = 9003,
         Level = LogLevel.Critical,
         Message = "Automation {Id} failed deserialization"
     )]

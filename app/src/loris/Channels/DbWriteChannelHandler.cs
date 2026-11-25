@@ -3,8 +3,11 @@ using Loris.Extensions;
 using Loris.Logging;
 using Loris.Messages.Database;
 using Loris.Models;
+using Loris.Protocol;
 using Microsoft.EntityFrameworkCore;
 using Moniker;
+using Function = Loris.Models.Function;
+using Sensor = Loris.Models.Sensor;
 
 namespace Loris.Channels;
 
@@ -20,44 +23,53 @@ public class DbWriteChannelHandler(
     {
         return message switch
         {
-            ReportWriteMessage sensor => HandleReport(sensor, stoppingToken),
-            CapabilitiesWriteMessage capabilities => HandleCapabilities(
-                capabilities,
+            ReportWriteMessage sensorMessage => HandleReport(
+                sensorMessage.SensorId,
+                sensorMessage.DevEui,
+                sensorMessage.Report,
+                sensorMessage.DateTime,
                 stoppingToken
             ),
-            PingWriteMessage ping => HandlePing(ping, stoppingToken),
+            CapabilitiesWriteMessage capabilitiesMessage => HandleCapabilities(
+                capabilitiesMessage.DevEui,
+                capabilitiesMessage.Capabilities,
+                capabilitiesMessage.DateTime,
+                stoppingToken
+            ),
+            PingWriteMessage pingMessage => HandlePing(
+                pingMessage.DevEui,
+                pingMessage.DateTime,
+                stoppingToken
+            ),
             _ => Task.CompletedTask,
         };
     }
 
+    // TODO ANALYZE THIS FUNCTION, IF IT ADHERES TO
+    // THE DEVEUI / DEVICE ID LOGIC
     private async Task HandleCapabilities(
-        CapabilitiesWriteMessage message,
+        DevEui devEui,
+        Capabilities capabilities,
+        DateTime dateTime,
         CancellationToken stoppingToken
     )
     {
-        var devEui = message.DevEui;
-        var datetime = message.DateTime;
-        var capabilities = message.Capabilities;
-
         using var ctx = await _ctxFactory.CreateDbContextAsync(stoppingToken);
 
         // check if the device already exists
-        if (await ctx.TryBumpDeviceAsync(devEui, datetime, stoppingToken))
+        if (await ctx.TryBumpDeviceAsync(devEui, dateTime, stoppingToken))
         {
-            _logger.DeviceAlreadyExists(devEui, datetime);
+            _logger.DeviceAlreadyExists(devEui, dateTime);
 
-            // update the device status to PENDING if it was previously DISCONNECTED
-            var updatedRows = await ctx
-                .Devices.Where(d => d.DevEui == devEui)
-                .Where(d => d.DeviceStatus == DeviceStatus.DISCONNECTED)
-                .ExecuteUpdateAsync(
-                    setter => setter.SetProperty(p => p.DeviceStatus, DeviceStatus.PENDING),
-                    stoppingToken
-                );
-
-            if (updatedRows > 0)
+            // if a device exists, we need to ensure that it is in a PENDING status
+            // because it sends capabilities after all. It could be in DISCONNECTED status by user intervention
+            // or in any other and a device bug forced it to start send capabilities again.
+            var device = await ctx.Devices.FirstAsync(d => d.DevEui == devEui, stoppingToken);
+            if (device.DeviceStatus != DeviceStatus.PENDING)
             {
-                _logger.DisconnectedIsPending(devEui);
+                _logger.ForcedToPending(devEui, device.DeviceStatus);
+                device.DeviceStatus = DeviceStatus.PENDING;
+                await ctx.SaveChangesAsync(CancellationToken.None);
             }
 
             // early return since the device already exists
@@ -69,18 +81,18 @@ public class DbWriteChannelHandler(
             DevEui = devEui,
             DeviceName = capabilities.DeviceName,
             FriendlyName = $"{NameGenerator.GenerateMoniker()}{DateTime.Now:HHmmss}",
-            LastSeen = datetime,
+            LastSeen = dateTime,
             DeviceStatus = DeviceStatus.PENDING,
         };
 
         foreach (var sensor in capabilities.Sensors)
         {
-            newDevice.Sensors.Add(Sensor.FromProto(devEui, sensor));
+            newDevice.Sensors.Add(Sensor.FromProto(newDevice.DeviceId, sensor));
         }
 
         foreach (var function in capabilities.Functions)
         {
-            newDevice.Functions.Add(Function.FromProto(devEui, function));
+            newDevice.Functions.Add(Function.FromProto(newDevice.DeviceId, function));
         }
 
         _logger.NewDeviceAdded(devEui, newDevice.Sensors.Count, newDevice.Functions.Count);
@@ -89,28 +101,29 @@ public class DbWriteChannelHandler(
         await ctx.SaveChangesAsync(stoppingToken);
     }
 
-    private async Task HandleReport(ReportWriteMessage message, CancellationToken stoppingToken)
+    private async Task HandleReport(
+        Guid sensorId,
+        DevEui devEui,
+        Report report,
+        DateTime dateTime,
+        CancellationToken stoppingToken
+    )
     {
         using var ctx = await _ctxFactory.CreateDbContextAsync(stoppingToken);
 
-        if (!await ctx.TryBumpDeviceAsync(message.DevEui, message.DateTime, stoppingToken))
+        if (!await ctx.TryBumpDeviceAsync(devEui, dateTime, stoppingToken))
         {
-            _logger.DeviceNotFound(message.DevEui, message.DateTime);
+            _logger.DeviceNotFound(devEui, dateTime);
             return;
         }
 
-        ctx.SensorReadings.Add(
-            SensorReading.FromProto(message.DevEui, message.DateTime, message.Report)
-        );
+        ctx.SensorReadings.Add(SensorReading.FromProto(sensorId, dateTime, report));
         await ctx.SaveChangesAsync(stoppingToken);
     }
 
-    private async Task HandlePing(PingWriteMessage message, CancellationToken stoppingToken)
+    private async Task HandlePing(DevEui devEui, DateTime dateTime, CancellationToken stoppingToken)
     {
         using var ctx = await _ctxFactory.CreateDbContextAsync(stoppingToken);
-
-        _logger.ReceivedPing(message.DevEui, message.DateTime);
-
-        await ctx.TryBumpDeviceAsync(message.DevEui, message.DateTime, stoppingToken);
+        await ctx.TryBumpDeviceAsync(devEui, dateTime, stoppingToken);
     }
 }

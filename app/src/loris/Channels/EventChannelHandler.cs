@@ -22,6 +22,9 @@ public class EventChannelHandler(
             return;
 
         // filter automations
+        // TODO: add foreach loop with try catch
+        // block, to ignore (and log) exception for each delegate.
+        // we want to exhaust all automations, not stop after first exception
         var filtered = automations
             .Where(a =>
             {

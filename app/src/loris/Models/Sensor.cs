@@ -7,9 +7,15 @@ namespace Loris.Models;
 [Comment("Devices sensors exposed via capabilities")]
 public partial class Sensor
 {
-    public DevEui DevEui { get; set; }
+    /// <summary>
+    /// Artificial primary key
+    /// </summary>
+    public Guid SensorId { get; set; }
 
-    public int SensorId { get; set; }
+    /// <summary>
+    /// Locally unique ID in a single device
+    /// </summary>
+    public int DeviceSensorId { get; set; }
 
     public string Name { get; set; } = null!;
 
@@ -20,6 +26,8 @@ public partial class Sensor
     public SensorValueType ValueType { get; set; }
 
     public SensorSemantics Semantics { get; set; }
+
+    public Guid DeviceId { get; set; }
 
     //
     // REFERENCES
@@ -35,17 +43,34 @@ public partial class Sensor
     // Proto helpers
     //
 
-    public static Sensor FromProto(DevEui devEui, Protocol.Sensor sensor)
+    public static Sensor FromProto(Guid deviceId, Protocol.Sensor sensor)
     {
         return new Sensor()
         {
-            DevEui = devEui,
-            SensorId = sensor.Id,
+            DeviceId = deviceId,
+            DeviceSensorId = sensor.Id,
             Name = sensor.Name,
             Description = sensor.Description,
             Unit = sensor.HasUnit ? sensor.Unit : default,
             ValueType = sensor.ValueType,
             Semantics = sensor.Semantics,
         };
+    }
+
+    public bool EqualsWithDefinition(Sensor other)
+    {
+        if (
+            DeviceSensorId != other.DeviceSensorId
+            || Name != other.Name
+            || Description != other.Description
+            || Unit != other.Unit
+            || ValueType != other.ValueType
+            || Semantics != other.Semantics
+        )
+        {
+            return false;
+        }
+
+        return true;
     }
 }

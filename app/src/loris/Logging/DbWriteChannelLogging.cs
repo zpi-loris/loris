@@ -5,7 +5,7 @@ namespace Loris.Logging;
 public static partial class DbWriteChannelLogging
 {
     [LoggerMessage(
-        EventId = 1,
+        EventId = 3000,
         Level = LogLevel.Information,
         Message = "Device {DevEui} already exists, bumped last seen to {DateTime}"
     )]
@@ -16,14 +16,14 @@ public static partial class DbWriteChannelLogging
     );
 
     [LoggerMessage(
-        EventId = 2,
+        EventId = 3001,
         Level = LogLevel.Information,
         Message = "Received ping from device {DevEui} at {DateTime}"
     )]
     public static partial void ReceivedPing(this ILogger logger, DevEui devEui, DateTime datetime);
 
     [LoggerMessage(
-        EventId = 3,
+        EventId = 3002,
         Level = LogLevel.Information,
         Message = "Device {DevEui} not found, dropping report at {DateTime}"
     )]
@@ -34,7 +34,7 @@ public static partial class DbWriteChannelLogging
     );
 
     [LoggerMessage(
-        EventId = 4,
+        EventId = 3003,
         Level = LogLevel.Information,
         Message = "New device {DevEui} added with {SensorCount} sensors and {FunctionCount} functions"
     )]
@@ -46,9 +46,13 @@ public static partial class DbWriteChannelLogging
     );
 
     [LoggerMessage(
-        EventId = 5,
+        EventId = 3004,
         Level = LogLevel.Information,
-        Message = "Device {DevEui} has been disconnected but it's now pending"
+        Message = "Device {DevEui} has been in {Status} status but it's now pending"
     )]
-    public static partial void DisconnectedIsPending(this ILogger logger, DevEui devEui);
+    public static partial void ForcedToPending(
+        this ILogger logger,
+        DevEui devEui,
+        DeviceStatus Status
+    );
 }

@@ -1,27 +1,23 @@
-using Chirpstack.Api;
-using Grpc.Core;
 using Loris.Data;
-using Loris.Extensions;
 using Loris.Logging;
 using Loris.Models;
 using Loris.Protocol;
+using loris.Services;
 using Microsoft.EntityFrameworkCore;
 
 namespace Loris.Automations.Actions.DeviceCall;
 
 public class DeviceCallActionCompiler(
-    ILogger<DeviceCallActionCompiler> logger,
     IDbContextFactory<LorisDbContext> ctxFactory,
-    DeviceService.DeviceServiceClient client
+    IChirpstackService chirpstackService
 ) : ActionCompilerBase<DeviceCallActionDto>
 {
-    private readonly ILogger<DeviceCallActionCompiler> _logger = logger;
     private readonly IDbContextFactory<LorisDbContext> _ctxFactory = ctxFactory;
-    private readonly DeviceService.DeviceServiceClient _downlinkClient = client;
+    private readonly IChirpstackService _chirpstackService = chirpstackService;
 
     // lookups
-    private const string FUNCTION_ID = "FunctionId";
-    private const string DEV_EUI = "DevEui";
+    private const string DEVICE_FUNCTION_ID = "DeviceFunctionId";
+    private const string DEVICE_ID = "DeviceId";
     private const string FUNC_ARG_TYPE = "FuncArgType";
 
     protected override async Task<BlockValidationResult> ValidateAsync(
@@ -32,7 +28,7 @@ public class DeviceCallActionCompiler(
         using var ctx = await _ctxFactory.CreateDbContextAsync(cancellationToken);
 
         var device = await ctx
-            .Devices.Where(d => d.DeviceStatus == Loris.Models.DeviceStatus.ACTIVE)
+            .Devices.Where(d => d.DeviceStatus == DeviceStatus.ACTIVE)
             .SingleOrDefaultAsync(d => d.FriendlyName == dto.DeviceName, cancellationToken);
 
         if (device is null)
@@ -47,7 +43,7 @@ public class DeviceCallActionCompiler(
         }
 
         var function = await ctx.Functions.SingleOrDefaultAsync(
-            f => f.DevEui == device.DevEui && f.Name == dto.FunctionName,
+            f => f.DeviceId == device.DeviceId && f.Name == dto.FunctionName,
             cancellationToken
         );
 
@@ -62,12 +58,6 @@ public class DeviceCallActionCompiler(
             ]);
         }
 
-        Dictionary<string, object> lookup = [];
-
-        // add verified values
-        lookup.Add(FUNCTION_ID, function.FunctionId);
-        lookup.Add(DEV_EUI, device.DevEui);
-
         var isValidValue = function.ArgType switch
         {
             FuncArgType.Float => float.TryParse(dto.Value, out var _),
@@ -78,7 +68,7 @@ public class DeviceCallActionCompiler(
 
         if (!isValidValue)
         {
-            BlockValidationResult.Failure([
+            return BlockValidationResult.Failure([
                 new BlockError(
                     nameof(dto.Value),
                     dto.Value,
@@ -87,7 +77,12 @@ public class DeviceCallActionCompiler(
             ]);
         }
 
-        lookup.Add(FUNC_ARG_TYPE, function.ArgType);
+        var lookup = new Dictionary<string, object>
+        {
+            { DEVICE_ID, device.DeviceId },
+            { DEVICE_FUNCTION_ID, function.DeviceFunctionId },
+            { FUNC_ARG_TYPE, function.ArgType },
+        };
 
         return BlockValidationResult.Success(lookup);
     }
@@ -97,7 +92,7 @@ public class DeviceCallActionCompiler(
         LookupContext? lookup
     )
     {
-        Call call = new() { FunctionId = lookup!.Get<int>(FUNCTION_ID) };
+        Call call = new() { FunctionId = lookup!.Get<int>(DEVICE_FUNCTION_ID) };
 
         switch (lookup!.Get<FuncArgType>(FUNC_ARG_TYPE))
         {
@@ -122,23 +117,16 @@ public class DeviceCallActionCompiler(
             call.WakeAfterSecs = dto.WakeAfter.Value;
         }
 
-        return (token) =>
-            RequestDownlink(lookup!.Get<DevEui>(DEV_EUI), new Downlink { Call = call }, token);
-    }
+        var deviceId = lookup!.Get<Guid>(DEVICE_ID);
 
-    private async Task RequestDownlink(
-        DevEui devEui,
-        Downlink message,
-        CancellationToken cancellationToken
-    )
-    {
-        try
-        {
-            await _downlinkClient.EnqueueDownlinkAsync(message, devEui, cancellationToken);
-        }
-        catch (RpcException ex)
-        {
-            _logger.DownlinkFailed(devEui, ex.Message);
-        }
+        // we capture the service in a local variable
+        // this way we avoid capturing 'this' in the lambda
+        var service = _chirpstackService;
+
+        // this is deferred call, so we use deviceId instead of DevEui
+        // so the automation always points to the correct device even if DevEui changes
+        return (token) => service.CallFunctionAsync(deviceId, call, token);
+
+        // TODO: consider catching the result and logging it, so we can see if the call failed
     }
 }

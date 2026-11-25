@@ -14,8 +14,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Loris.Migrations
 {
     [DbContext(typeof(LorisDbContext))]
-    [Migration("20261115042831_Initial migration")]
-    partial class Initialmigration
+    [Migration("20261122181929_Add initial migration")]
+    partial class Addinitialmigration
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -31,13 +31,44 @@ namespace Loris.Migrations
             NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "sensor_value_type", new[] { "bool", "float", "int", "text", "unspecified" });
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("Loris.Models.Automation", b =>
+                {
+                    b.Property<Guid>("AutomationId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("automation_id");
+
+                    b.Property<string>("Actions")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("actions");
+
+                    b.Property<string>("Conditions")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("conditions");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("name");
+
+                    b.Property<string>("Triggers")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("triggers");
+
+                    b.HasKey("AutomationId")
+                        .HasName("pk_automations");
+
+                    b.ToTable("automations", (string)null);
+                });
+
             modelBuilder.Entity("Loris.Models.Device", b =>
                 {
                     b.Property<Guid>("DeviceId")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid")
-                        .HasColumnName("device_id")
-                        .HasDefaultValueSql("uuidv7()");
+                        .HasColumnName("device_id");
 
                     b.Property<byte[]>("DevEui")
                         .IsRequired()
@@ -65,9 +96,6 @@ namespace Loris.Migrations
                     b.HasKey("DeviceId")
                         .HasName("pk_devices");
 
-                    b.HasAlternateKey("DevEui")
-                        .HasName("ak_devices_dev_eui");
-
                     b.HasIndex("DevEui")
                         .IsUnique()
                         .HasDatabaseName("ix_devices_dev_eui");
@@ -84,12 +112,9 @@ namespace Loris.Migrations
 
             modelBuilder.Entity("Loris.Models.Function", b =>
                 {
-                    b.Property<byte[]>("DevEui")
-                        .HasColumnType("bytea")
-                        .HasColumnName("dev_eui");
-
-                    b.Property<int>("FunctionId")
-                        .HasColumnType("integer")
+                    b.Property<Guid>("FunctionId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
                         .HasColumnName("function_id");
 
                     b.Property<FuncArgType>("ArgType")
@@ -101,13 +126,24 @@ namespace Loris.Migrations
                         .HasColumnType("text")
                         .HasColumnName("description");
 
+                    b.Property<int>("DeviceFunctionId")
+                        .HasColumnType("integer")
+                        .HasColumnName("device_function_id");
+
+                    b.Property<Guid>("DeviceId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("device_id");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("text")
                         .HasColumnName("name");
 
-                    b.HasKey("DevEui", "FunctionId")
+                    b.HasKey("FunctionId")
                         .HasName("pk_functions");
+
+                    b.HasIndex("DeviceId")
+                        .HasDatabaseName("ix_functions_device_id");
 
                     b.ToTable("functions", null, t =>
                         {
@@ -117,18 +153,23 @@ namespace Loris.Migrations
 
             modelBuilder.Entity("Loris.Models.Sensor", b =>
                 {
-                    b.Property<byte[]>("DevEui")
-                        .HasColumnType("bytea")
-                        .HasColumnName("dev_eui");
-
-                    b.Property<int>("SensorId")
-                        .HasColumnType("integer")
+                    b.Property<Guid>("SensorId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
                         .HasColumnName("sensor_id");
 
                     b.Property<string>("Description")
                         .IsRequired()
                         .HasColumnType("text")
                         .HasColumnName("description");
+
+                    b.Property<Guid>("DeviceId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("device_id");
+
+                    b.Property<int>("DeviceSensorId")
+                        .HasColumnType("integer")
+                        .HasColumnName("device_sensor_id");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -147,8 +188,11 @@ namespace Loris.Migrations
                         .HasColumnType("sensor_value_type")
                         .HasColumnName("value_type");
 
-                    b.HasKey("DevEui", "SensorId")
+                    b.HasKey("SensorId")
                         .HasName("pk_sensors");
+
+                    b.HasIndex("DeviceId")
+                        .HasDatabaseName("ix_sensors_device_id");
 
                     b.ToTable("sensors", null, t =>
                         {
@@ -158,12 +202,8 @@ namespace Loris.Migrations
 
             modelBuilder.Entity("Loris.Models.SensorReading", b =>
                 {
-                    b.Property<byte[]>("DevEui")
-                        .HasColumnType("bytea")
-                        .HasColumnName("dev_eui");
-
-                    b.Property<int>("SensorId")
-                        .HasColumnType("integer")
+                    b.Property<Guid>("SensorId")
+                        .HasColumnType("uuid")
                         .HasColumnName("sensor_id");
 
                     b.Property<DateTime>("Time")
@@ -186,7 +226,7 @@ namespace Loris.Migrations
                         .HasColumnType("text")
                         .HasColumnName("string_value");
 
-                    b.HasKey("DevEui", "SensorId", "Time")
+                    b.HasKey("SensorId", "Time")
                         .HasName("pk_sensor_readings");
 
                     b.ToTable("sensor_readings", null, t =>
@@ -244,11 +284,10 @@ namespace Loris.Migrations
                 {
                     b.HasOne("Loris.Models.Device", "Device")
                         .WithMany("Functions")
-                        .HasForeignKey("DevEui")
-                        .HasPrincipalKey("DevEui")
-                        .OnDelete(DeleteBehavior.ClientCascade)
+                        .HasForeignKey("DeviceId")
+                        .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired()
-                        .HasConstraintName("fk_functions_devices_dev_eui");
+                        .HasConstraintName("fk_functions_devices_device_id");
 
                     b.Navigation("Device");
                 });
@@ -257,11 +296,10 @@ namespace Loris.Migrations
                 {
                     b.HasOne("Loris.Models.Device", "Device")
                         .WithMany("Sensors")
-                        .HasForeignKey("DevEui")
-                        .HasPrincipalKey("DevEui")
-                        .OnDelete(DeleteBehavior.ClientCascade)
+                        .HasForeignKey("DeviceId")
+                        .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired()
-                        .HasConstraintName("fk_sensors_devices_dev_eui");
+                        .HasConstraintName("fk_sensors_devices_device_id");
 
                     b.Navigation("Device");
                 });
@@ -270,10 +308,10 @@ namespace Loris.Migrations
                 {
                     b.HasOne("Loris.Models.Sensor", "Sensor")
                         .WithMany("SensorReadings")
-                        .HasForeignKey("DevEui", "SensorId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .HasForeignKey("SensorId")
+                        .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired()
-                        .HasConstraintName("fk_sensor_readings_sensors_dev_eui_sensor_id");
+                        .HasConstraintName("fk_sensor_readings_sensors_sensor_id");
 
                     b.Navigation("Sensor");
                 });

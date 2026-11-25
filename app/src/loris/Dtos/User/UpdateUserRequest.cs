@@ -1,6 +1,6 @@
 using Loris.Models;
 
-namespace Loris.Controllers.Requests;
+namespace Loris.Dtos.User;
 
 public record UpdateUserRequest
 {

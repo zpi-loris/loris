@@ -1,9 +1,9 @@
-using Loris.OpenApi;
+using Loris.Json;
 
-namespace Loris.Controllers.Requests;
+namespace Loris.Dtos.Function;
 
 public record CallFunctionRequest
 {
     [JsonOneOfTypes(typeof(bool), typeof(int), typeof(float), typeof(string))]
-    public required object Arg { get; set; }
+    public required object Arg { get; init; }
 }
