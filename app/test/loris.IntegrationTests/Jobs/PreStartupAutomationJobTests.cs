@@ -14,8 +14,8 @@ using Microsoft.Extensions.Options;
 
 namespace loris.IntegrationTests.Jobs;
 
+[Collection(TimescaleDbApplicationFactory.CollectionKey)]
 public sealed class PreStartupAutomationJobTests(TimescaleDbApplicationFactory appFactory)
-    : IClassFixture<TimescaleDbApplicationFactory>
 {
     private readonly TimescaleDbApplicationFactory _appFactory = appFactory;
 

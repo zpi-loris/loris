@@ -7,8 +7,8 @@ using Microsoft.Extensions.Logging.Abstractions;
 
 namespace loris.IntegrationTests.Jobs;
 
+[Collection(TimescaleDbApplicationFactory.CollectionKey)]
 public class PreStartupStateCacheJobTests(TimescaleDbApplicationFactory appFactory)
-    : IClassFixture<TimescaleDbApplicationFactory>
 {
     private readonly TimescaleDbApplicationFactory _appFactory = appFactory;
 
