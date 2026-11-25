@@ -16,8 +16,17 @@ namespace loris.IntegrationTests.Jobs;
 
 [Collection(TimescaleDbApplicationFactory.CollectionKey)]
 public sealed class PreStartupAutomationJobTests(TimescaleDbApplicationFactory appFactory)
+    : IAsyncLifetime
 {
     private readonly TimescaleDbApplicationFactory _appFactory = appFactory;
+
+    public async ValueTask DisposeAsync()
+    {
+        await _appFactory.ResetDatabaseAsync();
+        ((FakeStateCache)_appFactory.Services.GetRequiredService<IStateCache>()).Clear();
+    }
+
+    public ValueTask InitializeAsync() => ValueTask.CompletedTask;
 
     [Fact]
     public async Task StartAsync_PreStartupAutomationJob_InitializesAllValidAutomations()
