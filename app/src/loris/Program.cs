@@ -51,10 +51,11 @@ builder.Services.AddChannels();
 builder.Services.AddHostedService<PreStartupAutomationJob>();
 builder.Services.AddHostedService<PreStartupStateCacheJob>();
 
-// Configure consumers for each channel
+// Register background workers
 builder.Services.AddHostedService<DeviceChannelConsumer>();
 builder.Services.AddHostedService<DbWriteChannelConsumer>();
 builder.Services.AddHostedService<EventChannelConsumer>();
+builder.Services.AddHostedService<TimeEventProducer>();
 
 // Configure handlers for each channel consumer
 builder.Services.AddSingleton<IDeviceChannelHandler, DeviceChannelHandler>();
