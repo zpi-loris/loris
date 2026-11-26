@@ -1,4 +1,5 @@
 using System.Text.Json.Serialization;
+using Loris.Automations.Helpers;
 using Loris.Json;
 
 namespace Loris.Automations.Conditions.Time;
@@ -15,5 +16,3 @@ public record TimeConditionDto : IConditionDto
     public string ServiceKey => Discriminator;
     public const string Discriminator = "time";
 };
-
-public record TimeMap(int Hour, int Minute = 0);
