@@ -11,5 +11,5 @@ public record TimeTriggerDto : ITriggerDto
 
     [JsonIgnore]
     public string ServiceKey => Discriminator;
-    public const string Discriminator = "example";
+    public const string Discriminator = "time";
 }

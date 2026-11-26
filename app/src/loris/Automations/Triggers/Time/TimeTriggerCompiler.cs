@@ -1,5 +1,4 @@
 using Loris.Automations.Helpers;
-using Loris.Automations.Triggers.Time;
 using Loris.Events;
 using Loris.Messages.Event;
 using static Loris.Automations.Helpers.TimeValidation;
