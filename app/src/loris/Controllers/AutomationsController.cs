@@ -24,6 +24,7 @@ public class AutomationsController(IAutomationService service) : ControllerBase
     [ProducesSuccessNoContent]
     [ProducesAutomationValidationError]
     [ProducesUnauthorized]
+    [ProducesBadRequest]
     public async Task<IActionResult> Validate(
         [FromBody] IReadOnlyList<AutomationDto> rules,
         CancellationToken ct
@@ -55,6 +56,7 @@ public class AutomationsController(IAutomationService service) : ControllerBase
     [ProducesSuccessNoContent]
     [ProducesAutomationValidationError]
     [ProducesUnauthorized]
+    [ProducesBadRequest]
     public async Task<IActionResult> Apply(
         [FromBody] IReadOnlyList<AutomationDto> rules,
         CancellationToken ct

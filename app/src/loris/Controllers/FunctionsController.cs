@@ -30,6 +30,7 @@ public class FunctionsController(IFunctionService functionService) : ControllerB
     /// The time of the actual function execution on the device may vary based on the device's uplinks frequency.
     /// </remarks>
     [HttpPost("{id}/invoke")]
+    [ProducesBadRequest]
     [ProducesUnauthorized]
     [ProducesSuccessNoContent]
     public async Task<IActionResult> CallFunction(

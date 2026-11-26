@@ -8,7 +8,7 @@ public sealed class ProducesAutomationValidationError
     : ProducesResponseTypeAttribute<AutomationProblemDetails>
 {
     public ProducesAutomationValidationError()
-        : base(StatusCodes.Status400BadRequest)
+        : base(StatusCodes.Status422UnprocessableEntity)
     {
         Description = "Automation rules are invalid. Compiler validations failed";
     }
