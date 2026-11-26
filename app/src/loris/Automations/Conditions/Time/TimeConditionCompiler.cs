@@ -1,5 +1,6 @@
 using Loris.Automations.Helpers;
 using Loris.Data;
+using static Loris.Automations.Helpers.TimeValidation;
 
 namespace Loris.Automations.Conditions.Time;
 
@@ -50,43 +51,6 @@ public class TimeConditionCompiler : ConditionCompilerBase<TimeConditionDto>
         }
 
         return lookup;
-    }
-
-    private static void ValidateTimeMap(
-        List<BlockError> errors,
-        Dictionary<string, object> lookup,
-        string name,
-        TimeMap map
-    )
-    {
-        var valid = true;
-        if (map.Hour > 23 || map.Hour < 0)
-        {
-            errors.Add(new BlockError(name, map.Hour.ToString(), "Hour must be in range 0-23"));
-            valid = false;
-        }
-        if (map.Minute > 59 || map.Hour < 0)
-        {
-            errors.Add(new BlockError(name, map.Minute.ToString(), "Minute must be in range 0-59"));
-            valid = false;
-        }
-        if (valid)
-            lookup.Add(name, map);
-    }
-
-    private static void ValidateTimeSpan(
-        List<BlockError> errors,
-        Dictionary<string, object> lookup,
-        string name,
-        TimeSpan span
-    )
-    {
-        if (span.Days > 0)
-        {
-            errors.Add(new BlockError(name, span.ToString(), "Inline format allows only xx:xx"));
-        }
-        else
-            lookup.Add(name, new TimeMap(span.Hours, span.Minutes));
     }
 
     protected override Func<IStateCache, bool> Compile(TimeConditionDto dto, LookupContext? lookup)
