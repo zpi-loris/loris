@@ -18,8 +18,8 @@ public class TimeConditionCompiler : ConditionCompilerBase<TimeConditionDto>
         {
             return BlockValidationResult.Failure([
                 new BlockError(
-                    nameof(dto.Before) + "/" + nameof(dto.After),
-                    "null",
+                    "{" + nameof(dto.Before) + "," + nameof(dto.After) + "}",
+                    "",
                     $"You must specify at least one of: {nameof(dto.Before)} or {nameof(dto.After)}"
                 ),
             ]);
