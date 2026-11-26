@@ -1,6 +1,7 @@
 using System.Threading.Channels;
 using System.Timers;
 using Loris.Events;
+using Loris.Logging;
 using Loris.Messages.Event;
 
 namespace Loris.Background;
@@ -50,7 +51,6 @@ public sealed class TimeEventProducer(
             {
                 ResetTimer();
                 var time = e.SignalTime;
-                _logger.LogInformation($"OnTimedEvent fired with time: {time.Hour}:{time.Minute}");
                 await _channelWriter.WriteAsync(
                     new TimeEventMessage(TimeEvent.FromDateTime(time)),
                     _stoppingCts.Token
@@ -59,8 +59,7 @@ public sealed class TimeEventProducer(
         }
         catch (Exception ex)
         {
-            // TODO: replace for static logging method
-            _logger.LogCritical("There was some unknown exception writing new TimeEvent");
+            _logger.TimedEventError(ex);
         }
     }
 
