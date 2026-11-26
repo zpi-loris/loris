@@ -2,7 +2,7 @@ using System.Threading.Channels;
 using Loris.Channels;
 using Loris.Messages.Device;
 
-namespace Loris.Consumers;
+namespace Loris.Background;
 
 // TODO: consider paralleling DeviceConsumer
 

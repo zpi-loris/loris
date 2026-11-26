@@ -1,8 +1,8 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Text.Json.Serialization.Metadata;
+using Loris.Background;
 using Loris.Channels;
-using Loris.Consumers;
 using Loris.Data;
 using loris.Extensions;
 using Loris.Extensions;
