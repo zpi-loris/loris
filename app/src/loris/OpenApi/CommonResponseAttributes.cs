@@ -56,11 +56,11 @@ public sealed class ProducesSuccessAttribute : ProducesResponseTypeAttribute
 }
 
 public sealed class ProducesBadRequestAttribute
-    : ProducesResponseTypeAttribute<ResultProblemDetails>
+    : ProducesResponseTypeAttribute<ValidationProblemDetails>
 {
     public ProducesBadRequestAttribute()
         : base(StatusCodes.Status400BadRequest)
     {
-        Description = "Invalid request";
+        Description = "Invalid request either syntactically or with json additional validation";
     }
 }
