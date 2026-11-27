@@ -226,8 +226,7 @@ def list_devices(args):
 
     print(8 * "=", "  Devices  ", 8 * "=")
     yaml_string = yaml.safe_dump(r.json())
-    for device in yaml_string:
-        pprint(device)
+    pprint(device)
 
 
 def device(args):
