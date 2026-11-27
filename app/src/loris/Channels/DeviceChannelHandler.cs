@@ -111,7 +111,7 @@ public class DeviceChannelHandler(
         await _eventChannelWriter.WriteAsync(
             new SensorEventMessage()
             {
-                Event = new SensorEvent() { SensorId = sensor.SensorId },
+                Event = new SensorEvent(sensor.SensorId),
                 Previous = reading is not null ? reading.ToReport(report.SensorId) : default,
                 Current = report,
             },

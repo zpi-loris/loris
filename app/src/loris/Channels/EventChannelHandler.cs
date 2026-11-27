@@ -43,7 +43,7 @@ public class EventChannelHandler(
                     return true;
                 }
                 _logger.AutomationConditionsNotMet(a.Id, a.Name);
-                return true;
+                return false;
             }); // filter by trigger
 
         foreach (var automation in filtered)

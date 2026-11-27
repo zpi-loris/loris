@@ -36,6 +36,12 @@ public readonly record struct BlockValidationResult
     public static BlockValidationResult Success(Dictionary<string, object> lookup) =>
         new(LookupContext.FromDict(lookup), true, default);
 
+    public static implicit operator BlockValidationResult(Dictionary<string, object> lookup) =>
+        Success(lookup);
+
+    public static implicit operator BlockValidationResult(List<BlockError> errors) =>
+        Failure(errors);
+
     public static BlockValidationResult Failure(IReadOnlyList<BlockError> errors) =>
         new(default, false, errors);
 }

@@ -1,9 +1,7 @@
 namespace Loris.Events;
 
-public readonly record struct SensorEvent : IEvent<SensorEvent>
-{
-    /// <summary>
-    /// Sensor primary key
-    /// </summary>
-    public required Guid SensorId { get; init; }
-}
+/// <summary>
+/// SensorEvent is an event representing a specific sensor
+/// identified by its unique SensorId.
+/// </summary>
+public readonly record struct SensorEvent(Guid SensorId) : IEvent<SensorEvent> { }

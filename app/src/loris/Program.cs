@@ -1,8 +1,8 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Text.Json.Serialization.Metadata;
+using Loris.Background;
 using Loris.Channels;
-using Loris.Consumers;
 using Loris.Data;
 using loris.Extensions;
 using Loris.Extensions;
@@ -51,10 +51,11 @@ builder.Services.AddChannels();
 builder.Services.AddHostedService<PreStartupAutomationJob>();
 builder.Services.AddHostedService<PreStartupStateCacheJob>();
 
-// Configure consumers for each channel
+// Register background workers
 builder.Services.AddHostedService<DeviceChannelConsumer>();
 builder.Services.AddHostedService<DbWriteChannelConsumer>();
 builder.Services.AddHostedService<EventChannelConsumer>();
+builder.Services.AddHostedService<TimeEventProducer>();
 
 // Configure handlers for each channel consumer
 builder.Services.AddSingleton<IDeviceChannelHandler, DeviceChannelHandler>();

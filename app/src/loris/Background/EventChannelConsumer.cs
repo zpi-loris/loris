@@ -4,7 +4,7 @@ using Loris.Data;
 using Loris.Messages.Device;
 using Loris.Messages.Event;
 
-namespace Loris.Consumers;
+namespace Loris.Background;
 
 public sealed class EventChannelConsumer(
     ILogger<EventChannelConsumer> logger,

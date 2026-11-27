@@ -24,6 +24,7 @@ public static partial class IngestionLogging
     [LoggerMessage(
         EventId = 9003,
         Level = LogLevel.Critical,
+        EventName = nameof(AutomationDeserializationError),
         Message = "Automation {Id} failed deserialization"
     )]
     public static partial void AutomationDeserializationError(
@@ -31,4 +32,12 @@ public static partial class IngestionLogging
         Exception ex,
         Guid id
     );
+
+    [LoggerMessage(
+        EventId = 9004,
+        Level = LogLevel.Critical,
+        EventName = nameof(TimedEventError),
+        Message = "There was an unknown exception writing new TimedEvent"
+    )]
+    public static partial void TimedEventError(this ILogger logger, Exception ex);
 }

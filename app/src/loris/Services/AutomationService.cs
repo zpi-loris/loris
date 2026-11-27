@@ -238,7 +238,7 @@ public sealed class AutomationService(
                 continue;
 
             var ServiceKey = blocks[i].ServiceKey;
-            var prefix = $"{sectionName}.{i}.{ServiceKey}";
+            var prefix = $"{sectionName}.[{i}].{ServiceKey}";
 
             foreach (var error in result.Errors)
             {

@@ -2,7 +2,7 @@ using System.Threading.Channels;
 using Loris.Channels;
 using Loris.Messages.Database;
 
-namespace Loris.Consumers;
+namespace Loris.Background;
 
 public class DbWriteChannelConsumer(
     ILogger<DbWriteChannelConsumer> logger,

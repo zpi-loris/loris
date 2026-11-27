@@ -107,7 +107,7 @@ public class SensorCrossedTriggerCompiler(IDbContextFactory<LorisDbContext> ctxF
         var sensorId = lookup!.Get<Guid>(SENSOR_ID);
         var valueType = lookup!.Get<SensorValueType>(SENSOR_VALUE_TYPE);
 
-        IEvent newEvent = new SensorEvent { SensorId = sensorId };
+        IEvent newEvent = new SensorEvent(sensorId);
 
         Func<IEventMessage, bool> filter = valueType switch
         {
