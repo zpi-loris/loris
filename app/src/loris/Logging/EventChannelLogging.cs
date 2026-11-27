@@ -1,19 +1,18 @@
 using Loris.Messages.Event;
-using Loris.Types;
 
 namespace Loris.Logging;
 
 public static partial class EventChannelLogging
 {
     [LoggerMessage(
-        EventId = 1,
+        EventId = 4000,
         Level = LogLevel.Information,
         Message = "New event received: {EventMessage}"
     )]
     public static partial void EventReceived(this ILogger logger, IEventMessage Eventmessage);
 
     [LoggerMessage(
-        EventId = 2,
+        EventId = 4001,
         Level = LogLevel.Information,
         Message = "Automation {Id} {Name} triggered by event: {EventMessage}"
     )]
@@ -25,14 +24,14 @@ public static partial class EventChannelLogging
     );
 
     [LoggerMessage(
-        EventId = 3,
+        EventId = 4002,
         Level = LogLevel.Information,
         Message = "Automation {Id} {Name} conditions met"
     )]
     public static partial void AutomationConditionsMet(this ILogger logger, Guid id, string name);
 
     [LoggerMessage(
-        EventId = 4,
+        EventId = 4003,
         Level = LogLevel.Information,
         Message = "Automation {Id} {Name} conditions not met"
     )]

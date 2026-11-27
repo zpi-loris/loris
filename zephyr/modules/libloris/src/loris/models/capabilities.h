@@ -14,7 +14,9 @@
 
 #include "loris/models/devclass.h"
 #include "loris/models/function.h"
+#include "loris/models/report.h"
 #include "loris/models/sensor.h"
+#include "loris/result.h"
 #include "loris/str.h"
 
 typedef struct capabilities {
@@ -63,7 +65,7 @@ result_t capabilities_add_sensor(
     sensor_value_type_t value_type,
     sensor_semantics_t semantics,
     const char* unit,
-    report_t (*report_func)(struct sensor*),
+    result_t (*report_func)(report_t*, struct sensor*),
     int32_t interval_sec
 );
 
@@ -84,7 +86,7 @@ result_t capabilities_add_function(
     char* name,
     char* description,
     func_arg_type_t func_arg_type,
-    void (*call_function)(void*),
+    result_t (*call_function)(void*),
     int32_t wake_interval_sec
 );
 

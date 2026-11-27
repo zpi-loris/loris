@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace Loris.Automations.Actions.DeviceCall;
 
 public record DeviceCallActionDto(
@@ -8,5 +10,7 @@ public record DeviceCallActionDto(
 ) : IActionDto
 {
     public const string Discriminator = "device-call";
+
+    [JsonIgnore]
     public string ServiceKey => Discriminator;
 }

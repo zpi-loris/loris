@@ -60,7 +60,7 @@ public static class ConfigServiceCollectionExtensions
 
             if (!int.TryParse(conf["Port"], out int port))
             {
-                port = 1833;
+                port = 1883;
             }
 
             if (!int.TryParse(conf["ReconnectInterval"], out var reconnectInterval))

@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Loris.Automations;
 using Loris.Automations.Actions;
 using Loris.Automations.Conditions;
@@ -6,18 +7,26 @@ using Loris.Data;
 using Loris.Events;
 using Loris.Logging;
 using Loris.Messages.Event;
+using Loris.Models;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 
 namespace Loris.Services;
 
 public sealed class AutomationService(
     ILogger<AutomationService> logger,
+    LorisDbContext context,
     IServiceProvider provider,
-    IAutomationIndex index
+    IAutomationIndex index,
+    IOptions<JsonOptions> jsonOptions
 ) : IAutomationService
 {
     private readonly IAutomationIndex _index = index;
     private readonly IServiceProvider _provider = provider;
+    private readonly LorisDbContext _ctx = context;
     private readonly ILogger<AutomationService> _logger = logger;
+    private readonly IOptions<JsonOptions> _jsonOptions = jsonOptions;
 
     public async Task<IReadOnlyList<AutomationError>> ValidateAsync(
         IReadOnlyList<AutomationDto> rules,
@@ -40,18 +49,94 @@ public sealed class AutomationService(
 
     public async Task<IReadOnlyList<AutomationError>> ApplyAsync(
         IReadOnlyList<AutomationDto> rules,
+        bool force = false,
         CancellationToken cancellationToken = default
     )
     {
         var validationResults = await ValidateRulesAsync(rules, cancellationToken);
         var errors = rules
             .Zip(validationResults)
-            .SelectMany(pair => ExtractRuleErrors(pair.First, pair.Second))
+            .SelectMany(ruleAndResult =>
+                ExtractRuleErrors(ruleAndResult.First, ruleAndResult.Second)
+            )
             .ToList();
 
-        if (errors.Count > 0)
+        if (errors.Count > 0 && !force)
+        {
             return errors;
+        }
+        else if (errors.Count > 0)
+        {
+            // force is true,
+            // we want to apply valid rules only
+            FilterOutErrors(ref rules, ref validationResults, errors);
+        }
 
+        // saving is implemented using a transaction. If a cancellation
+        // is requested anytime during the method call, the rules are not replaced.
+        // The dbContext should throw itself, but just to be sure I will throw (if cancelled)
+        // again so the automations are not replaced in the runtime if the cancellation is requested
+        await SaveToDiskAsync(rules, cancellationToken);
+        cancellationToken.ThrowIfCancellationRequested();
+
+        // compile and apply rules
+        var automations = Compile(rules, validationResults);
+        ApplyToIndex(automations);
+
+        _logger.AutomationsApplied(rules.Count, automations.Count);
+
+        return [];
+    }
+
+    private static void FilterOutErrors(
+        ref IReadOnlyList<AutomationDto> rules,
+        ref List<AutomationValidationResult> validationResults,
+        List<AutomationError> errors
+    )
+    {
+        var invalidAutomations = errors.Select(e => e.Id).ToHashSet();
+
+        var filteredRules = new List<AutomationDto>(rules.Count);
+        var filteredResults = new List<AutomationValidationResult>(rules.Count);
+
+        // filter out the rules that have errors if force is true
+        foreach (var (rule, result) in rules.Zip(validationResults))
+        {
+            if (invalidAutomations.Contains(rule.Id))
+            {
+                continue;
+            }
+
+            filteredRules.Add(rule);
+            filteredResults.Add(result);
+        }
+
+        rules = filteredRules;
+        validationResults = filteredResults;
+    }
+
+    private void ApplyToIndex(List<CompiledAutomation> automations)
+    {
+        Dictionary<IEvent, List<CompiledAutomation>> index = [];
+        foreach (var val in automations)
+        {
+            if (!index.TryGetValue(val.Trigger, out List<CompiledAutomation>? list))
+            {
+                list = [];
+                index.Add(val.Trigger, list);
+            }
+            list.Add(val);
+
+            _logger.TriggerIndexed(val.Name, val.Id, val.Trigger.GetType().Name);
+        }
+        _index.Update(index);
+    }
+
+    private List<CompiledAutomation> Compile(
+        IReadOnlyList<AutomationDto> rules,
+        IEnumerable<AutomationValidationResult> validationResults
+    )
+    {
         List<CompiledAutomation> automations = [];
         foreach (var (rule, validation) in rules.Zip(validationResults))
         {
@@ -79,27 +164,10 @@ public sealed class AutomationService(
             );
         }
 
-        Dictionary<IEvent, List<CompiledAutomation>> index = [];
-        foreach (var val in automations)
-        {
-            List<CompiledAutomation>? list;
-            if (!index.TryGetValue(val.Trigger, out list))
-            {
-                list = [];
-                index.Add(val.Trigger, list);
-            }
-            list.Add(val);
-
-            _logger.TriggerIndexed(val.Name, val.Id, val.Trigger.GetType().Name);
-        }
-        _index.Update(index);
-
-        _logger.AutomationsApplied(rules.Count, automations.Count);
-
-        return [];
+        return automations;
     }
 
-    private async Task<IEnumerable<AutomationValidationResult>> ValidateRulesAsync(
+    private async Task<List<AutomationValidationResult>> ValidateRulesAsync(
         IReadOnlyList<AutomationDto> rules,
         CancellationToken cancellationToken
     )
@@ -127,7 +195,8 @@ public sealed class AutomationService(
 
         return Enumerable
             .Zip(await triggersTask, await conditionsTask, await actionsTask)
-            .Select(v => new AutomationValidationResult(v.First, v.Second, v.Third));
+            .Select(v => new AutomationValidationResult(v.First, v.Second, v.Third))
+            .ToList();
     }
 
     private List<AutomationError> ExtractRuleErrors(
@@ -158,7 +227,7 @@ public sealed class AutomationService(
         string sectionName,
         AutomationDto rule,
         IReadOnlyList<TBlock> blocks,
-        IReadOnlyList<ValidationResult> results
+        IReadOnlyList<BlockValidationResult> results
     )
         where TBlock : IAutomationBlock
     {
@@ -169,7 +238,7 @@ public sealed class AutomationService(
                 continue;
 
             var ServiceKey = blocks[i].ServiceKey;
-            var prefix = $"{sectionName}.{i}.{ServiceKey}";
+            var prefix = $"{sectionName}.[{i}].{ServiceKey}";
 
             foreach (var error in result.Errors)
             {
@@ -184,12 +253,50 @@ public sealed class AutomationService(
         }
     }
 
-    public Task SaveToDiskAsync(
+    private async Task SaveToDiskAsync(
         IReadOnlyList<AutomationDto> rules,
         CancellationToken cancellationToken = default
     )
     {
-        throw new NotImplementedException();
+        // use MVC defined jsonSerializerOptions. It is the same, that is applied to
+        // the .UseControllers().AddJsonOptions(options => {})
+        var jsonSerializerOptions = _jsonOptions.Value.JsonSerializerOptions;
+
+        // we need to use transaction, to ensure automations replacement does
+        // not corrupt data on failure
+
+        using var transaction = await _ctx.Database.BeginTransactionAsync(cancellationToken);
+
+        int deleted = _ctx.Automations.Count();
+
+        try
+        {
+            // delete all rows from the table
+            _ctx.Automations.RemoveRange(_ctx.Automations);
+
+            // serialize and track all the new rules
+            var automationModels = rules.Select(rule => new Automation
+            {
+                Name = rule.Name,
+                AutomationId = rule.Id,
+                Triggers = JsonSerializer.Serialize(rule.Triggers, jsonSerializerOptions),
+                Conditions = JsonSerializer.Serialize(rule.Conditions, jsonSerializerOptions),
+                Actions = JsonSerializer.Serialize(rule.Actions, jsonSerializerOptions),
+            });
+            _ctx.Automations.AddRange(automationModels);
+            await _ctx.SaveChangesAsync(cancellationToken);
+
+            await transaction.CommitAsync(cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            _logger.RulesReplacementFailed(ex);
+
+            // throw for the sake of the request
+            throw;
+        }
+
+        _logger.RulesReplacementSucceeded(deleted, rules.Count);
     }
 
     // ========================================================================
@@ -287,7 +394,7 @@ public sealed class AutomationService(
     // VALIDATION SERVICE HELPERS
     // ========================================================================
 
-    private async Task<ValidationResult> ValidateTrigger(
+    private async Task<BlockValidationResult> ValidateTrigger(
         AutomationDto rule,
         ITriggerDto dto,
         CancellationToken cancellationToken
@@ -313,7 +420,7 @@ public sealed class AutomationService(
         }
     }
 
-    private async Task<ValidationResult> ValidateCondition(
+    private async Task<BlockValidationResult> ValidateCondition(
         AutomationDto rule,
         IConditionDto dto,
         CancellationToken cancellationToken
@@ -344,7 +451,7 @@ public sealed class AutomationService(
         }
     }
 
-    private async Task<ValidationResult> ValidateAction(
+    private async Task<BlockValidationResult> ValidateAction(
         AutomationDto rule,
         IActionDto dto,
         CancellationToken cancellationToken
@@ -393,8 +500,8 @@ public sealed class AutomationService(
     }
 
     private sealed record AutomationValidationResult(
-        IReadOnlyList<ValidationResult> Triggers,
-        IReadOnlyList<ValidationResult> Conditions,
-        IReadOnlyList<ValidationResult> Actions
+        IReadOnlyList<BlockValidationResult> Triggers,
+        IReadOnlyList<BlockValidationResult> Conditions,
+        IReadOnlyList<BlockValidationResult> Actions
     ) { }
 }

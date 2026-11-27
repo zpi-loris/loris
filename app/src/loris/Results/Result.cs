@@ -50,4 +50,7 @@ public readonly record struct Result
     public static Result Success() => new(true, Error.None);
 
     public static Result Failure(Error error) => new(false, error);
+
+    public TOut Match<TOut>(Func<TOut> onSuccess, Func<Error, TOut> onFailure) =>
+        IsSuccess ? onSuccess() : onFailure(Error);
 }

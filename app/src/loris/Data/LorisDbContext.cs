@@ -1,7 +1,6 @@
 ﻿using CmdScale.EntityFrameworkCore.TimescaleDB;
 using Loris.Models;
 using Loris.Protocol;
-using Loris.Types;
 using Microsoft.EntityFrameworkCore;
 
 namespace Loris.Data;
@@ -23,6 +22,8 @@ public partial class LorisDbContext : DbContext
 
     public virtual DbSet<User> Users { get; set; }
 
+    public virtual DbSet<Automation> Automations { get; set; }
+
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder) =>
         optionsBuilder
             .UseNpgsql(options =>
@@ -43,6 +44,6 @@ public partial class LorisDbContext : DbContext
 
     protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
     {
-        configurationBuilder.Properties<DevEui>().HaveConversion<DevEui.Converter>();
+        configurationBuilder.Properties<DevEui>().HaveConversion<DevEui.ValueConverter>();
     }
 }

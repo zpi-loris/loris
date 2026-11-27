@@ -1,19 +1,27 @@
+using System.Buffers.Binary;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
-namespace Loris.Types;
+namespace Loris.Models;
 
-// TODO: write tests for devEUI
+[JsonConverter(typeof(JsonConverter))]
 public readonly record struct DevEui(ulong Value) : IParsable<DevEui>
 {
     public static DevEui Parse(string hex) => Parse(hex, null);
 
-    public static DevEui Parse(byte[] bytes) => new(BitConverter.ToUInt64(bytes));
+    public static DevEui Parse(byte[] bytes) => new(BinaryPrimitives.ReadUInt64BigEndian(bytes));
 
     public override string ToString() => Value.ToString("X16");
 
-    public byte[] ToBytes() => BitConverter.GetBytes(Value);
+    public byte[] ToBytes()
+    {
+        var bytes = new byte[8];
+        BinaryPrimitives.WriteUInt64BigEndian(bytes, Value);
+        return bytes;
+    }
 
     //
     // IParsable<DebEui> interface implementation
@@ -45,9 +53,34 @@ public readonly record struct DevEui(ulong Value) : IParsable<DevEui>
         return false;
     }
 
-    public class Converter : ValueConverter<DevEui, byte[]>
+    public class ValueConverter : ValueConverter<DevEui, byte[]>
     {
-        public Converter()
+        public ValueConverter()
             : base(v => v.ToBytes(), v => Parse(v)) { }
+    }
+
+    public class JsonConverter : JsonConverter<DevEui>
+    {
+        public override DevEui Read(
+            ref Utf8JsonReader reader,
+            Type typeToConvert,
+            JsonSerializerOptions options
+        )
+        {
+            try
+            {
+                return Parse(reader.GetString() ?? "");
+            }
+            catch (ArgumentException ex)
+            {
+                throw new JsonException($"Could not read json", ex);
+            }
+        }
+
+        public override void Write(
+            Utf8JsonWriter writer,
+            DevEui value,
+            JsonSerializerOptions options
+        ) => writer.WriteStringValue(value.ToString());
     }
 }

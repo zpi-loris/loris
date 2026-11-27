@@ -3,10 +3,11 @@
 #include "loris/models/capabilities.h"
 #include "loris/models/function.h"
 #include "loris/models/report.h"
-#include "zephyr/sys/printk.h"
+#include "loris/result.h"
 
 #include <zephyr/logging/log.h>
 #include <zephyr/lorawan/lorawan.h>
+#include <zephyr/sys/printk.h>
 
 #define LORAWAN_DEV_EUI { 0x5b, 0xd1, 0x3f, 0x6a, 0xd9, 0x5e, 0xe2, 0x1c }
 #define LORAWAN_JOIN_EUI { 0x52, 0xf1, 0xcc, 0xb8, 0x84, 0xf6, 0xdc, 0x7c }
@@ -18,14 +19,18 @@ LOG_MODULE_REGISTER(lorawan_main_test, LOG_LEVEL_INF);
 
 #define REJOIN_RETRY_SECONDS 30
 
-report_t temp_report(sensor_t* sensor) {
-  report_t sample_report = { .sensor_id = 1,
-                             .value.int_val = 22,
-                             .which_value = REPORT_VALUE_INT };
-  return sample_report;
+result_t temp_report(report_t* out, sensor_t* sensor) {
+  *out = (report_t){ .sensor_id = 1,
+                     .value.int_val = 22,
+                     .which_value = REPORT_VALUE_INT };
+
+  return OK;
 }
 
-void hello_world(void* unused) { printk("Hello world! \n"); };
+result_t hello_world(void* unused) {
+  printk("Hello world! \n");
+  return OK;
+};
 
 int main() {
   uint8_t dev_eui[] = LORAWAN_DEV_EUI;

@@ -12,6 +12,7 @@ public enum ErrorType
     Forbidden = 4,
     Upstream = 5,
     Timeout = 6,
+    Invalid = 7,
 }
 
 public readonly record struct Error(string Code, string Description, ErrorType Type)
@@ -35,4 +36,7 @@ public readonly record struct Error(string Code, string Description, ErrorType T
 
     public static Error Timeout(string code, string description) =>
         new(code, description, ErrorType.Timeout);
+
+    public static Error Invalid(string code, string description) =>
+        new(code, description, ErrorType.Invalid);
 }

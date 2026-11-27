@@ -9,8 +9,8 @@ public class ExampleActionCompiler : ActionCompilerBase<ExampleActionDto>
     ) => (token) => Task.Run(() => Console.WriteLine("This is an example action"), token);
 
     // see Triggers/Example for full example
-    protected override async Task<ValidationResult> ValidateAsync(
+    protected override async Task<BlockValidationResult> ValidateAsync(
         ExampleActionDto dto,
         CancellationToken cancellationToken
-    ) => ValidationResult.Success();
+    ) => BlockValidationResult.Success();
 }

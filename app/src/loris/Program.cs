@@ -1,57 +1,96 @@
+using System.Text.Json;
+using System.Text.Json.Serialization;
+using System.Text.Json.Serialization.Metadata;
+using Loris.Background;
 using Loris.Channels;
-using Loris.Consumers;
 using Loris.Data;
+using loris.Extensions;
 using Loris.Extensions;
+using Loris.Jobs;
+using Loris.Json;
 using Loris.MQTT.Client;
+using loris.Services;
 using Loris.Services;
+using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+var socketPath = Path.Combine("/", "run", "loris", "loris.socket");
+if (builder.Environment.IsDevelopment())
+{
+    socketPath = Path.Combine(Path.GetTempPath(), "loris.socket");
+}
 
+builder.WebHost.ConfigureLorisLocalhost(port: 5158);
+builder.WebHost.ConfigureLorisUnixSocket(socketPath: socketPath);
+
+// add factory dbContext. It will serve as an entry point for factory retrieval
+// as well as single, scoped DbContext instance for each request.
 string? connectionString = builder.Configuration.GetConnectionString("Timescale");
-
-// add factory first because it's singleton, thus options will inherit singleton
 builder.Services.AddDbContextFactory<LorisDbContext>(options =>
     options.UseNpgsql(connectionString)
 );
 
+//
 // Global state
+//
 builder.Services.AddSingleton<IAutomationIndex, AutomationIndex>();
 builder.Services.AddSingleton<IStateCache, StateCache>();
 
+//
 // Configure channels for the ingestion subsystem
+//
 builder.Services.AddChannels();
 
-// Configure consumers for each channel
+//
+// Pre startup tasks.
+// ORDER IS IMPORTANT
+//
+builder.Services.AddHostedService<PreStartupAutomationJob>();
+builder.Services.AddHostedService<PreStartupStateCacheJob>();
+
+// Register background workers
 builder.Services.AddHostedService<DeviceChannelConsumer>();
 builder.Services.AddHostedService<DbWriteChannelConsumer>();
 builder.Services.AddHostedService<EventChannelConsumer>();
+builder.Services.AddHostedService<TimeEventProducer>();
 
 // Configure handlers for each channel consumer
 builder.Services.AddSingleton<IDeviceChannelHandler, DeviceChannelHandler>();
 builder.Services.AddSingleton<IDbWriteChannelHandler, DbWriteChannelHandler>();
 builder.Services.AddSingleton<IEventChannelHandler, EventChannelHandler>();
 
+// Register all custom automations blocks compilers
 builder.Services.AddAutomationsCompilers();
 
-builder.Services.AddScoped<IAutomationService, AutomationService>();
-builder.Services.AddScoped<IDeviceService, DeviceService>();
+// Services for controller
+builder.Services.AddTransient<IChirpstackService, ChirpstackService>();
+builder.Services.AddTransient<IAutomationService, AutomationService>();
+builder.Services.AddTransient<IDeviceService, DeviceService>();
+builder.Services.AddTransient<IUserService, UserService>();
 
-// Add chirpstack integration background task with handler implementation
+// Chirpstacks integration background service and device grpc downlink service
 builder.Services.AddChirpstackIntegration<ChirpstackIntegrationHandler>(builder.Configuration);
-
-// Add chirpstack grpc device service client factory
 builder.Services.AddChirpstackDeviceService(builder.Configuration);
 
-builder.Services.AddControllers();
+builder
+    .Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.Converters.Add(
+            new JsonStringEnumConverter(JsonNamingPolicy.CamelCase)
+        );
+        options.JsonSerializerOptions.TypeInfoResolver = new DefaultJsonTypeInfoResolver
+        {
+            Modifiers = { OneOfTypesPropertyModifier.Modifier },
+        };
+    });
 
 builder.Services.AddProblemDetails();
 
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-builder.Services.AddOpenApi();
+builder.Services.AddLorisOpenApi();
 
 builder.Services.Configure<RouteOptions>(options =>
 {
@@ -60,10 +99,7 @@ builder.Services.Configure<RouteOptions>(options =>
 
 var app = builder.Build();
 
-// app.UseExceptionHandler();
-// app.UseStatusCodePages();
-
-// Configure the HTTP request pipeline.
+// development open api and docs serving
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();

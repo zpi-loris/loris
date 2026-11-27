@@ -1,11 +1,11 @@
-using Loris.Types;
+using Loris.Models;
 
 namespace Loris.Logging;
 
 public static partial class DeviceChannelLogging
 {
     [LoggerMessage(
-        EventId = 1,
+        EventId = 2000,
         Level = LogLevel.Warning,
         EventName = nameof(DeviceNotAccepted),
         Message = "Device {DevEui} was not accepted before, but sends  {MessageType}"
@@ -17,7 +17,19 @@ public static partial class DeviceChannelLogging
     );
 
     [LoggerMessage(
-        EventId = 2,
+        EventId = 2001,
+        Level = LogLevel.Warning,
+        EventName = nameof(DeviceNotSeen),
+        Message = "Device {DevEui} was not seen before, but sends {MessageType}"
+    )]
+    public static partial void DeviceNotSeen(
+        this ILogger logger,
+        DevEui devEui,
+        string messageType
+    );
+
+    [LoggerMessage(
+        EventId = 2002,
         Level = LogLevel.Information,
         EventName = nameof(ReportReceived),
         Message = "Received report from device {DevEui} at {DateTime}"
@@ -29,7 +41,7 @@ public static partial class DeviceChannelLogging
     );
 
     [LoggerMessage(
-        EventId = 3,
+        EventId = 2003,
         Level = LogLevel.Warning,
         EventName = nameof(DeviceAlreadyAccepted),
         Message = "Device {DevEui} was already accepted before, but sends capabilities"
@@ -37,7 +49,7 @@ public static partial class DeviceChannelLogging
     public static partial void DeviceAlreadyAccepted(this ILogger logger, DevEui devEui);
 
     [LoggerMessage(
-        EventId = 4,
+        EventId = 2004,
         Level = LogLevel.Information,
         EventName = nameof(PingReceived),
         Message = "Received ping from device {DevEui} at {DateTime}"
@@ -45,7 +57,7 @@ public static partial class DeviceChannelLogging
     public static partial void PingReceived(this ILogger logger, DevEui devEui, DateTime dateTime);
 
     [LoggerMessage(
-        EventId = 5,
+        EventId = 2005,
         Level = LogLevel.Information,
         EventName = nameof(CapabilitiesReceived),
         Message = "Received capabilities from device {DevEui} at {DateTime}"
@@ -54,5 +66,17 @@ public static partial class DeviceChannelLogging
         this ILogger logger,
         DevEui devEui,
         DateTime dateTime
+    );
+
+    [LoggerMessage(
+        EventId = 2006,
+        Level = LogLevel.Warning,
+        EventName = nameof(DeviceSendsUnknownSensor),
+        Message = "Device {DevEui} is accepted but sends an unkown sensor id = {DeviceSensorId}"
+    )]
+    public static partial void DeviceSendsUnknownSensor(
+        this ILogger logger,
+        DevEui devEui,
+        int DeviceSensorId
     );
 }

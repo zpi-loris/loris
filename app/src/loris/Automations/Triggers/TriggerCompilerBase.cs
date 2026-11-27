@@ -15,7 +15,7 @@ public abstract class TriggerCompilerBase<TDto> : ITriggerCompiler
         return Compile(typedDto, lookup);
     }
 
-    public Task<ValidationResult> ValidateAsync(
+    public Task<BlockValidationResult> ValidateAsync(
         ITriggerDto dto,
         CancellationToken cancellationToken = default
     )
@@ -29,7 +29,7 @@ public abstract class TriggerCompilerBase<TDto> : ITriggerCompiler
         LookupContext? lookup
     );
 
-    protected abstract Task<ValidationResult> ValidateAsync(
+    protected abstract Task<BlockValidationResult> ValidateAsync(
         TDto dto,
         CancellationToken cancellationToken
     );

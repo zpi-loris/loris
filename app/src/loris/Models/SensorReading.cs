@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel;
+using System.Text.Json.Serialization;
 using Loris.Protocol;
-using Loris.Types;
 using Microsoft.EntityFrameworkCore;
 
 namespace Loris.Models;
@@ -8,9 +8,7 @@ namespace Loris.Models;
 [Comment("Readings of actuals sensors exposed via capabilities")]
 public class SensorReading
 {
-    public DevEui DevEui { get; set; }
-
-    public int SensorId { get; set; }
+    public Guid SensorId { get; set; }
 
     public DateTime Time { get; set; }
 
@@ -26,20 +24,16 @@ public class SensorReading
     // REFERENCES
     //
 
+    [JsonIgnore]
     public Sensor Sensor { get; set; } = null!;
 
     //
     // Proto helpers
     //
 
-    public static SensorReading FromProto(DevEui devEui, DateTime dateTime, Report report)
+    public static SensorReading FromProto(Guid sensorId, DateTime dateTime, Report report)
     {
-        var reading = new SensorReading()
-        {
-            DevEui = devEui,
-            SensorId = report.SensorId,
-            Time = dateTime,
-        };
+        var reading = new SensorReading() { SensorId = sensorId, Time = dateTime };
 
         switch (report.ValueCase)
         {
@@ -64,23 +58,26 @@ public class SensorReading
         return reading;
     }
 
-    public Report ToReport()
+    /// <summary>
+    /// Transform to protocol
+    /// </summary>
+    public Report ToReport(int id)
     {
         if (FloatValue.HasValue)
         {
-            return new Report { SensorId = SensorId, FloatVal = FloatValue.Value };
+            return new Report { SensorId = id, FloatVal = FloatValue.Value };
         }
         else if (IntValue.HasValue)
         {
-            return new Report { SensorId = SensorId, IntVal = IntValue.Value };
+            return new Report { SensorId = id, IntVal = IntValue.Value };
         }
         else if (BoolValue.HasValue)
         {
-            return new Report { SensorId = SensorId, BoolVal = BoolValue.Value };
+            return new Report { SensorId = id, BoolVal = BoolValue.Value };
         }
         else if (StringValue is not null)
         {
-            return new Report { SensorId = SensorId, StrVal = StringValue };
+            return new Report { SensorId = id, StrVal = StringValue };
         }
         else
         {

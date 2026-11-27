@@ -11,11 +11,11 @@ public class ExampleConditionCompiler : ConditionCompilerBase<ExampleConditionDt
     ) => (_) => true;
 
     // see Triggers/Example for full example
-    protected override async Task<ValidationResult> ValidateAsync(
+    protected override async Task<BlockValidationResult> ValidateAsync(
         ExampleConditionDto dto,
         CancellationToken cancellationToken
     )
     {
-        return ValidationResult.Success();
+        return BlockValidationResult.Success();
     }
 }
