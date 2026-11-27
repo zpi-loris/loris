@@ -215,6 +215,12 @@ public class DeviceService(
         // register newly activated device in runtime
         _stateCache[device.DevEui] = device;
 
+        // BUG: HERE IS THE BUG FIX
+        foreach (var sensor in device.Sensors)
+        {
+            _stateCache[(device.DevEui, sensor.DeviceSensorId)] = sensor;
+        }
+
         return DeviceResponse.FromModel(device);
     }
 
