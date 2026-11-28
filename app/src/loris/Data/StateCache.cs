@@ -17,29 +17,48 @@ public sealed class StateCache : IStateCache
         set
         {
             // check if some device (value) already points to some devEUI
-            if (_deviceToDevEui.TryGetValue(value.DeviceId, out var oldDevEui))
+            if (_deviceToDevEui.TryGetValue(value.DeviceId, out var existingDevEui))
             {
-                // This means, that we have replaced the devEUI (replaced a physical device)
-                // with a new one.
-
-                // remove old devEUI mapping
-                _devEuiToDevice.Remove(oldDevEui);
-
-                // replace the sensor mapping with wrong devEUI
-                var oldDevEuiKeys = _sensorMapping.Keys.Where(k => k.Item1 == oldDevEui);
-                foreach (var (_, deviceSensorId) in oldDevEuiKeys)
+                if (devEui != existingDevEui)
                 {
-                    var sensor = _sensorMapping[(oldDevEui, deviceSensorId)];
-                    _sensorMapping.Remove((oldDevEui, deviceSensorId));
-                    _sensorMapping[(devEui, deviceSensorId)] = sensor;
+                    UpdateReplaced(devEui, existingDevEui);
                 }
             }
-            // deviceId => devEui mapping
-            _deviceToDevEui[value.DeviceId] = devEui;
-            // devEui => device mapping
-            _devEuiToDevice[devEui] = value;
+
+            // prevents from memory leak on disconnected devices
+            if (value.DeviceStatus == DeviceStatus.DISCONNECTED)
+            {
+                var sensorCacheKeys = _sensorMapping.Keys.Where(k => k.Item1 == value.DevEui);
+                foreach (var key in sensorCacheKeys)
+                {
+                    _sensorMapping.Remove(key);
+                }
+            }
+
+            // actual cache updates
+            {
+                // deviceId => devEui mapping
+                _deviceToDevEui[value.DeviceId] = devEui;
+                // devEui => device mapping
+                _devEuiToDevice[devEui] = value;
+            }
         }
     }
+
+    private void UpdateReplaced(DevEui @new, DevEui old)
+    {
+        _devEuiToDevice.Remove(old);
+
+        // replace the sensor mapping with wrong devEUI
+        var oldDevEuiKeys = _sensorMapping.Keys.Where(k => k.Item1 == old);
+        foreach (var (_, deviceSensorId) in oldDevEuiKeys)
+        {
+            var sensor = _sensorMapping[(old, deviceSensorId)];
+            _sensorMapping.Remove((old, deviceSensorId));
+            _sensorMapping[(@new, deviceSensorId)] = sensor;
+        }
+    }
+
     public Models.Sensor this[(DevEui devEui, int deviceSensorId) sensorMapping]
     {
         get => _sensorMapping[sensorMapping];

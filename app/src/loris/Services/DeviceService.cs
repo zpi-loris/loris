@@ -106,10 +106,6 @@ public class DeviceService(
         CancellationToken ct = default
     )
     {
-        // NOTE: THIS IS ALTERNATE APPROACH
-        // var result = _ctx
-        //     .Devices.Where(d => d.FriendlyName == name)
-        //     .ExecuteUpdateAsync(setters => setters.SetProperty(d => d.FriendlyName, newName), ct);
         var device = await _ctx.Devices.FirstOrDefaultAsync(d => d.FriendlyName == name, ct);
         if (device is null)
         {
@@ -207,18 +203,21 @@ public class DeviceService(
         }
 
         device.DeviceStatus = DeviceStatus.ACTIVE;
-
-        // We don't want to cancel the database save, because
-        // we want to persist the device status change.
         await _ctx.SaveChangesAsync(CancellationToken.None);
 
-        // register newly activated device in runtime
+        // register newly activated device in runtime cache
         _stateCache[device.DevEui] = device;
 
-        // BUG: HERE IS THE BUG FIX
-        foreach (var sensor in device.Sensors)
+        // register device sensors in runtime cache
         {
-            _stateCache[(device.DevEui, sensor.DeviceSensorId)] = sensor;
+            var sensors = await _ctx
+                .Sensors.AsNoTracking()
+                .Where(s => s.DeviceId == device.DeviceId)
+                .ToListAsync(CancellationToken.None);
+            foreach (var sensor in sensors)
+            {
+                _stateCache[(device.DevEui, sensor.DeviceSensorId)] = sensor;
+            }
         }
 
         return DeviceResponse.FromModel(device);
@@ -302,9 +301,6 @@ public class DeviceService(
         }
 
         device.DeviceStatus = DeviceStatus.DISCONNECTED;
-
-        // We don't want to cancel the database save, because
-        // we want to persist the device status change.
         await _ctx.SaveChangesAsync(CancellationToken.None);
 
         // update state cache; device is not ACCEPTED anymore
