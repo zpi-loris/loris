@@ -25,21 +25,21 @@ public class SensorCrossedTriggerCompiler(IDbContextFactory<LorisDbContext> ctxF
 
         var device = await ctx
             .Devices.Where(d => d.DeviceStatus == DeviceStatus.ACTIVE)
-            .SingleOrDefaultAsync(d => d.FriendlyName == dto.DeviceName, cancellationToken);
+            .SingleOrDefaultAsync(d => d.FriendlyName == dto.Device, cancellationToken);
 
         if (device is null)
         {
             return BlockValidationResult.Failure([
                 new BlockError(
-                    nameof(dto.DeviceName),
-                    dto.DeviceName,
+                    nameof(dto.Device),
+                    dto.Device,
                     "There is no device with given Friendly Name"
                 ),
             ]);
         }
 
         var sensor = await ctx.Sensors.SingleOrDefaultAsync(
-            s => s.DeviceId == device.DeviceId && s.Name == dto.SensorName,
+            s => s.DeviceId == device.DeviceId && s.Name == dto.Sensor,
             cancellationToken
         );
 
@@ -47,9 +47,9 @@ public class SensorCrossedTriggerCompiler(IDbContextFactory<LorisDbContext> ctxF
         {
             return BlockValidationResult.Failure([
                 new BlockError(
-                    nameof(dto.SensorName),
-                    dto.SensorName,
-                    $"There is no sensor with given Friendly Name for device {dto.DeviceName}"
+                    nameof(dto.Sensor),
+                    dto.Sensor,
+                    $"[{dto.Device}] device does not have sensor called [{dto.Sensor}]"
                 ),
             ]);
         }
@@ -65,17 +65,19 @@ public class SensorCrossedTriggerCompiler(IDbContextFactory<LorisDbContext> ctxF
         {
             return BlockValidationResult.Failure([
                 new BlockError(
-                    nameof(dto.SensorName),
-                    dto.SensorName,
+                    nameof(dto.Sensor),
+                    dto.Sensor,
                     $"Sensor of type {sensor.ValueType} does not support threshold crossing"
                 ),
             ]);
         }
 
-        var isValidValue = sensor.ValueType switch
+        var isValidValue = (sensor.ValueType, dto.Value) switch
         {
-            SensorValueType.Float => float.TryParse(dto.Value, out _),
-            SensorValueType.Int => int.TryParse(dto.Value, out _),
+            // float accepts int and float value types
+            (SensorValueType.Float, _) => true,
+            // int must be strictly int
+            (SensorValueType.Int, int val) => true,
             _ => false,
         };
 
@@ -84,7 +86,7 @@ public class SensorCrossedTriggerCompiler(IDbContextFactory<LorisDbContext> ctxF
             return BlockValidationResult.Failure([
                 new BlockError(
                     nameof(dto.Value),
-                    dto.Value,
+                    dto.Value.ToString() ?? "",
                     $"Sensor accepts values of type: {sensor.ValueType}"
                 ),
             ]);
@@ -111,8 +113,10 @@ public class SensorCrossedTriggerCompiler(IDbContextFactory<LorisDbContext> ctxF
 
         Func<IEventMessage, bool> filter = valueType switch
         {
-            SensorValueType.Float => CreateFloatFilter(float.Parse(dto.Value), dto.TopBottom),
-            SensorValueType.Int => CreateIntFilter(int.Parse(dto.Value), dto.TopBottom),
+            // here we convert to flaot, from either float or int
+            SensorValueType.Float => CreateFloatFilter(Convert.ToSingle(dto.Value), dto.TopBottom),
+            // here we are certain it is an int
+            SensorValueType.Int => CreateIntFilter((int)dto.Value, dto.TopBottom),
             _ => static (_) => false,
         };
 
