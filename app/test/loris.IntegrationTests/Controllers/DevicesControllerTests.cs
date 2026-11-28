@@ -929,7 +929,7 @@ public sealed class DevicesControllerTests(
     {
         // Arrange
         using var appFactory = WithChirpstackService<FakeChirpstackServiceWithSuccess>();
-        var device = CreateDevice(status: DeviceStatus.PENDING);
+        var device = CreateDevice(status: DeviceStatus.PENDING, withCapabilities: true);
         await SeedDevicesAsync(appFactory, device);
 
         var jsonOptions = GetJsonOptions(appFactory);
@@ -952,6 +952,13 @@ public sealed class DevicesControllerTests(
         Assert.NotNull(deviceResponse);
         Assert.Equal(DeviceStatus.ACTIVE, deviceResponse.DeviceStatus);
         Assert.True(stateCache.TryGetDevice(device.DevEui, out var cachedDevice));
+        Assert.True(
+            stateCache.TryGetSensor(
+                device.DevEui,
+                device.Sensors.First().DeviceSensorId,
+                out var cachedSensor
+            )
+        );
         Assert.Equal(DeviceStatus.ACTIVE, cachedDevice.DeviceStatus);
     }
 
@@ -1083,7 +1090,7 @@ public sealed class DevicesControllerTests(
     {
         // Arrange
         using var appFactory = WithChirpstackService<FakeChirpstackServiceWithSuccess>();
-        var device = CreateDevice(status: DeviceStatus.PENDING);
+        var device = CreateDevice(status: DeviceStatus.PENDING, withCapabilities: true);
         await SeedDevicesAsync(appFactory, device);
 
         var jsonOptions = GetJsonOptions(appFactory);
@@ -1106,6 +1113,13 @@ public sealed class DevicesControllerTests(
         Assert.NotNull(deviceResponse);
         Assert.Equal(DeviceStatus.ACTIVE, deviceResponse.DeviceStatus);
         Assert.True(stateCache.TryGetDevice(device.DevEui, out var cachedDevice));
+        Assert.True(
+            stateCache.TryGetSensor(
+                device.DevEui,
+                device.Sensors.First().DeviceSensorId,
+                out var cachedSensor
+            )
+        );
         Assert.Equal(DeviceStatus.ACTIVE, cachedDevice.DeviceStatus);
     }
 
@@ -1237,7 +1251,7 @@ public sealed class DevicesControllerTests(
     {
         // Arrange
         using var appFactory = WithChirpstackService<FakeChirpstackServiceWithSuccess>();
-        var device = CreateDevice(status: DeviceStatus.PENDING);
+        var device = CreateDevice(status: DeviceStatus.PENDING, withCapabilities: true);
         await SeedDevicesAsync(appFactory, device);
 
         var jsonOptions = GetJsonOptions(appFactory);
@@ -1260,6 +1274,13 @@ public sealed class DevicesControllerTests(
         Assert.NotNull(deviceResponse);
         Assert.Equal(DeviceStatus.ACTIVE, deviceResponse.DeviceStatus);
         Assert.True(stateCache.TryGetDevice(device.DevEui, out var cachedDevice));
+        Assert.True(
+            stateCache.TryGetSensor(
+                device.DevEui,
+                device.Sensors.First().DeviceSensorId,
+                out var cachedSensor
+            )
+        );
         Assert.Equal(DeviceStatus.ACTIVE, cachedDevice.DeviceStatus);
     }
 

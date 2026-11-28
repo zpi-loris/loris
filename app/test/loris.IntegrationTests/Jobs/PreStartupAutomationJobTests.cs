@@ -108,12 +108,7 @@ public sealed class PreStartupAutomationJobTests(TimescaleDbApplicationFactory a
         Assert.Single(index._index);
         // the event key is of given structure
         Assert.True(
-            index.TryGet(
-                // TODO: this need to be changed for the sake of system transition
-                // deviceId (GUID) and sensorId (GUID)
-                new SensorEvent(device.Sensors.First().SensorId),
-                out var validAutomations
-            )
+            index.TryGet(new SensorEvent(device.Sensors.First().SensorId), out var validAutomations)
         );
         // there is 1 automation that trigger on such event key
         Assert.Single(validAutomations);

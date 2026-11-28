@@ -129,21 +129,19 @@ public class DeviceChannelHandler(
         _logger.CapabilitiesReceived(devEui, dateTime);
 
         // check the cached devices
-        if (_stateCache.TryGetDevice(devEui, out var device))
+        if (_stateCache.TryGetDevice(devEui, out var cachedDevice))
         {
-            switch (device.DeviceStatus)
+            if (cachedDevice.DeviceStatus == DeviceStatus.ACTIVE)
             {
-                case DeviceStatus.ACTIVE:
-                    _logger.DeviceAlreadyAccepted(devEui);
-                    return;
-                case DeviceStatus.DISCONNECTED:
-                    // we update the device reference in the cache.
-                    // Device is sending capabilities again after disconnection
-                    // so it is pending again.
-                    device.DeviceStatus = DeviceStatus.PENDING;
-                    break;
-                default:
-                    break;
+                _logger.DeviceAlreadyAccepted(devEui);
+                return;
+            }
+            if (cachedDevice.DeviceStatus == DeviceStatus.DISCONNECTED)
+            {
+                // we update the device reference in the cache.
+                // Device is sending capabilities again after disconnection
+                // so it is pending again.
+                cachedDevice.DeviceStatus = DeviceStatus.PENDING;
             }
         }
 

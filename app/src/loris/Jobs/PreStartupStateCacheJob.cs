@@ -36,6 +36,10 @@ public class PreStartupStateCacheJob(
             _state[device.DevEui] = device;
             foreach (var sensor in device.Sensors)
             {
+                // save sensor to cache
+                _state[(device.DevEui, sensor.DeviceSensorId)] = sensor;
+
+                // save last reading to cache
                 if (sensor.SensorReadings.FirstOrDefault() is SensorReading reading)
                 {
                     _state.AddOrUpdateReading(reading);
