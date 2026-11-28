@@ -50,7 +50,11 @@ public sealed class PreStartupStateCacheJobTests(TimescaleDbApplicationFactory a
             DeviceStatus.ACTIVE,
             stateCache[DevEui.Parse("1122AABBCCDDEEFF")].DeviceStatus
         );
-
+        Assert.EquivalentWithExclusions(
+            device.Sensors.First(),
+            stateCache[(DevEui.Parse("1122AABBCCDDEEFF"), 1)],
+            [s => s.Device, s => s.SensorReadings] // exclude model references
+        );
         Assert.True(
             stateCache.TryGetSensorLastReading(device.Sensors.First().SensorId, out var lastState)
         );
