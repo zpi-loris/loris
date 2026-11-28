@@ -29,21 +29,21 @@ public class DeviceCallActionCompiler(
 
         var device = await ctx
             .Devices.Where(d => d.DeviceStatus == DeviceStatus.ACTIVE)
-            .SingleOrDefaultAsync(d => d.FriendlyName == dto.DeviceName, cancellationToken);
+            .SingleOrDefaultAsync(d => d.FriendlyName == dto.Device, cancellationToken);
 
         if (device is null)
         {
             return BlockValidationResult.Failure([
                 new BlockError(
-                    nameof(dto.DeviceName),
-                    dto.DeviceName,
+                    nameof(dto.Device),
+                    dto.Device,
                     "There is no device with given Friendly Name"
                 ),
             ]);
         }
 
         var function = await ctx.Functions.SingleOrDefaultAsync(
-            f => f.DeviceId == device.DeviceId && f.Name == dto.FunctionName,
+            f => f.DeviceId == device.DeviceId && f.Name == dto.Function,
             cancellationToken
         );
 
@@ -51,19 +51,23 @@ public class DeviceCallActionCompiler(
         {
             return BlockValidationResult.Failure([
                 new BlockError(
-                    nameof(dto.FunctionName),
-                    dto.FunctionName,
-                    $"There is no function with given Friendly Name for device {dto.DeviceName}"
+                    nameof(dto.Function),
+                    dto.Function,
+                    $"[{dto.Device}] device does not have function called [{dto.Function}]"
                 ),
             ]);
         }
 
-        var isValidValue = function.ArgType switch
+        var isValidValue = (function.ArgType, dto.Value) switch
         {
-            FuncArgType.Float => float.TryParse(dto.Value, out var _),
-            FuncArgType.Int => int.TryParse(dto.Value, out var _),
-            FuncArgType.Bool => bool.TryParse(dto.Value, out var _),
-            _ => true,
+            (FuncArgType.Float, float) => true,
+            (FuncArgType.Float, int) => true,
+            (FuncArgType.Int, int) => true,
+            (FuncArgType.Bool, bool) => true,
+            (FuncArgType.String, string) => true,
+            (FuncArgType.Void, null) => true,
+            (FuncArgType.Unspecified, _) => true,
+            _ => false,
         };
 
         if (!isValidValue)
@@ -71,8 +75,10 @@ public class DeviceCallActionCompiler(
             return BlockValidationResult.Failure([
                 new BlockError(
                     nameof(dto.Value),
-                    dto.Value,
-                    $"Function accepts values of type {function.ArgType}"
+                    dto.Value?.ToString() ?? "",
+                    function.ArgType == FuncArgType.Void
+                        ? "Function does not accept values"
+                        : $"Function accept values of type {function.ArgType}"
                 ),
             ]);
         }
@@ -97,16 +103,16 @@ public class DeviceCallActionCompiler(
         switch (lookup!.Get<FuncArgType>(FUNC_ARG_TYPE))
         {
             case FuncArgType.Float:
-                call.FloatVal = float.Parse(dto.Value);
+                call.FloatVal = Convert.ToSingle(dto.Value);
                 break;
             case FuncArgType.Int:
-                call.IntVal = int.Parse(dto.Value);
+                call.IntVal = (int)dto.Value!;
                 break;
             case FuncArgType.Bool:
-                call.BoolVal = bool.Parse(dto.Value);
+                call.BoolVal = (bool)dto.Value!;
                 break;
             case FuncArgType.String:
-                call.StrVal = dto.Value;
+                call.StrVal = (string)dto.Value!;
                 break;
             default:
                 break;
